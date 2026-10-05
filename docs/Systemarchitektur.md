@@ -1,0 +1,213 @@
+# Systemarchitektur: Pink Robin
+
+Status: erster Architekturentwurf zur gemeinsamen Abstimmung.
+
+## 1. Zweck und Grundlagen
+
+Dieses Dokument beschreibt die fachlichen Komponenten, ihre Zuständigkeiten, Datenhaltung und Kommunikation. Es bildet die Grundlage für die anschliessende Definition des Robin Protocol.
+
+Massgeblich sind das [Lastenheft](Lastenheft.md) und die [Robin Principles](Robin-Principles.md). Die Architektur bevorzugt lokale Verarbeitung, erhält wesentliche Offline-Funktionen und ordnet Persönlichkeit den Sicherheitsregeln, Datenschutzvorgaben und bewussten Benutzerentscheidungen unter.
+
+Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Ihre physische Verteilung auf Rechner und Robotermodule wird später festgelegt. Konkrete Prozessoren, Betriebssysteme, Frameworks, Sensorchips und Nachrichtenformate bleiben offen.
+
+## 2. Ausgangspunkt des Entwurfs
+
+Robin besitzt einen lokal betriebenen Kern, der seinen aktuellen Kontext, sein Verhalten und seine persönlichen Informationen verwaltet. Grundlegende Interaktion und sicherer Betrieb hängen weder von einem Server noch von einer verbundenen App ab.
+
+Companion-App und Weboberfläche ermöglichen Bedienung und Verwaltung. Die Homestation kann lokale Zusatzfunktionen bereitstellen. Der Server stellt ergänzende Dienste bereit. Externe KI liefert Ergebnisse oder Handlungsvorschläge; ausführbare Aktionen werden weiterhin lokal auf Berechtigung, Sicherheit und Benutzerentscheidungen geprüft.
+
+Virtual Robin ersetzt die physische Hardware durch simulierte Fähigkeiten und verwendet möglichst denselben Robin-Kern.
+
+Diese Aufteilung ist der Arbeitsstand dieses Entwurfs. Die offenen Entscheidungen in Abschnitt 12 müssen vor einer verbindlichen Umsetzung geklärt werden.
+
+## 3. Komponentenübersicht
+
+| Komponente | Hauptverantwortung | Abhängigkeit im Grundbetrieb |
+| --- | --- | --- |
+| Robin-Kern | Kontext, Verhalten, Persönlichkeit, lokale Daten und Koordination | Lokal verfügbar |
+| Sicherheits- und Zugriffsprüfung | Aktionen zulassen, begrenzen oder stoppen | Lokal verfügbar; Sicherheitsfunktionen zusätzlich an Modulen |
+| Kopf | Wahrnehmung, Mimik, Audio und Kopfbewegung | Meldet verfügbare Fähigkeiten an den Kern |
+| Bauch | Energieversorgung, Laden, Drehbewegung und Modulverbindungen | Für physischen Betrieb erforderlich |
+| Beinmodule | Ausführung freigegebener Bewegung und lokale Schutzreaktionen | Nur für entsprechende Bewegungsfähigkeiten erforderlich |
+| Ladestation | Ladeverbindung und sicherer Ladebetrieb | Für Laden erforderlich |
+| Homestation | Aufenthaltsort und optionale lokale Zusatzdienste | Keine Voraussetzung für Grundbetrieb |
+| Companion-App | Einrichtung, Verwaltung und Benutzerinteraktion | Für Einrichtung und Verwaltung, nicht dauerhaft |
+| Weboberfläche | Berechtigte Fernbedienung und Verwaltung | Abhängig vom angebotenen lokalen oder externen Zugang |
+| Server | Geräteverwaltung, Updates und optionale Fernfunktionen | Ergänzend |
+| Externe KI-Dienste | Komplexe Verarbeitung und Vorschläge | Ergänzend |
+| Virtual Robin / Smartphone-Simulator | Simulation von Fähigkeiten und Testszenarien | Entwicklungsumgebung |
+
+## 4. Robin-Kern
+
+### 4.1 Wahrnehmung und Fähigkeiten
+
+Hardwareadapter stellen Sensordaten und Ereignisse über fachliche Schnittstellen bereit. Eine Wahrnehmungskomponente leitet daraus Beobachtungen ab und kennzeichnet Unsicherheit, Aktualität und Quelle.
+
+Die Fähigkeitenverwaltung kennt verfügbare Module, unterstützte Funktionen und Einschränkungen. Verhalten muss sich daran anpassen: Ein Robin ohne Beinmodul kann beispielsweise weiter sprechen und Mimik zeigen, aber keine Laufbewegung ausführen.
+
+Unbekannte Personen werden nur für die aktuelle Interaktion unterschieden. Ihre Beobachtungen dürfen nicht automatisch zu dauerhaften Personeneinträgen werden.
+
+### 4.2 Kontext und Verhalten
+
+Die Kontextverwaltung führt relevante Beobachtungen, Benutzerwünsche, aktive Aufgaben und Systemzustände zusammen. Kurzfristiger Kontext und dauerhaft gespeicherte Informationen werden getrennt behandelt.
+
+Die Verhaltenssteuerung entscheidet, welche Reaktion oder Unterstützung zur Situation passt. Persönlichkeit, Interessen und Beziehungen beeinflussen Ausdruck und Vorschläge.
+
+Die Aktionskoordination löst Konflikte zwischen gleichzeitig angeforderten Handlungen und steuert deren Ablauf. Jede ausführbare Aktion durchläuft die notwendigen Sicherheits-, Datenschutz- und Berechtigungsprüfungen.
+
+Priorität haben physische Sicherheit und Datenschutz. Bewusste Benutzerentscheidungen und das Stoppen laufender Bewegungen haben Vorrang vor autonomem Verhalten und Persönlichkeitspräferenzen. Ein Benutzerwunsch darf eine Sicherheitsregel nicht ausser Kraft setzen.
+
+### 4.3 Ausdruck und Aktionen
+
+Ausdrucksfunktionen koordinieren Mimik, Sprache und Bewegung. Ein technischer Zustand kann als Teil der Persönlichkeit dargestellt werden, bleibt aber im technischen Status eindeutig erkennbar.
+
+Module erhalten begrenzte, freigegebene Aufträge. Sie melden Annahme, Fortschritt, Abschluss oder Fehler. Sicherheitskritische Module müssen auch bei ausbleibender Kernkommunikation in einen definierten sicheren Zustand wechseln können.
+
+### 4.4 Zustände und Energie
+
+Eine lokale Zustandsverwaltung koordiniert Einrichtung, Normalbetrieb, Ruhe, Laden, eingeschränkten Betrieb, Fehler, Update, Lost Mode und Reset. Online-Verfügbarkeit und aktive Videoübertragung werden als zusätzliche Zustandsinformationen behandelt.
+
+Das Energiemanagement bewertet Akku, Ladeverbindung und relevante Temperaturinformationen. Es reduziert Funktionen kontrolliert und fordert rechtzeitig Laden oder einen sicheren Ruhezustand an.
+
+## 5. Physische Module und Stationen
+
+Kopf, Bauch und Beinmodule bieten Fähigkeiten über definierte Schnittstellen an. Ihre konkrete Elektronik darf die fachliche Verhaltenslogik nicht bestimmen.
+
+Der Kopf verantwortet seine Sensoren, Mimik, Audiofunktionen und Kopfbewegungen. Der Bauch verantwortet Energieversorgung, Akku-Laden, Drehbewegung und die Verbindung zu Kopf und Beinen. Beinmodule verantworten ihre Bewegungssteuerung und lokalen Schutzreaktionen.
+
+Die Ladestation stellt die Ladeverbindung bereit. Die Zuständigkeit für Ladefreigabe, Akkuüberwachung und Abbruch bei unsicheren Bedingungen muss zwischen Bauch und Station eindeutig festgelegt werden.
+
+Die Homestation ist Robins definierter Aufenthaltsort. Zusatzdienste wie lokale Verarbeitung oder Datensicherung sind mögliche Erweiterungen, keine bereits beschlossenen Voraussetzungen. Bei Ausfall muss Robin seine Grundfunktionen behalten.
+
+Ob Lade- und Homestation ein gemeinsames Gerät bilden, bleibt offen.
+
+## 6. Bedienoberflächen und externe Dienste
+
+### 6.1 Companion-App
+
+Die App führt durch Ersteinrichtung, bewusste Kopplung und Besitzerzuordnung. Sie verwaltet berechtigte Zugänge, Einstellungen, Personenregistrierung, Kontaktverknüpfungen, Erinnerungen und Datenschutzentscheidungen.
+
+Sie zeigt Zustand, Einschränkungen und Diagnose an und unterstützt Updates, Lost Mode, Reset und Weitergabe. Sie übermittelt Benutzerentscheidungen an die jeweils zuständige Systemkomponente und zeigt erst nach Bestätigung den tatsächlichen Systemstand.
+
+Die App ist kein dauerhaft erforderlicher Ausführungsort der grundlegenden Verhaltenssteuerung.
+
+### 6.2 Weboberfläche
+
+Die Weboberfläche ermöglicht die im Lastenheft vorgesehenen Status-, Einstellungs-, Firmware- und Livestream-Funktionen. Sie verwendet dieselben fachlichen Berechtigungen und Regeln wie die App.
+
+Ob sie lokal, über die Homestation oder über den Server bereitgestellt wird, bleibt offen. Ein Fernzugang darf nicht allein deshalb Steuerrechte erhalten, weil eine Verbindung besteht.
+
+### 6.3 Server und externe KI
+
+Der Server stellt Geräteverwaltung, Updatebereitstellung, Konfigurationsdienste, eine Programmierschnittstelle und geschützte Fernfunktionen bereit.
+
+Externe KI wird für klar abgegrenzte Aufgaben aufgerufen. Nur die dafür notwendigen und freigegebenen Daten werden übertragen. Ergebnisse besitzen keine unmittelbare Befugnis, Bewegungen, Registrierung, Livestreams oder dauerhafte Datenspeicherung auszulösen.
+
+Für externe Aufgaben werden Zeitgrenzen, Abbruch und ein verständlicher Ersatz bei Nichtverfügbarkeit vorgesehen. Antworten auf bereits abgebrochene oder überholte Aufgaben werden nicht nachträglich als aktuelle Handlungsaufträge ausgeführt.
+
+## 7. Datenhaltung und Zuständigkeit
+
+| Datenart | Führende Instanz im Entwurf | Umgang |
+| --- | --- | --- |
+| Aktueller Kontext und unbekannte Personen | Robin-Kern | Kurzfristig; begrenzte Lebensdauer; keine automatische Registrierung |
+| Registrierte Personen und Beziehungen | Lokale Datenverwaltung des Robin-Kerns | Bewusste Registrierung; einsehbar, korrigierbar und löschbar |
+| Persönlichkeit und Präferenzen | Robin-Kern | Lokal; durch Benutzerregeln begrenzt |
+| Erinnerungen und persönliche Einstellungen | Robin-Kern | Lokal verfügbar; App dient der Verwaltung |
+| Ownership und Geräteberechtigungen | Lokale Zugriffsverwaltung | Geschützt; Kopplungen bewusst erteilen und widerrufen |
+| Technischer Zustand | Zuständiges Modul, zusammengeführt im Kern | Aktuell; mit Quelle und Verfügbarkeit |
+| Diagnoseereignisse | Erzeugende Komponente | Datenarm, zugriffsgeschützt und zeitlich begrenzt |
+| Verfügbare Updatepakete | Updatebereitstellung des Servers | Herkunft, Unversehrtheit und Kompatibilität lokal prüfen |
+| Gewünschte serverseitige Konfiguration | Server | Änderungsvorschlag; lokale Annahme und Bestätigung erforderlich |
+
+Für persönliche Roboterinformationen ist der lokale Stand führend. Eine optionale Synchronisation oder Sicherung auf Homestation beziehungsweise Server muss bewusst eingerichtet werden. Sie benötigt Regeln für Konflikte, Löschung, Wiederherstellung und Zugriff; sie ist in diesem Entwurf noch nicht festgelegt.
+
+Kontaktverknüpfungen werden bewusst in der App vorgenommen. Daraus folgt keine pauschale Übertragung des gesamten Adressbuchs an Robin oder einen Server.
+
+Ein vollständiger Reset entfernt persönliche Daten, Zugangsinformationen und Kopplungen. Falls später externe Kopien eingeführt werden, muss deren Löschung oder Trennung im Ablauf ebenfalls definiert werden.
+
+## 8. Kommunikationswege und Robin Protocol
+
+| Verbindung | Ausgetauschte Informationen |
+| --- | --- |
+| Kopf / Bauch / Beine ↔ Robin-Kern | Fähigkeiten, Beobachtungen, Status, freigegebene Aktionen und Fehler |
+| Companion-App ↔ Robin | Einrichtung, Benutzerentscheidungen, Konfiguration, Personenverwaltung und Status |
+| Robin ↔ Homestation | Stationsstatus und gegebenenfalls bewusst eingerichtete lokale Zusatzdienste |
+| Robin ↔ Server | Berechtigte Geräteverwaltung, Updates und freigegebene externe Aufgaben |
+| Weboberfläche ↔ zuständiger lokaler oder externer Dienst | Berechtigte Bedien- und Statusfunktionen |
+| Simulator ↔ Robin-Kern | Dieselben fachlichen Fähigkeiten, Ereignisse und Aktionen wie reale Adapter |
+
+Diese Verbindungen beschreiben fachliche Beziehungen. Sie legen keine konkrete Netzwerktopologie fest. Eine Weiterleitung über Bauch, Station oder Server muss die ursprüngliche Berechtigung und den Auftrag erhalten.
+
+Das Robin Protocol definiert gemeinsame Bedeutungen für Fähigkeiten, Befehle, Ereignisse, Zustände, Konfiguration und Fehler. Für interne Modulverbindungen dürfen angepasste Transportwege verwendet werden, solange die fachliche Bedeutung erhalten bleibt.
+
+Für die anschliessende Protokolldefinition werden mindestens benötigt:
+
+- Identität, Rolle, Protokollversion und Fähigkeiten der Beteiligten;
+- Zuordnung von Auftrag, Bestätigung, Ergebnis und Fehler;
+- Aktualität, Gültigkeitsdauer und Abbruch von Aufträgen;
+- Verhalten bei Duplikaten, Verbindungsabbruch und Wiederverbindung;
+- Berechtigungen und Ablehnungsgründe;
+- Meldung von Zustands- und Fähigkeitsänderungen.
+
+Konkrete Nachrichtenformate werden erst im Protokolldokument festgelegt.
+
+## 9. Typische Abläufe
+
+### 9.1 Lokale Interaktion
+
+Eine Wahrnehmung erzeugt eine Beobachtung. Der Kern aktualisiert den Kontext, wählt eine Reaktion und prüft diese gegen Regeln und Zustand. Die zuständigen Module führen freigegebene Aktionen aus und melden Ergebnisse zurück.
+
+### 9.2 Komplexe externe Aufgabe
+
+Der Kern prüft Verfügbarkeit und erlaubte Datenverwendung, beauftragt einen externen Dienst und wartet innerhalb einer definierten Zeitgrenze. Das Ergebnis wird als Information oder Vorschlag verarbeitet. Jede daraus abgeleitete Aktion wird erneut lokal geprüft.
+
+### 9.3 Personenregistrierung
+
+Der Benutzer startet die Registrierung bewusst über die App. Robin führt den vorgesehenen lokalen Erfassungsablauf durch und bestätigt den gespeicherten Eintrag. Eine Kontaktverknüpfung ist eine separate bewusste Entscheidung.
+
+### 9.4 Livestream
+
+Ein berechtigter Benutzer fordert Videoübertragung an. Robin prüft die definierten Bedingungen und aktiviert eine lokal sichtbare Anzeige, bevor Bilddaten übertragen werden. Kann die Anzeige nicht sichergestellt werden, wird die Übertragung abgelehnt oder beendet. Eine verlorene Bedienverbindung darf keinen unbegrenzt unbeaufsichtigten Stream hinterlassen; die Beendigungsbedingungen werden im Protokoll konkretisiert.
+
+### 9.5 Update
+
+Die lokale Updatekoordination prüft Paket, Kompatibilität, Energie und Betriebszustand. Robin nimmt einen sicheren Zustand ein, führt das Update aus und bestätigt anschliessend seine Betriebsfähigkeit. Bei Fehlern bleibt ein funktionsfähiger Stand oder Wiederherstellungsmodus verfügbar.
+
+## 10. Betrieb bei Ausfällen
+
+| Ausfall | Erwartetes Verhalten |
+| --- | --- |
+| Internet oder Server nicht verfügbar | Lokale Interaktion, Sicherheit und Energiemanagement bleiben verfügbar; externe Aufgaben melden Einschränkung |
+| App nicht verbunden | Robin setzt lokalen Betrieb fort; keine nachträgliche Ausführung veralteter App-Befehle |
+| Homestation nicht verfügbar | Grundbetrieb bleibt erhalten; Zusatzdienste melden Nichtverfügbarkeit |
+| Sensor oder Modul ausgefallen | Fähigkeit wird eingeschränkt; betroffene Aktionen werden begrenzt oder gestoppt |
+| Robin-Kern antwortet nicht | Sicherheitskritische Module wechseln anhand lokaler Regeln in einen sicheren Zustand |
+| Energie kritisch | Kontrollierte Funktionsreduktion und sicherer Zustand |
+| Update fehlgeschlagen | Rückkehr zum funktionsfähigen Stand oder Wiederherstellung |
+| Verbindung wiederhergestellt | Zustände und Berechtigungen abgleichen; veraltete Aufträge nicht automatisch nachholen |
+
+## 11. Virtual Robin und Diagnose
+
+Virtual Robin führt möglichst denselben Kern aus wie der physische Roboter. Simulierte Adapter ersetzen Wahrnehmung, Ausdruck, Bewegung und Energieversorgung. Testwerkzeuge können Ereignisse, Fehler und Verbindungszustände reproduzierbar erzeugen.
+
+Ein Smartphone-Simulator kann seine vorhandenen Fähigkeiten anbieten und fehlende Robotermodule simulieren. Die genaue Nutzung von Kamera, Audio und Bewegungssensorik wird später festgelegt.
+
+Diagnose verbindet Beobachtungen, Entscheidungen, freigegebene Aktionen und Ergebnisse nachvollziehbar. Persönliche Inhalte und Zugangsinformationen werden dabei minimiert und geschützt. Benutzerverständliche Erklärungen bleiben getrennt von technischen Diagnoseinformationen.
+
+Simulation prüft fachliche Abläufe und Regeln. Physische Sicherheit, Ladebetrieb und reale Bewegungen benötigen ergänzende Hardwareprüfungen.
+
+## 12. Offene Entscheidungen und nächster Schritt
+
+Vor der verbindlichen Umsetzung sind insbesondere zu klären:
+
+1. Physischer Ausführungsort des Robin-Kerns und lokale Schutzverantwortung jedes Moduls.
+2. Rolle der Homestation: Aufenthaltsort allein oder zusätzliche lokale Rechen- und Sicherungsdienste.
+3. Betrieb und Zugangsweg der Weboberfläche sowie Umfang der Fernsteuerung.
+4. Umfang persönlicher Langzeitdaten, Aufbewahrungszeiten und optionale Synchronisation.
+5. Rechte weiterer Benutzer sowie Wiederherstellung der Ownership bei Verlust eines gekoppelten Geräts.
+6. Messbare Zielwerte für Reaktionszeiten, Energie und sichere Kommunikationsausfälle.
+7. Kleinster erster Entwicklungsumfang für Virtual Robin.
+
+Als erster Entwicklungsumfang wird vorgeschlagen: Fähigkeiten melden, Wahrnehmungsereignis verarbeiten, Kontext aktualisieren, eine begrenzte Reaktion wählen und ausführen, Zustand anzeigen sowie Verbindungs- und Energieausfälle simulieren.
+
+Nach Abstimmung der Zuständigkeiten folgt das Robin Protocol. Dabei wird zunächst der gemeinsame fachliche Vertrag für diesen ersten Ablauf definiert und anschliessend um Personenverwaltung, externe Aufgaben, Updates und Fernfunktionen erweitert.
