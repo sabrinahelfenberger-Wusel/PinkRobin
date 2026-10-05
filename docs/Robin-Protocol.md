@@ -155,6 +155,82 @@ Voraussetzung: bewusst gekoppeltes Smartphone, betriebsbereite Nickmechanik und 
 
 Bei blockierter Nickmechanik oder unsicherer Lage wird der Auftrag abgelehnt oder eine bereits begonnene Bewegung sicher beendet. Wird die Ergebnisnachricht verloren, fragt das Smartphone denselben Auftrag ab; es löst nicht nochmals Nicken aus.
 
+
+### 10.1 Fachlicher Vertrag
+
+Die Aktion „einmal nicken“ bewegt den Kopf von einer bestätigten Ausgangsposition einmal nach unten und anschliessend zurück zu dieser Ausgangsposition. Sie enthält genau einen Bewegungszyklus. Mehrere Nickbewegungen und direkte dauerhafte Positionierung sind spätere, eigenständige Aktionen.
+
+Die Winkel beziehen sich auf die Nickachse der Kopfmechanik, nicht auf die Lage des gesamten Roboters im Raum. Die Auslenkung ist eine positive Winkelgrösse in Grad; die Richtung „nach unten“ wird vom Hardwareadapter eindeutig umgesetzt. Der Lagesensor unterstützt die Beurteilung der Roboterlage, ersetzt aber nicht automatisch eine Rückmeldung der Nickposition.
+
+### 10.2 Gemeldete Fähigkeit
+
+Robin meldet für diese Aktion:
+
+| Eigenschaft | Bedeutung |
+| --- | --- |
+| Verfügbarkeit | Aktuell ausführbar oder eingeschränkt, mit Grund |
+| Auslenkungsbereich | Kleinste und grösste unterstützte Auslenkung in Grad |
+| Geschwindigkeitsbereich | Unterstützte Bewegungsgeschwindigkeit in Grad pro Sekunde |
+| Standardprofil | Lokal festgelegte Auslenkung und Geschwindigkeit |
+| Positionsgrenzen | Zulässiger Bereich der Nickachse |
+| Referenzzustand | Ob Ausgangsposition und Bewegungsreferenz bekannt sind |
+| Ergebnisnachweis | Physisch bestätigt oder nur Ausführung des Bewegungsablaufs bestätigt |
+| Laufzeitgrenze | Maximale Ausführungszeit in Millisekunden |
+| Revision | Stand der gemeldeten Grenzen und Voraussetzungen |
+
+Konkrete Zahlen werden anhand der Mechanik festgelegt. Die tatsächlich zulässige Auslenkung hängt zusätzlich von der aktuellen Ausgangsposition ab: Sowohl Zielposition als auch vollständiger Bewegungsweg müssen innerhalb der sicheren Grenzen liegen.
+
+### 10.3 Auftragsparameter
+
+| Parameter | Festlegung |
+| --- | --- |
+| Auftragskennung | Eindeutig beim berechtigten Auftraggeber; für Wiederholung und Statusabfrage beibehalten |
+| Sitzung | Aktuelle bestätigte Sitzung |
+| Ziel | Nickfunktion des Kopfes |
+| Aktion | Einmal nicken |
+| Auslenkung | Optional; Grad innerhalb des gemeldeten Bereichs |
+| Geschwindigkeit | Optional; Grad pro Sekunde innerhalb des gemeldeten Bereichs |
+| Startgültigkeit | Begrenzte Frist, innerhalb der die Bewegung beginnen darf |
+| Erwartete Fähigkeitsrevision | Revision, auf deren Grundlage der Auftrag geplant wurde |
+
+Fehlende optionale Bewegungsparameter werden aus dem gemeldeten lokalen Standardprofil übernommen. Robin bestätigt die tatsächlich verwendeten Werte bei Annahme. Ungültige Werte werden abgelehnt und nicht stillschweigend auf andere Werte begrenzt.
+
+Die konkrete Darstellung der Frist wird mit der technischen Gültigkeitsprüfung festgelegt. Sie muss verzögerte Zustellung und Uhrabweichungen berücksichtigen. Zusätzlich begrenzt Robin die Ausführungsdauer lokal. Eine noch gültige Startfrist erlaubt keine unbegrenzt lange Bewegung.
+
+### 10.4 Prüfung und Ausführung
+
+Vor der Annahme prüft Robin die allgemeinen Auftragsregeln sowie Referenzzustand, sicheren Bewegungsweg, Lage, Energie, Mechanikstatus und freie Nickfunktion. Bei nicht mehr aktueller Fähigkeitsrevision fordert Robin einen neuen Abgleich an und lehnt den Auftrag ab.
+
+Für den ersten Umfang wird keine Warteschlange für Nickaufträge vorgesehen. Ist die Nickfunktion belegt, wird ein neuer Auftrag abgelehnt. Wiederholungen desselben Auftrags werden weiterhin nach den Regeln zur Wiederholungserkennung behandelt.
+
+Nach Annahme wird die Nickfunktion für diesen Auftrag reserviert. Unmittelbar vor Bewegungsbeginn werden die Voraussetzungen und die Startgültigkeit erneut geprüft. Die Ausgangsposition wird dabei erfasst und mit dem Auftrag verbunden.
+
+Die Ausführung umfasst Abwärtsbewegung und Rückkehr. Währenddessen überwacht Robin die verfügbaren sicherheitsrelevanten Rückmeldungen. Eine Änderung von Zustand oder Grenzen kann die Bewegung beenden, auch wenn der Auftrag zuvor angenommen wurde.
+
+### 10.5 Abschluss und Nachweis
+
+Ein Ergebnis enthält den Endzustand, die verwendeten Parameter, den Ergebnisnachweis sowie die bekannte Endposition beziehungsweise eine ausdrückliche Kennzeichnung unbekannter Position.
+
+„Erfolgreich beendet“ erfordert einen abgeschlossenen Zyklus und eine Rückkehr zur Ausgangsposition innerhalb einer zuvor festgelegten Toleranz. Die Fähigkeit muss offenlegen, wie dieser Nachweis erbracht wird.
+
+Kann die Hardware lediglich bestätigen, dass der geplante Bewegungsablauf ausgegeben wurde, darf das Ergebnis keine physisch bestätigte Rückkehr behaupten. Es wird entsprechend als Ablaufbestätigung gekennzeichnet. Benötigt ein Auftrag eine physische Bestätigung, die nicht verfügbar ist, muss er abgelehnt werden. Die Parametrisierung dieses Nachweisbedarfs wird vor Implementierung ergänzt.
+
+Ein angenommener Auftrag, der wegen abgelaufener Startfrist nicht beginnt, endet fehlgeschlagen mit dem Grund „Startfrist abgelaufen“. Störungen und überschrittene Ausführungszeit führen ebenfalls zu einem erklärten Fehler nach sicherem Beenden. Ein Benutzerabbruch oder sicherheitsbedingter Abbruch wird als abgebrochen gemeldet.
+
+### 10.6 Abbruch und Verbindungsverlust
+
+Bei Abbruch oder Bewegungsstopp wird die Bewegung auf die für die Mechanik sichere Weise beendet. Eine automatische Rückfahrt zur Ausgangsposition ist dabei nicht vorgeschrieben: Sie könnte dem Stoppwunsch widersprechen oder bei einer Störung unsicher sein.
+
+Für diesen ersten Nickauftrag wird als Entwurfsentscheidung festgelegt: Ein erkannter Verlust der Smartphone-Sitzung bricht eine noch laufende Bewegung sicher ab. Ein bereits abgeschlossener Auftrag behält seinen Endzustand. Die Zeit bis zur Erkennung des Verbindungsverlusts sowie das sichere Brems- beziehungsweise Halteverhalten müssen vor Hardwarebetrieb festgelegt werden.
+
+Nach Wiederverbindung kann das Smartphone den Status abfragen. Eine Rückkehr zur Ausgangsposition erfolgt nicht durch Wiederholung oder Statusabfrage, sondern nur durch eine separat geprüfte neue Aktion.
+
+### 10.7 Fachliche Prüffälle für den Nickauftrag
+
+Virtual Robin prüft die Verwendung des Standardprofils, gültige und ungültige Parameter, veränderte Fähigkeitsrevision, unbekannte Referenz, belegte Nickfunktion, abgelaufene Startfrist, vollständigen Zyklus, fehlende physische Ergebnisbestätigung, Laufzeitüberschreitung und Abbruch in beiden Bewegungsphasen.
+
+Zusätzlich werden Verbindungsverlust sowie doppelte Aufträge vor, während und nach Ausführung geprüft. Mechanische Grenzen, Positionsnachweis und sicheres Stoppen werden ergänzend an realer Hardware erprobt.
+
 ## 11. Erweiterung für die Homestation
 
 Die Homestation wird als eigene Komponente mit Lade-, Dreh- und Lichtfähigkeiten beschrieben. Das Smartphone richtet seine Verhaltensaufträge an den Robin-Kern; dieser koordiniert Stationsaufträge.
@@ -183,4 +259,4 @@ Dies sind fachliche Prüfszenarien; eine konkrete Implementierung besteht mit di
 
 Vor einer Implementierung werden Nachrichtencodierung, Übertragungswege, sichere Identitätsprüfung, Sitzungs- und Nachrichtenkennungen, Versionsregeln sowie konkrete Zeit- und Speichergrenzen festgelegt.
 
-Für die erste Aktion werden zusätzlich Nickbewegungsgrenzen, Gültigkeitsprüfung, Verhalten bei Verbindungsverlust und Kriterien für bestätigten Erfolg festgelegt. Die weiteren Funktionsbereiche erhalten eigene, auf diesem Grundablauf aufbauende Spezifikationen.
+Für die erste Aktion werden die in Abschnitt 10 beschriebenen Regeln technisch konkretisiert: Zahlenwerte für Bewegungsgrenzen, Standardprofil und Positionstoleranz, tatsächlicher Positionsnachweis, Darstellung des benötigten Ergebnisnachweises, Gültigkeitsprüfung, Ausführungszeit und sicheres Stoppen. Die weiteren Funktionsbereiche erhalten eigene, auf diesem Grundablauf aufbauende Spezifikationen.
