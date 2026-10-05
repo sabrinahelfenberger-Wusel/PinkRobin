@@ -18,7 +18,7 @@ Robin bleibt die entscheidende Instanz für Sicherheit, Datenschutz, Benutzerreg
 
 Virtual Robin bietet denselben fachlichen Vertrag an. Simulierte Fähigkeiten und Ergebnisse werden ausdrücklich als simuliert gekennzeichnet.
 
-Die folgenden Nachrichtennamen sind fachliche Bezeichnungen, keine Festlegung von Feldnamen oder Codierung.
+Nachrichten- und Feldnamen bilden den vorgeschlagenen fachlichen Wortschatz dieses Entwurfs. Ihre konkrete Codierung wird später festgelegt.
 
 ## 3. Verbindung und Sitzung
 
@@ -81,6 +81,95 @@ Jede fachliche Nachricht muss ihrem Typ, Absender, Empfänger und ihrer Sitzung 
 Aufträge haben zusätzlich eine Auftragskennung, die für Wiederholungen und Statusabfragen erhalten bleibt. Antworten und Ereignisse zum Auftrag tragen dieselbe Auftragskennung.
 
 Für Aufträge werden Gültigkeit, Ausführungsgrenzen und relevante Voraussetzungen beschrieben. Die spätere technische Spezifikation muss eine überprüfbare Frist trotz möglicher Uhrabweichungen festlegen. Eine einfache lokale Ankunftszeit genügt nicht, um bereits vor der Zustellung veraltete Aufträge zu erkennen.
+
+### 6.1 Gemeinsamer Nachrichtenrahmen
+
+Die folgenden Feldnamen sind der vorgeschlagene gemeinsame Wortschatz. Sie legen Bedeutung und logische Datentypen fest, aber noch keine Codierung, Feldlänge oder Transporttechnik.
+
+| Feld | Pflicht | Bedeutung |
+| --- | --- | --- |
+| `protocol_version` | In bestätigter Sitzung | Vereinbarte Protokollversion |
+| `message_type` | Immer | Art und fachlicher Zweck der Nachricht |
+| `message_id` | Immer | Kennung dieser logischen Nachricht |
+| `sender_id` | Immer | Absenderkennung, an die nachgewiesene Identität gebunden |
+| `recipient_id` | Immer | Zuständiger Empfänger |
+| `session_id` | In bestätigter Sitzung | Aktuelle Sitzung; keine eigenständige Zugangsberechtigung |
+| `in_reply_to` | Bei direkter Antwort | Nachrichtenkennung der beantworteten Anfrage |
+| `request_id` | Bei Auftrag, Statusabfrage, Abbruch und zugehöriger Meldung | Über Sitzungswechsel hinweg erhaltene Auftragskennung |
+| `payload` | Immer | Zum Nachrichtentyp gehörende fachliche Inhalte |
+
+Kennungen werden als undurchsichtige Werte behandelt. Sie enthalten keine Namen, Kontaktinformationen oder Geheimnisse. Eine Rolle oder Berechtigung wird nicht allein aus einem frei gelieferten Feld abgeleitet.
+
+Vor Bestätigung einer Sitzung sind nur die separat definierten Nachrichten des Verbindungsaufbaus erlaubt. Sie verwenden noch keine bestätigte Sitzungskennung und nennen unterstützte Versionen in ihrem Inhalt. Ihr genauer Rahmen wird mit dem Identitätsnachweis festgelegt. Sie dürfen keine Steueraufträge oder geschützten Zustandsdaten transportieren.
+
+### 6.2 Nachrichten- und Auftragskennung
+
+Eine neue Anfrage oder Statusabfrage erhält eine neue `message_id`. Eine unveränderte erneute Zustellung derselben logischen Nachricht verwendet dieselbe Kennung. Nachrichtenkennungen müssen innerhalb der Sitzung je Absender eindeutig sein.
+
+Die `request_id` bezeichnet dagegen den fachlichen Auftrag. Sie bleibt bei erneuter Anfrage, Statusabfrage, Abbruch und Wiederverbindung erhalten. Ihr Gültigkeitsbereich umfasst den nachgewiesenen Auftraggeber und den zuständigen Robin.
+
+Eine Antwort hat eine eigene `message_id` und verweist über `in_reply_to` auf die Anfrage. Spätere Auftragsereignisse verwenden die `request_id`; sie benötigen keinen Bezug auf eine zwischenzeitlich verloren gegangene Anfrage.
+
+Beispiel: Eine Nickanforderung trägt Nachrichtenkennung M1 und Auftragskennung A1. Nach verlorenem Ergebnis wird eine Statusabfrage M2 für A1 gesendet. Die Antwort M3 verweist auf M2 und A1. Sie führt keine neue Nickbewegung aus. Die Kennungen sind nur illustrative Platzhalter.
+
+Bei Weiterleitung an die Station bleibt der ursprüngliche Auftraggeber nachvollziehbar. Der lokale Komponentenauftrag darf eine eigene Kennung besitzen, muss aber eindeutig dem übergeordneten Auftrag zugeordnet sein. Ein Smartphone darf Auftraggeber oder übergeordnete Kennung nicht nutzen, um Rechte eines anderen Geräts zu beanspruchen.
+
+### 6.3 Nachrichtentypen des ersten Umfangs
+
+| `message_type` | Fachlicher Zweck | Wesentliche Inhalte in `payload` |
+| --- | --- | --- |
+| `capabilities.get` | Fähigkeiten anfordern | Gewünschter zulässiger Umfang |
+| `capabilities.snapshot` | Vollständige Fähigkeiten melden | Ursprung, Revision, Fähigkeiten |
+| `state.get` | Aktuellen Zustand anfordern | Gewünschter zulässiger Umfang |
+| `state.snapshot` | Vollständigen Zustand melden | Ursprung, Revision, Werte mit Aktualität und Quelle |
+| `state.changed` | Zustandsänderung melden | Ursprung, Basisrevision, neue Revision, Änderungen |
+| `action.request` | Neue Aktion anfordern oder bekannten Auftrag erneut anfragen | Ziel, Aktion, Parameter, Startgültigkeit, Fähigkeitsrevision und gegebenenfalls Ergebnisnachweis |
+| `action.status.get` | Auftrag abfragen | Auftragskennung im Rahmen |
+| `action.status` | Annahme, Ablehnung, Beginn, Fortschritt oder Endzustand melden | Auftragszustand, Statusrevision, tatsächliche Parameter, Ergebnis und gegebenenfalls Grund |
+| `action.cancel` | Abbruch eines Auftrags anfordern | Auftragskennung im Rahmen; optionaler Grund |
+| `motion.stop` | Berechtigten Bewegungsstopp anfordern | Eindeutiger Stoppumfang |
+| `error` | Anfrage konnte nicht regulär verarbeitet werden | Stabiler Fehlergrund und verständliche Erklärung |
+
+Eine direkte Antwort verwendet `in_reply_to`. Unaufgeforderte Zustands- oder Auftragsmeldungen besitzen keinen künstlichen Antwortbezug. Fehlende Empfangsbestätigungen ändern die Bedeutung von Annahme und Ergebnis nicht.
+
+Ein bekannter Auftrag mit unzulässigen Aktionsparametern wird durch `action.status` als abgelehnt beantwortet. Ein nicht auswertbarer Nachrichtentyp oder beschädigter Rahmen kann eine `error`-Antwort erzeugen, sofern der Absender sicher zugeordnet werden kann. Eine unzuordenbare oder unberechtigte Nachricht erzeugt keinen gültigen Auftrag.
+
+### 6.4 Aktionsinhalt und Gültigkeit
+
+Der Inhalt von `action.request` verwendet folgende gemeinsame Felder:
+
+| Feld | Bedeutung |
+| --- | --- |
+| `target` | Fachliche Zielkomponente und Fähigkeit |
+| `action` | Unterstützte Aktion |
+| `parameters` | Zur Aktion gehörende Werte mit definierten Einheiten |
+| `start_validity` | Überprüfbare begrenzte Startgültigkeit |
+| `capability_revision` | Erwarteter Stand der Fähigkeit |
+| `required_evidence` | Benötigter Ergebnisnachweis, falls für die Aktion definiert |
+
+`start_validity` bezeichnet einen gemeinsamen fachlichen Vertrag, noch kein festgelegtes Zeitformat. Die Umsetzung muss verzögerte Zustellung, Uhrabweichungen und erneute Sitzungen berücksichtigen. Fehlt eine erforderliche Gültigkeitsangabe oder kann Robin sie nicht verlässlich prüfen, wird die Aktion abgelehnt.
+
+`motion.stop` ist ein eigener Kontrollauftrag. Er wird nicht hinter normalen Aktionsaufträgen eingereiht und hängt nicht von deren Fähigkeitsrevision ab. Sitzung, Rechte und eindeutiger Stoppumfang müssen trotzdem geprüft werden. Seine Bestätigung unterscheidet Empfang, angenommene Stoppanforderung und tatsächlich bestätigten Bewegungsstillstand. Ein Auftragsabbruch bestätigt ebenfalls erst nach tatsächlichem Beenden den Endzustand.
+
+### 6.5 Revisionen und Reihenfolge
+
+Zustand und Fähigkeiten erhalten jeweils einen `origin_id`, der ihre aktuelle Ausführungsinstanz kennzeichnet. Nach Neustart beziehungsweise Verlust des Revisionsstands wird ein neuer Ursprung verwendet. Er ist keine Identität und keine Berechtigung.
+
+Ein `state.snapshot` liefert den vollständigen freigegebenen Umfang für Ursprung und Revision. Eine Änderung enthält `base_revision` und `revision`. Das Smartphone wendet sie nur an, wenn Ursprung und Basisrevision zu seinem Stand passen. Ältere Meldungen werden nicht als neuer Zustand übernommen; Lücken oder ein neuer Ursprung erfordern einen Vollabgleich.
+
+Für den ersten Umfang werden geänderte Fähigkeiten als vollständiges `capabilities.snapshot` übertragen. Ein Änderungsformat für Fähigkeiten wird noch nicht eingeführt.
+
+Auftragsmeldungen tragen eine je Auftrag steigende `status_revision`. Ein alter Status darf einen neueren Status oder einen bestätigten Endzustand nicht überschreiben. Kann Robin einen Auftragsstatus nach Neustart nicht mehr nachweisen, wird das Ergebnis als unbekannt gekennzeichnet. Unbekannt ist kein zusätzlicher Ausführungs-Endzustand, sondern eine Aussage über fehlenden Nachweis.
+
+### 6.6 Fehler, Grenzen und Erweiterungen
+
+Ein Fehler enthält `reason_code` als stabilen fachlichen Grund und `explanation` als verständliche Erklärung. Eine wiederholbare Zustellung ist von einem neuen Ausführungsversuch zu unterscheiden. Fehlerantworten dürfen keine pauschale automatische Wiederholung einer Bewegung auslösen.
+
+Vor Implementierung werden die erlaubten Größen und Verschachtelungen, Wertebereiche, Nachrichtenraten und Aufbewahrungsgrenzen festgelegt. Ungültige Nachrichten werden ohne Teil-Ausführung abgewiesen.
+
+Pflichtfelder und unbekannte sicherheitsrelevante Inhalte dürfen nicht stillschweigend ignoriert werden. Erweiterungen müssen zwischen optionalen Zusatzinformationen und zwingend unterstützten Funktionen unterscheiden. Unbekannte Aktionen werden abgelehnt. Ein kompatibles Nachrichtenformat hebt keine fehlende Fähigkeit oder Berechtigung auf.
+
+Der Nachrichtenrahmen und seine Inhalte müssen gegen Manipulation und Wiederverwendung ausserhalb der gültigen Sitzung geschützt werden. Das konkrete Verfahren wird mit der technischen Sicherheitsspezifikation festgelegt.
 
 ## 7. Auftrag und Rückmeldung
 
