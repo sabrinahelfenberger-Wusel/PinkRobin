@@ -50,11 +50,29 @@ Unbekannte Personen werden nur für die aktuelle Interaktion unterschieden. Ihre
 
 Die Kontextverwaltung führt relevante Beobachtungen, Benutzerwünsche, aktive Aufgaben und Systemzustände zusammen. Kurzfristiger Kontext und dauerhaft gespeicherte Informationen werden getrennt behandelt.
 
-Die lokale Verhaltenssteuerung im Kopf entscheidet über grundlegende Reaktionen und führt das Grundverhalten aus. Die Verhaltenssteuerung auf dem Smartphone ergänzt dieses um erweitertes Verhalten. Persönlichkeit, Interessen und Beziehungen können Ausdruck und Vorschläge beeinflussen; welche Teile davon lokal oder auf dem Smartphone verarbeitet werden, ist noch festzulegen.
+Die lokale Verhaltenssteuerung im Kopf entscheidet über grundlegende Reaktionen und führt das Grundverhalten aus. Die Verhaltenssteuerung auf dem Smartphone ergänzt dieses um erweitertes Verhalten. Eine einfache Persönlichkeit bleibt im lokalen Grundverhalten spürbar. Das Smartphone übernimmt die weitergehende Entwicklung von Persönlichkeit, Interessen und Beziehungen. Die genaue Datenhaltung wird separat festgelegt.
 
 Die Aktionskoordination löst Konflikte zwischen gleichzeitig angeforderten Handlungen und steuert deren Ablauf. Jede ausführbare Aktion durchläuft die notwendigen Sicherheits-, Datenschutz- und Berechtigungsprüfungen.
 
 Priorität haben physische Sicherheit und Datenschutz. Bewusste Benutzerentscheidungen und das Stoppen laufender Bewegungen haben Vorrang vor autonomem Verhalten und Persönlichkeitspräferenzen. Ein Benutzerwunsch darf eine Sicherheitsregel nicht ausser Kraft setzen.
+
+### 4.2.1 Vorläufig abgestimmte Funktionszuordnung
+
+Die folgende Aufteilung ist der gemeinsam abgestimmte Arbeitsstand. Sie wird bei der Erprobung überprüft; insbesondere der Umfang des lokalen Sprachverständnisses hängt von der verfügbaren Rechenleistung im Kopf ab.
+
+| Grundverhalten im Kopf | Erweitertes Verhalten auf dem Smartphone |
+| --- | --- |
+| Mimik, Blinzeln und einfache Animationen | Kontextabhängige, komplexere Reaktionen |
+| Berührung erkennen und unmittelbar reagieren | Persönlichkeit, Interessen und Beziehungen weiterentwickeln |
+| Einfache lokale Sprachreaktionen | Gespräche und komplexeres Sprachverständnis |
+| Nickbewegungen und grundlegende Bewegungsabläufe koordinieren | Übergreifende Abläufe und Disco-Choreografie planen |
+| Auf Lage, Nähe und Hindernisse reagieren | Wahrnehmungen über längere Zeit zusammenführen |
+| Akku, Laden und technische Zustände behandeln | Erinnerungen und Unterstützung planen |
+| Sicherheitsregeln prüfen und Bewegungen stoppen | Externe KI-Dienste bei Bedarf einbinden |
+
+Die Tabellenzeilen beschreiben zwei Aufgabenbereiche; sie stellen keine zwingenden paarweisen Abhängigkeiten dar. Bewegungen und Lichteffekte werden von den jeweils zuständigen Modulen ausgeführt. Das Smartphone kann beispielsweise einen Disco-Ablauf planen; der Kopf prüft und koordiniert die Aufträge, während die Homestation Drehung und Leuchtring ausführt.
+
+Eine einfache Persönlichkeit muss auch ohne Smartphone wahrnehmbar bleiben. Erweiterte Planung und Gespräche sind bei fehlender Smartphone-Verbindung eingeschränkt; unmittelbare Reaktionen, Sicherheit und Energiemanagement bleiben lokal verfügbar.
 
 ### 4.3 Ausdruck und Aktionen
 
@@ -123,7 +141,7 @@ Sie zeigt Zustand, Einschränkungen und Diagnose an und unterstützt Updates, Lo
 
 Zusätzlich führt das Smartphone das erweiterte Verhalten aus. Dazu verarbeitet es die für die jeweilige Funktion notwendigen und freigegebenen Informationen und übermittelt daraus abgeleitete Vorschläge oder Aufträge an den Robin-Kern. Der lokale Kern prüft ausführbare Aktionen weiterhin auf Sicherheit, Datenschutz, Berechtigungen, Aktualität und verfügbare Fähigkeiten.
 
-Ohne Smartphone oder bei unterbrochener Verbindung bleibt das Grundverhalten im Kopf verfügbar. Erweitertes Verhalten wird als nicht verfügbar oder eingeschränkt angezeigt. Welche Funktionen zum Grundverhalten und welche zum erweiterten Verhalten gehören, wird in einer eigenen Funktionszuordnung festgelegt. Erweitertes Verhalten auf dem Smartphone bedeutet nicht automatisch eine Abhängigkeit von Internet oder Cloud.
+Ohne Smartphone oder bei unterbrochener Verbindung bleibt das Grundverhalten im Kopf verfügbar. Erweitertes Verhalten wird als nicht verfügbar oder eingeschränkt angezeigt. Die vorläufig abgestimmte Funktionszuordnung steht in Abschnitt 4.2.1. Erweitertes Verhalten auf dem Smartphone bedeutet nicht automatisch eine Abhängigkeit von Internet oder Cloud.
 
 ### 6.2 Weboberfläche
 
@@ -145,7 +163,7 @@ Für externe Aufgaben werden Zeitgrenzen, Abbruch und ein verständlicher Ersatz
 | --- | --- | --- |
 | Aktueller Kontext und unbekannte Personen | Robin-Kern | Kurzfristig; begrenzte Lebensdauer; keine automatische Registrierung |
 | Registrierte Personen und Beziehungen | Lokale Datenverwaltung des Robin-Kerns | Bewusste Registrierung; einsehbar, korrigierbar und löschbar |
-| Persönlichkeit und Präferenzen | Aufteilung zwischen Robin-Kern und Smartphone noch offen | Grundverhalten muss ohne Smartphone erhalten bleiben; durch Benutzerregeln begrenzt |
+| Persönlichkeit und Präferenzen | Einfache Ausprägung im Robin-Kern; Weiterentwicklung auf dem Smartphone | Datenhaltung und Abgleich noch offen; Grundpersönlichkeit bleibt ohne Smartphone verfügbar |
 | Erinnerungen und persönliche Einstellungen | Robin-Kern | Lokal verfügbar; App dient der Verwaltung |
 | Ownership und Geräteberechtigungen | Lokale Zugriffsverwaltung | Geschützt; Kopplungen bewusst erteilen und widerrufen |
 | Technischer Zustand | Zuständiges Modul, zusammengeführt im Kern | Aktuell; mit Quelle und Verfügbarkeit |
@@ -234,7 +252,7 @@ Simulation prüft fachliche Abläufe und Regeln. Lade-, Dreh- und Leuchtring-Fun
 
 Vor der verbindlichen Umsetzung sind insbesondere zu klären:
 
-1. Genaue Funktionszuordnung zwischen Grundverhalten im Kopf und erweitertem Verhalten auf dem Smartphone; dazugehörige Datenhaltung und lokale Schutzverantwortung jedes Moduls.
+1. Detaillierung der vorläufig abgestimmten Funktionszuordnung: Umfang lokaler Sprachreaktionen, Datenhaltung und Abgleich mit dem Smartphone sowie lokale Schutzverantwortung jedes Moduls.
 2. Mechanische Umsetzung des stationsseitigen Drehantriebs, Erhalt der Ladeverbindung und mögliche Begrenzung auf eine volle Umdrehung beziehungsweise endlose Rotation.
 3. Betrieb und Zugangsweg der Weboberfläche sowie Umfang der Fernsteuerung.
 4. Umfang persönlicher Langzeitdaten, Aufbewahrungszeiten und optionale Synchronisation.
