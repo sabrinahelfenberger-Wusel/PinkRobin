@@ -174,7 +174,7 @@ Die Ladestation muss sicheres Laden ermöglichen und Ladebereitschaft, Ladevorga
 
 Robin soll einen niedrigen Akkustand erkennen und verständlich den Bedarf zum Laden anzeigen. Soweit seine Bewegungsfähigkeiten dies erlauben, soll Robin die Ladestation aufsuchen und andocken können. Erfolgloses Andocken muss erkannt und gemeldet werden.
 
-Die Homestation muss hauptsächlich als Ladestation dienen und Robin im angedockten Zustand eine Drehung um 360° ermöglichen. Die Ladeverbindung muss diese Drehung unterstützen. Die konkrete mechanische Umsetzung und die Möglichkeit endloser Rotation werden später festgelegt.
+Die Homestation muss hauptsächlich als Ladestation dienen und den angedockten Robin mit einem eigenen Drehantrieb um 360° drehen können. Sie muss Drehaufträge über eine definierte Schnittstelle entgegennehmen und die Drehbewegung sicher ausführen können. Die Ladeverbindung muss während der Drehung erhalten bleiben. Die konkrete mechanische Umsetzung und die Möglichkeit endloser Rotation werden später festgelegt.
 
 Die Homestation muss einen Leuchtring besitzen, der Zustände darstellen und Lichteffekte für einen Disco-Modus ausgeben kann. Sicherheitsrelevante Zustandsanzeigen müssen Vorrang vor Disco-Effekten haben. Die Lichtfunktionen müssen über definierte Schnittstellen steuerbar sein.
 
