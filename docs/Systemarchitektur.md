@@ -8,11 +8,11 @@ Dieses Dokument beschreibt die fachlichen Komponenten, ihre Zuständigkeiten, Da
 
 Massgeblich sind das [Lastenheft](Lastenheft.md) und die [Robin Principles](Robin-Principles.md). Die Architektur bevorzugt lokale Verarbeitung, erhält wesentliche Offline-Funktionen und ordnet Persönlichkeit den Sicherheitsregeln, Datenschutzvorgaben und bewussten Benutzerentscheidungen unter.
 
-Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Ihre physische Verteilung auf Rechner und Robotermodule wird später festgelegt. Konkrete Prozessoren, Betriebssysteme, Frameworks, Sensorchips und Nachrichtenformate bleiben offen.
+Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Das Grundverhalten läuft auf dem Prozessor im Kopf; erweitertes Verhalten läuft auf dem Smartphone. Die weitere Aufteilung der Softwarekomponenten und ihrer Daten wird nachfolgend konkretisiert. Konkrete Prozessoren, Betriebssysteme, Frameworks, Sensorchips und Nachrichtenformate bleiben offen.
 
 ## 2. Ausgangspunkt des Entwurfs
 
-Robin besitzt einen lokal betriebenen Kern, der seinen aktuellen Kontext, sein Verhalten und seine persönlichen Informationen verwaltet. Grundlegende Interaktion und sicherer Betrieb hängen weder von einem Server noch von einer verbundenen App ab.
+Robin besitzt einen lokal betriebenen Kern auf dem Prozessor im Kopf. Dieser führt das Grundverhalten aus und koordiniert den lokalen Betrieb. Das Smartphone führt erweitertes Verhalten aus und arbeitet dabei mit dem lokalen Kern zusammen. Grundlegende Interaktion und sicherer Betrieb hängen weder von einem Server noch von einem verbundenen Smartphone ab.
 
 Companion-App und Weboberfläche ermöglichen Bedienung und Verwaltung. Die Homestation ist hauptsächlich Robins Ladestation. Sie dreht Robin mit einem eigenen Drehantrieb um 360° im angedockten Zustand und besitzt einen Leuchtring für Disco-Modus und Zustandsanzeigen. Der Server stellt ergänzende Dienste bereit. Externe KI liefert Ergebnisse oder Handlungsvorschläge; ausführbare Aktionen werden weiterhin lokal auf Berechtigung, Sicherheit und Benutzerentscheidungen geprüft.
 
@@ -24,13 +24,13 @@ Diese Aufteilung ist der Arbeitsstand dieses Entwurfs. Die offenen Entscheidunge
 
 | Komponente | Hauptverantwortung | Abhängigkeit im Grundbetrieb |
 | --- | --- | --- |
-| Robin-Kern | Kontext, Verhalten, Persönlichkeit, lokale Daten und Koordination | Lokal verfügbar |
+| Robin-Kern im Kopf | Grundverhalten, lokaler Kontext, lokale Daten und Koordination | Lokal verfügbar |
 | Sicherheits- und Zugriffsprüfung | Aktionen zulassen, begrenzen oder stoppen | Lokal verfügbar; Sicherheitsfunktionen zusätzlich an Modulen |
-| Kopf | Wahrnehmung, Mimik, Audio und Kopfbewegung | Meldet verfügbare Fähigkeiten an den Kern |
-| Bauch | Energieversorgung, Laden, Drehbewegung und Modulverbindungen | Für physischen Betrieb erforderlich |
+| Kopf | Prozessor und Speicher, Gesichtsanzeige, Audio, Wahrnehmung, Nickbewegung und Funkanbindung | Beherbergt den lokalen Robin-Kern |
+| Bauch | Akku, Ladeelektronik, Radar, Status-LED und gegebenenfalls IR | Für physischen Betrieb erforderlich |
 | Beinmodule | Ausführung freigegebener Bewegung und lokale Schutzreaktionen | Nur für entsprechende Bewegungsfähigkeiten erforderlich |
 | Homestation (Ladestation) | Sicherer Ladebetrieb, eigener Drehantrieb für Robin (360°) und Leuchtring | Für Laden und Stationsfunktionen erforderlich; mobiler Grundbetrieb bleibt unabhängig |
-| Companion-App | Einrichtung, Verwaltung und Benutzerinteraktion | Für Einrichtung und Verwaltung, nicht dauerhaft |
+| Smartphone / Companion-App | Erweitertes Verhalten, Einrichtung, Verwaltung und Benutzerinteraktion | Für erweitertes Verhalten erforderlich; Grundverhalten bleibt unabhängig |
 | Weboberfläche | Berechtigte Fernbedienung und Verwaltung | Abhängig vom angebotenen lokalen oder externen Zugang |
 | Server | Geräteverwaltung, Updates und optionale Fernfunktionen | Ergänzend |
 | Externe KI-Dienste | Komplexe Verarbeitung und Vorschläge | Ergänzend |
@@ -50,7 +50,7 @@ Unbekannte Personen werden nur für die aktuelle Interaktion unterschieden. Ihre
 
 Die Kontextverwaltung führt relevante Beobachtungen, Benutzerwünsche, aktive Aufgaben und Systemzustände zusammen. Kurzfristiger Kontext und dauerhaft gespeicherte Informationen werden getrennt behandelt.
 
-Die Verhaltenssteuerung entscheidet, welche Reaktion oder Unterstützung zur Situation passt. Persönlichkeit, Interessen und Beziehungen beeinflussen Ausdruck und Vorschläge.
+Die lokale Verhaltenssteuerung im Kopf entscheidet über grundlegende Reaktionen und führt das Grundverhalten aus. Die Verhaltenssteuerung auf dem Smartphone ergänzt dieses um erweitertes Verhalten. Persönlichkeit, Interessen und Beziehungen können Ausdruck und Vorschläge beeinflussen; welche Teile davon lokal oder auf dem Smartphone verarbeitet werden, ist noch festzulegen.
 
 Die Aktionskoordination löst Konflikte zwischen gleichzeitig angeforderten Handlungen und steuert deren Ablauf. Jede ausführbare Aktion durchläuft die notwendigen Sicherheits-, Datenschutz- und Berechtigungsprüfungen.
 
@@ -72,7 +72,38 @@ Das Energiemanagement bewertet Akku, Ladeverbindung und relevante Temperaturinfo
 
 Kopf, Bauch und Beinmodule bieten Fähigkeiten über definierte Schnittstellen an. Ihre konkrete Elektronik darf die fachliche Verhaltenslogik nicht bestimmen.
 
-Der Kopf verantwortet seine Sensoren, Mimik, Audiofunktionen und Kopfbewegungen. Der Bauch verantwortet Energieversorgung, Akku-Laden, Drehbewegung und die Verbindung zu Kopf und Beinen. Beinmodule verantworten ihre Bewegungssteuerung und lokalen Schutzreaktionen.
+### 5.1 Kopf
+
+Der Kopf enthält:
+
+- Prozessor für das Grundverhalten und lokale Koordination;
+- Speicher;
+- Anzeige für das Gesicht;
+- Mikrofone und Lautsprecher;
+- Nickmechanik mit Motor;
+- Lagesensor;
+- Kamera;
+- Touchsensor;
+- Antennen;
+- gegebenenfalls einen RFID-Leser.
+
+Der Kopf beherbergt den lokalen Robin-Kern und verantwortet die Anbindung seiner Wahrnehmungs- und Ausdrucksfunktionen. Der RFID-Leser ist eine optionale Ausstattung; sein Einsatzzweck ist noch offen.
+
+### 5.2 Bauch
+
+Der Bauch enthält:
+
+- Akku;
+- Ladeelektronik;
+- Radar;
+- Status-LED;
+- gegebenenfalls IR.
+
+Der Bauch verantwortet Energieversorgung und Laden und stellt Radarereignisse sowie seinen Status über definierte Schnittstellen bereit. Die konkrete Funktion der optionalen IR-Ausstattung bleibt offen. Die bisher geforderte Kommunikation des Bauchs mit Kopf und Beinmodulen bleibt erhalten; ihre technische Ausführung wird später festgelegt.
+
+### 5.3 Beine und Homestation
+
+Beinmodule verantworten ihre Bewegungssteuerung und lokalen Schutzreaktionen. Der Drehantrieb, der den angedockten Robin um 360° dreht, gehört zur Homestation.
 
 Die Ladestation stellt die Ladeverbindung bereit. Die Zuständigkeit für Ladefreigabe, Akkuüberwachung und Abbruch bei unsicheren Bedingungen muss zwischen Bauch und Station eindeutig festgelegt werden.
 
@@ -84,13 +115,15 @@ Die Station bietet Lade-, Licht- und Drehfähigkeiten über definierte Schnittst
 
 ## 6. Bedienoberflächen und externe Dienste
 
-### 6.1 Companion-App
+### 6.1 Smartphone und Companion-App
 
 Die App führt durch Ersteinrichtung, bewusste Kopplung und Besitzerzuordnung. Sie verwaltet berechtigte Zugänge, Einstellungen, Personenregistrierung, Kontaktverknüpfungen, Erinnerungen und Datenschutzentscheidungen.
 
 Sie zeigt Zustand, Einschränkungen und Diagnose an und unterstützt Updates, Lost Mode, Reset und Weitergabe. Sie übermittelt Benutzerentscheidungen an die jeweils zuständige Systemkomponente und zeigt erst nach Bestätigung den tatsächlichen Systemstand.
 
-Die App ist kein dauerhaft erforderlicher Ausführungsort der grundlegenden Verhaltenssteuerung.
+Zusätzlich führt das Smartphone das erweiterte Verhalten aus. Dazu verarbeitet es die für die jeweilige Funktion notwendigen und freigegebenen Informationen und übermittelt daraus abgeleitete Vorschläge oder Aufträge an den Robin-Kern. Der lokale Kern prüft ausführbare Aktionen weiterhin auf Sicherheit, Datenschutz, Berechtigungen, Aktualität und verfügbare Fähigkeiten.
+
+Ohne Smartphone oder bei unterbrochener Verbindung bleibt das Grundverhalten im Kopf verfügbar. Erweitertes Verhalten wird als nicht verfügbar oder eingeschränkt angezeigt. Welche Funktionen zum Grundverhalten und welche zum erweiterten Verhalten gehören, wird in einer eigenen Funktionszuordnung festgelegt. Erweitertes Verhalten auf dem Smartphone bedeutet nicht automatisch eine Abhängigkeit von Internet oder Cloud.
 
 ### 6.2 Weboberfläche
 
@@ -112,7 +145,7 @@ Für externe Aufgaben werden Zeitgrenzen, Abbruch und ein verständlicher Ersatz
 | --- | --- | --- |
 | Aktueller Kontext und unbekannte Personen | Robin-Kern | Kurzfristig; begrenzte Lebensdauer; keine automatische Registrierung |
 | Registrierte Personen und Beziehungen | Lokale Datenverwaltung des Robin-Kerns | Bewusste Registrierung; einsehbar, korrigierbar und löschbar |
-| Persönlichkeit und Präferenzen | Robin-Kern | Lokal; durch Benutzerregeln begrenzt |
+| Persönlichkeit und Präferenzen | Aufteilung zwischen Robin-Kern und Smartphone noch offen | Grundverhalten muss ohne Smartphone erhalten bleiben; durch Benutzerregeln begrenzt |
 | Erinnerungen und persönliche Einstellungen | Robin-Kern | Lokal verfügbar; App dient der Verwaltung |
 | Ownership und Geräteberechtigungen | Lokale Zugriffsverwaltung | Geschützt; Kopplungen bewusst erteilen und widerrufen |
 | Technischer Zustand | Zuständiges Modul, zusammengeführt im Kern | Aktuell; mit Quelle und Verfügbarkeit |
@@ -131,7 +164,7 @@ Ein vollständiger Reset entfernt persönliche Daten, Zugangsinformationen und K
 | Verbindung | Ausgetauschte Informationen |
 | --- | --- |
 | Kopf / Bauch / Beine ↔ Robin-Kern | Fähigkeiten, Beobachtungen, Status, freigegebene Aktionen und Fehler |
-| Companion-App ↔ Robin | Einrichtung, Benutzerentscheidungen, Konfiguration, Personenverwaltung und Status |
+| Smartphone / Companion-App ↔ Robin | Einrichtung, Benutzerentscheidungen, Konfiguration, Personenverwaltung, freigegebener Kontext für erweitertes Verhalten, Vorschläge, Aufträge und Status |
 | Robin ↔ Homestation | Lade- und Andockstatus, Leuchtring-Anzeigen, Disco-Effekte und Drehaufträge samt Rückmeldungen |
 | Robin ↔ Server | Berechtigte Geräteverwaltung, Updates und freigegebene externe Aufgaben |
 | Weboberfläche ↔ zuständiger lokaler oder externer Dienst | Berechtigte Bedien- und Statusfunktionen |
@@ -179,7 +212,7 @@ Die lokale Updatekoordination prüft Paket, Kompatibilität, Energie und Betrieb
 | Ausfall | Erwartetes Verhalten |
 | --- | --- |
 | Internet oder Server nicht verfügbar | Lokale Interaktion, Sicherheit und Energiemanagement bleiben verfügbar; externe Aufgaben melden Einschränkung |
-| App nicht verbunden | Robin setzt lokalen Betrieb fort; keine nachträgliche Ausführung veralteter App-Befehle |
+| Smartphone nicht verbunden oder erweitertes Verhalten nicht verfügbar | Grundverhalten im Kopf bleibt erhalten; laufende Smartphone-Aufträge werden definiert beendet oder eingeschränkt; veraltete Aufträge werden nicht nachträglich ausgeführt |
 | Homestation nicht verfügbar | Mobiler Grundbetrieb bleibt erhalten; Laden, Stationslicht und stationsgebundene Drehfähigkeit melden Nichtverfügbarkeit |
 | Sensor oder Modul ausgefallen | Fähigkeit wird eingeschränkt; betroffene Aktionen werden begrenzt oder gestoppt |
 | Robin-Kern antwortet nicht | Sicherheitskritische Module wechseln anhand lokaler Regeln in einen sicheren Zustand |
@@ -201,7 +234,7 @@ Simulation prüft fachliche Abläufe und Regeln. Lade-, Dreh- und Leuchtring-Fun
 
 Vor der verbindlichen Umsetzung sind insbesondere zu klären:
 
-1. Physischer Ausführungsort des Robin-Kerns und lokale Schutzverantwortung jedes Moduls.
+1. Genaue Funktionszuordnung zwischen Grundverhalten im Kopf und erweitertem Verhalten auf dem Smartphone; dazugehörige Datenhaltung und lokale Schutzverantwortung jedes Moduls.
 2. Mechanische Umsetzung des stationsseitigen Drehantriebs, Erhalt der Ladeverbindung und mögliche Begrenzung auf eine volle Umdrehung beziehungsweise endlose Rotation.
 3. Betrieb und Zugangsweg der Weboberfläche sowie Umfang der Fernsteuerung.
 4. Umfang persönlicher Langzeitdaten, Aufbewahrungszeiten und optionale Synchronisation.
