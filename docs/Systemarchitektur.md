@@ -14,7 +14,7 @@ Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Ihre phys
 
 Robin besitzt einen lokal betriebenen Kern, der seinen aktuellen Kontext, sein Verhalten und seine persönlichen Informationen verwaltet. Grundlegende Interaktion und sicherer Betrieb hängen weder von einem Server noch von einer verbundenen App ab.
 
-Companion-App und Weboberfläche ermöglichen Bedienung und Verwaltung. Die Homestation kann lokale Zusatzfunktionen bereitstellen. Der Server stellt ergänzende Dienste bereit. Externe KI liefert Ergebnisse oder Handlungsvorschläge; ausführbare Aktionen werden weiterhin lokal auf Berechtigung, Sicherheit und Benutzerentscheidungen geprüft.
+Companion-App und Weboberfläche ermöglichen Bedienung und Verwaltung. Die Homestation ist hauptsächlich Robins Ladestation. Sie ermöglicht Robin eine Drehung um 360° im angedockten Zustand und besitzt einen Leuchtring für Disco-Modus und Zustandsanzeigen. Der Server stellt ergänzende Dienste bereit. Externe KI liefert Ergebnisse oder Handlungsvorschläge; ausführbare Aktionen werden weiterhin lokal auf Berechtigung, Sicherheit und Benutzerentscheidungen geprüft.
 
 Virtual Robin ersetzt die physische Hardware durch simulierte Fähigkeiten und verwendet möglichst denselben Robin-Kern.
 
@@ -29,8 +29,7 @@ Diese Aufteilung ist der Arbeitsstand dieses Entwurfs. Die offenen Entscheidunge
 | Kopf | Wahrnehmung, Mimik, Audio und Kopfbewegung | Meldet verfügbare Fähigkeiten an den Kern |
 | Bauch | Energieversorgung, Laden, Drehbewegung und Modulverbindungen | Für physischen Betrieb erforderlich |
 | Beinmodule | Ausführung freigegebener Bewegung und lokale Schutzreaktionen | Nur für entsprechende Bewegungsfähigkeiten erforderlich |
-| Ladestation | Ladeverbindung und sicherer Ladebetrieb | Für Laden erforderlich |
-| Homestation | Aufenthaltsort und optionale lokale Zusatzdienste | Keine Voraussetzung für Grundbetrieb |
+| Homestation (Ladestation) | Sicherer Ladebetrieb, 360°-Drehmöglichkeit und Leuchtring | Für Laden und Stationsfunktionen erforderlich; mobiler Grundbetrieb bleibt unabhängig |
 | Companion-App | Einrichtung, Verwaltung und Benutzerinteraktion | Für Einrichtung und Verwaltung, nicht dauerhaft |
 | Weboberfläche | Berechtigte Fernbedienung und Verwaltung | Abhängig vom angebotenen lokalen oder externen Zugang |
 | Server | Geräteverwaltung, Updates und optionale Fernfunktionen | Ergänzend |
@@ -77,9 +76,11 @@ Der Kopf verantwortet seine Sensoren, Mimik, Audiofunktionen und Kopfbewegungen.
 
 Die Ladestation stellt die Ladeverbindung bereit. Die Zuständigkeit für Ladefreigabe, Akkuüberwachung und Abbruch bei unsicheren Bedingungen muss zwischen Bauch und Station eindeutig festgelegt werden.
 
-Die Homestation ist Robins definierter Aufenthaltsort. Zusatzdienste wie lokale Verarbeitung oder Datensicherung sind mögliche Erweiterungen, keine bereits beschlossenen Voraussetzungen. Bei Ausfall muss Robin seine Grundfunktionen behalten.
+Die Homestation übernimmt die Rolle der Ladestation und stellt Robins definierten Aufenthalts- und Ruheort bereit. Robin kann sich auf ihr um 360° drehen. Die Ladeverbindung muss diese Drehung ermöglichen. Ob die Drehung durch Robin oder durch einen Antrieb der Station ausgeführt wird und ob beliebig viele volle Umdrehungen möglich sind, bleibt offen.
 
-Ob Lade- und Homestation ein gemeinsames Gerät bilden, bleibt offen.
+Die Homestation besitzt einen Leuchtring. Er stellt System- und Ladezustände dar und ermöglicht Lichteffekte im Disco-Modus. Der Robin-Kern koordiniert gewünschte Anzeigen und Effekte; die Station verantwortet deren lokale Ausgabe und meldet ihren tatsächlichen Zustand. Sicherheitsrelevante Zustandsanzeigen haben Vorrang vor Disco-Effekten.
+
+Die Station bietet Lade-, Licht- und gegebenenfalls Drehfähigkeiten über definierte Schnittstellen an. Bei Kommunikationsausfall bleibt der Ladebetrieb lokal abgesichert; zustandsabhängige Anzeigen dürfen keinen nicht bestätigten Normalzustand vortäuschen. Zusätzliche Rechen- oder Sicherungsdienste gehören nicht zum derzeit festgelegten Umfang.
 
 ## 6. Bedienoberflächen und externe Dienste
 
@@ -95,7 +96,7 @@ Die App ist kein dauerhaft erforderlicher Ausführungsort der grundlegenden Verh
 
 Die Weboberfläche ermöglicht die im Lastenheft vorgesehenen Status-, Einstellungs-, Firmware- und Livestream-Funktionen. Sie verwendet dieselben fachlichen Berechtigungen und Regeln wie die App.
 
-Ob sie lokal, über die Homestation oder über den Server bereitgestellt wird, bleibt offen. Ein Fernzugang darf nicht allein deshalb Steuerrechte erhalten, weil eine Verbindung besteht.
+Ob sie lokal auf Robin oder über den Server bereitgestellt wird, bleibt offen. Ein Fernzugang darf nicht allein deshalb Steuerrechte erhalten, weil eine Verbindung besteht.
 
 ### 6.3 Server und externe KI
 
@@ -119,7 +120,7 @@ Für externe Aufgaben werden Zeitgrenzen, Abbruch und ein verständlicher Ersatz
 | Verfügbare Updatepakete | Updatebereitstellung des Servers | Herkunft, Unversehrtheit und Kompatibilität lokal prüfen |
 | Gewünschte serverseitige Konfiguration | Server | Änderungsvorschlag; lokale Annahme und Bestätigung erforderlich |
 
-Für persönliche Roboterinformationen ist der lokale Stand führend. Eine optionale Synchronisation oder Sicherung auf Homestation beziehungsweise Server muss bewusst eingerichtet werden. Sie benötigt Regeln für Konflikte, Löschung, Wiederherstellung und Zugriff; sie ist in diesem Entwurf noch nicht festgelegt.
+Für persönliche Roboterinformationen ist der lokale Stand führend. Eine optionale Synchronisation oder Sicherung auf einem Server muss bewusst eingerichtet werden. Sie benötigt Regeln für Konflikte, Löschung, Wiederherstellung und Zugriff; sie ist in diesem Entwurf noch nicht festgelegt.
 
 Kontaktverknüpfungen werden bewusst in der App vorgenommen. Daraus folgt keine pauschale Übertragung des gesamten Adressbuchs an Robin oder einen Server.
 
@@ -131,7 +132,7 @@ Ein vollständiger Reset entfernt persönliche Daten, Zugangsinformationen und K
 | --- | --- |
 | Kopf / Bauch / Beine ↔ Robin-Kern | Fähigkeiten, Beobachtungen, Status, freigegebene Aktionen und Fehler |
 | Companion-App ↔ Robin | Einrichtung, Benutzerentscheidungen, Konfiguration, Personenverwaltung und Status |
-| Robin ↔ Homestation | Stationsstatus und gegebenenfalls bewusst eingerichtete lokale Zusatzdienste |
+| Robin ↔ Homestation | Lade- und Andockstatus, Leuchtring-Anzeigen, Disco-Effekte und gegebenenfalls Drehaufträge samt Rückmeldungen |
 | Robin ↔ Server | Berechtigte Geräteverwaltung, Updates und freigegebene externe Aufgaben |
 | Weboberfläche ↔ zuständiger lokaler oder externer Dienst | Berechtigte Bedien- und Statusfunktionen |
 | Simulator ↔ Robin-Kern | Dieselben fachlichen Fähigkeiten, Ereignisse und Aktionen wie reale Adapter |
@@ -179,7 +180,7 @@ Die lokale Updatekoordination prüft Paket, Kompatibilität, Energie und Betrieb
 | --- | --- |
 | Internet oder Server nicht verfügbar | Lokale Interaktion, Sicherheit und Energiemanagement bleiben verfügbar; externe Aufgaben melden Einschränkung |
 | App nicht verbunden | Robin setzt lokalen Betrieb fort; keine nachträgliche Ausführung veralteter App-Befehle |
-| Homestation nicht verfügbar | Grundbetrieb bleibt erhalten; Zusatzdienste melden Nichtverfügbarkeit |
+| Homestation nicht verfügbar | Mobiler Grundbetrieb bleibt erhalten; Laden, Stationslicht und stationsgebundene Drehfähigkeit melden Nichtverfügbarkeit |
 | Sensor oder Modul ausgefallen | Fähigkeit wird eingeschränkt; betroffene Aktionen werden begrenzt oder gestoppt |
 | Robin-Kern antwortet nicht | Sicherheitskritische Module wechseln anhand lokaler Regeln in einen sicheren Zustand |
 | Energie kritisch | Kontrollierte Funktionsreduktion und sicherer Zustand |
@@ -194,14 +195,14 @@ Ein Smartphone-Simulator kann seine vorhandenen Fähigkeiten anbieten und fehlen
 
 Diagnose verbindet Beobachtungen, Entscheidungen, freigegebene Aktionen und Ergebnisse nachvollziehbar. Persönliche Inhalte und Zugangsinformationen werden dabei minimiert und geschützt. Benutzerverständliche Erklärungen bleiben getrennt von technischen Diagnoseinformationen.
 
-Simulation prüft fachliche Abläufe und Regeln. Physische Sicherheit, Ladebetrieb und reale Bewegungen benötigen ergänzende Hardwareprüfungen.
+Simulation prüft fachliche Abläufe und Regeln. Lade-, Dreh- und Leuchtring-Funktionen der Homestation werden ebenfalls simuliert. Physische Sicherheit, Ladebetrieb und reale Bewegungen benötigen ergänzende Hardwareprüfungen.
 
 ## 12. Offene Entscheidungen und nächster Schritt
 
 Vor der verbindlichen Umsetzung sind insbesondere zu klären:
 
 1. Physischer Ausführungsort des Robin-Kerns und lokale Schutzverantwortung jedes Moduls.
-2. Rolle der Homestation: Aufenthaltsort allein oder zusätzliche lokale Rechen- und Sicherungsdienste.
+2. Ausführung der 360°-Drehung auf der Homestation, Erhalt der Ladeverbindung und mögliche Begrenzung auf eine volle Umdrehung beziehungsweise endlose Rotation.
 3. Betrieb und Zugangsweg der Weboberfläche sowie Umfang der Fernsteuerung.
 4. Umfang persönlicher Langzeitdaten, Aufbewahrungszeiten und optionale Synchronisation.
 5. Rechte weiterer Benutzer sowie Wiederherstellung der Ownership bei Verlust eines gekoppelten Geräts.
