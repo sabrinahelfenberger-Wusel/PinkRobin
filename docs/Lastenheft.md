@@ -41,14 +41,13 @@ Das Gesamtsystem umfasst:
 - Roboterkopf;
 - Roboterbauch;
 - austauschbare Beinmodule;
-- Ladestation;
-- Homestation;
+- Homestation mit Ladefunktion, 360°-Drehmöglichkeit und Leuchtring;
 - Server und gegebenenfalls externe KI-Dienste;
 - Webanwendung;
 - mobile Companion-App;
 - Virtual Robin und weitere Simulatoren als Entwicklungswerkzeuge.
 
-Für jede Komponente müssen Verantwortlichkeiten, angebotene Fähigkeiten, benötigte Verbindungen und Verhalten bei Ausfall beschrieben werden. Funktionen der Lade- und Homestation dürfen in einem gemeinsamen Gerät bereitgestellt werden, sofern ihre Verantwortlichkeiten klar bleiben.
+Für jede Komponente müssen Verantwortlichkeiten, angebotene Fähigkeiten, benötigte Verbindungen und Verhalten bei Ausfall beschrieben werden. Die Homestation übernimmt hauptsächlich die Funktion der Ladestation.
 
 ## 5. Interaktion, Verhalten und Persönlichkeit
 
@@ -175,7 +174,11 @@ Die Ladestation muss sicheres Laden ermöglichen und Ladebereitschaft, Ladevorga
 
 Robin soll einen niedrigen Akkustand erkennen und verständlich den Bedarf zum Laden anzeigen. Soweit seine Bewegungsfähigkeiten dies erlauben, soll Robin die Ladestation aufsuchen und andocken können. Erfolgloses Andocken muss erkannt und gemeldet werden.
 
-Die Homestation soll einen definierten Aufenthalts- und Ruheort bereitstellen. Sie soll, soweit vorgesehen, lokale Kommunikation und unterstützende Systemfunktionen ermöglichen. Umfang und Zuständigkeit dieser Funktionen müssen dokumentiert sein; ihr Ausfall darf wesentliche Grundfunktionen von Robin nicht verhindern.
+Die Homestation muss hauptsächlich als Ladestation dienen und Robin im angedockten Zustand eine Drehung um 360° ermöglichen. Die Ladeverbindung muss diese Drehung unterstützen. Die konkrete mechanische Umsetzung und die Möglichkeit endloser Rotation werden später festgelegt.
+
+Die Homestation muss einen Leuchtring besitzen, der Zustände darstellen und Lichteffekte für einen Disco-Modus ausgeben kann. Sicherheitsrelevante Zustandsanzeigen müssen Vorrang vor Disco-Effekten haben. Die Lichtfunktionen müssen über definierte Schnittstellen steuerbar sein.
+
+Die Homestation soll einen definierten Aufenthalts- und Ruheort bereitstellen. Ihr Ausfall darf wesentliche Grundfunktionen von Robin ausserhalb der Station nicht verhindern.
 
 ### 10.5 Server
 
