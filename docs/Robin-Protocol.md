@@ -237,7 +237,93 @@ Die Homestation wird als eigene Komponente mit Lade-, Dreh- und Lichtfähigkeite
 
 Eine Stationsdrehung benötigt bestätigtes Andocken, betriebsbereiten Antrieb, zulässige Bewegungsgrenzen und die erforderlichen Ladebedingungen. Die Station setzt lokale Schutzreaktionen auch bei Kommunikationsverlust um.
 
-Leuchtring-Aufträge können Zustandsanzeigen und Disco-Effekte betreffen. Sicherheitsrelevante Anzeigen haben Vorrang vor Disco-Effekten. Der erste Entwurf legt noch keine Winkelreferenz, Geschwindigkeit, Farbcodierung oder Choreografie fest.
+Leuchtring-Aufträge können Zustandsanzeigen und Disco-Effekte betreffen. Sicherheitsrelevante Anzeigen haben Vorrang vor Disco-Effekten. Die folgenden Abschnitte konkretisieren den Leuchtring. Winkelreferenz und Geschwindigkeit der Stationsdrehung sowie konkrete Farbcodierung und Choreografie bleiben offen.
+
+### 11.1 Fachlicher Vertrag für den Leuchtring
+
+Die Homestation stellt zwei getrennte Lichtfunktionen bereit: automatische Zustandsanzeigen und begrenzte dekorative Effekte. Das Smartphone kann einen dekorativen Effekt anfordern. Fachliche Zustände werden von den zuständigen lokalen Komponenten gemeldet; ein Smartphone darf durch einen frei gewählten Effekt keinen Lade- oder Sicherheitszustand vortäuschen.
+
+Der Robin-Kern prüft Lichtaufträge und leitet sie an die Station weiter. Die Station setzt die Ausgabe um und sichert ihre lokalen Lade- und Fehleranzeigen auch ohne Smartphone ab.
+
+### 11.2 Gemeldete Lichtfähigkeit
+
+| Eigenschaft | Bedeutung |
+| --- | --- |
+| Verfügbarkeit | Station verbunden, Leuchtring betriebsbereit oder Einschränkungsgrund |
+| Unterstützte Effekte | Verfügbare Effektkennungen, beispielsweise ruhiges Licht, sanftes Pulsieren oder Disco |
+| Parameter je Effekt | Unterstützte Parameter, Einheiten, Grenzen und Standardwerte |
+| Helligkeit | Unterstützter Bereich von 0 bis 100 Prozent der freigegebenen maximalen Helligkeit |
+| Laufzeit | Zulässige Dauer und lokaler Standardwert in Millisekunden |
+| Farbunterstützung | Unterstützte benannte Farben oder Paletten, soweit vorhanden |
+| Ausgabeumfang | Ganzer Ring; segmentweise Ausgabe nur bei ausdrücklich gemeldeter Fähigkeit |
+| Rückmeldung | Bestätigter Ausgabestatus und verfügbare Fehlererkennung |
+| Revision | Stand der Fähigkeit und ihrer Grenzen |
+
+Farben, Paletten und Effekte werden als unterstützte Auswahl angeboten. Dieser Entwurf setzt keine konkrete Farbcodierung voraus. Auch Disco bezeichnet hier einen benannten Effekt, keine bereits definierte Musiksteuerung oder Choreografie.
+
+Der erste Umfang enthält keine freie Programmierung von Blinkfolgen oder einzelnen Lichtpunkten. Grenzwerte und Effektgestaltung werden bei der Erprobung festgelegt. Ein Lichtauftrag setzt keine Drehbewegung in Gang; koordinierte Licht- und Bewegungsabläufe werden später separat beschrieben.
+
+### 11.3 Auftrag für einen dekorativen Effekt
+
+| Parameter | Festlegung |
+| --- | --- |
+| Auftragskennung und Sitzung | Entsprechend den gemeinsamen Auftragsregeln |
+| Ziel | Leuchtring der Homestation |
+| Aktion | Dekorativen Effekt ausgeben |
+| Effekt | Eine aktuell gemeldete Effektkennung |
+| Helligkeit | Optional; Prozent innerhalb des gemeldeten Bereichs |
+| Farbe oder Palette | Optional, soweit für den Effekt unterstützt |
+| Dauer | Optional; begrenzt durch die gemeldete Laufzeit |
+| Startgültigkeit | Begrenzte Frist für den Beginn |
+| Erwartete Fähigkeitsrevision | Stand, auf dem der Auftrag basiert |
+
+Fehlende optionale Werte werden aus dem gemeldeten Standardprofil übernommen. Die Annahme enthält die tatsächlich verwendeten Werte. Ungültige oder nicht unterstützte Parameter werden abgelehnt und nicht stillschweigend angepasst.
+
+Für den ersten Umfang ist jeweils ein dekorativer Lichtauftrag aktiv. Ein weiterer Auftrag wird bei belegter Lichtfunktion abgelehnt. Ein Wechsel erfolgt nach bestätigtem Abbruch beziehungsweise Abschluss des bisherigen Auftrags. Wiederholungen derselben Auftragskennung starten den Effekt nicht neu und verlängern seine Laufzeit nicht.
+
+### 11.4 Zustandsanzeigen und Priorität
+
+Die Station unterscheidet lokal bekannte Zustände, beispielsweise Ladebereitschaft, Laden, Ladeabschluss und Ladefehler. Von Robin gemeldete Zustände müssen Quelle und Aktualität enthalten. Unbekannte oder veraltete Zustände dürfen nicht als bestätigter Normalzustand angezeigt werden.
+
+Die Entwurfspriorität lautet:
+
+1. Sicherheitsrelevante Fehler- und Warnanzeigen.
+2. Andere aktuell erforderliche Zustandsanzeigen.
+3. Dekorative Effekte.
+
+Die konkrete Zuordnung von Zuständen zu Anzeigeprofilen und Prioritäten wird separat festgelegt. Auch die Entscheidung, welche normalen Zustände dauerhaft sichtbar sein müssen, bleibt offen. Ein aktiver Ladevorgang blockiert deshalb nicht automatisch jeden Disco-Effekt.
+
+Ist eine höherrangige Anzeige bereits aktiv und beansprucht den Ring, wird der dekorative Auftrag mit einem erklärten Prioritätskonflikt abgelehnt. Wird eine solche Anzeige während eines Effekts erforderlich, wird der Effekt abgebrochen und die Zustandsanzeige ausgegeben. Er startet anschliessend nicht automatisch erneut.
+
+Ein dekorativer Ausschaltwunsch beziehungsweise Helligkeit null schaltet nur die dekorative Ausgabe aus. Er darf notwendige Zustandsanzeigen nicht unterdrücken.
+
+### 11.5 Ausführung und Ergebnis
+
+Robin meldet Annahme erst nach Prüfung von Rechten, Parametern, Revision, Aktualität, Stationsverfügbarkeit und Priorität. Die Meldung „In Ausführung“ folgt erst auf die Bestätigung der Station, dass der Effekt gestartet wurde.
+
+Die Station begrenzt die Laufzeit lokal. Bei Ablauf beendet sie den dekorativen Effekt und kehrt zur aktuell erforderlichen Zustandsanzeige beziehungsweise zum festgelegten Ruhezustand des Rings zurück. Der Auftrag endet erfolgreich, wenn die definierte Laufzeit und das anschliessende Beenden bestätigt wurden.
+
+Ein Abbruchwunsch beendet den dekorativen Auftrag und gibt den Ring für die aktuelle Zustandsanzeige frei. Eine höherrangige Anzeige führt ebenfalls zum Endzustand „Abgebrochen“, mit entsprechendem Grund.
+
+Rückmeldungen enthalten Auftrag, Effekt, verwendete Parameter, Beginn, Endzustand und Einschränkungen. Die Station unterscheidet bestätigte Ausgabeansteuerung von tatsächlich überprüfter Lichtemission. Ohne geeignete Rückmeldung darf sie keine optische Prüfung behaupten.
+
+### 11.6 Verbindungsverlust und Fehler
+
+Als Entwurfsentscheidung wird festgelegt: Bei erkanntem Verlust der Smartphone-Sitzung bricht Robin deren aktiven dekorativen Auftrag ab. Bei Verlust der Verbindung zwischen Robin und Station beendet die Station den Effekt nach einer lokal festgelegten Ausfallfrist selbstständig. Die Auftragslaufzeit bildet eine zusätzliche Obergrenze.
+
+Lokale Sicherheits- und Ladeanzeigen bleiben unabhängig davon wirksam. Nicht mehr aktuelle Robin-Zustände werden als unbekannt behandelt. Nach Wiederverbindung werden Station, Priorität und Ausgabe abgeglichen; ein alter Effekt wird nicht automatisch fortgesetzt.
+
+Fehlen Rückmeldungen zum Beenden, zeigt das Smartphone den Auftrag als unbekannt an. Es behauptet weder, der Ring sei ausgeschaltet, noch, der Effekt laufe weiter. Die Station beendet den Effekt anhand ihrer lokalen Grenzen.
+
+Ein erkannter Leuchtringfehler wird im technischen Status gemeldet. Der sichere Ladebetrieb muss bei Ausfall der dekorativen Lichtfunktion erhalten bleiben; erforderliche Sicherheitsreaktionen werden unabhängig von der Anzeige ausgeführt.
+
+### 11.7 Beispiel und Prüfung
+
+Beispiel: Das Smartphone fordert einen von der Station angebotenen Disco-Effekt mit Standardhelligkeit und begrenzter Dauer an. Robin prüft und bestätigt die verwendeten Werte, die Station startet den Effekt und bestätigt den Beginn. Nach Ablauf wird der Effekt beendet und die aktuelle Zustandsanzeige wieder dargestellt.
+
+Virtual Robin prüft Standardwerte, ungültige Parameter, fehlende Station, belegten Ring, höhere Anzeigepriorität vor und während der Ausgabe, Laufzeitende, Benutzerabbruch, doppelte Zustellung ohne Laufzeitverlängerung und beide Arten von Verbindungsverlust.
+
+Reale Hardwareprüfungen ergänzen Effektgestaltung, Helligkeit, Anzeigeerkennbarkeit, lokale Laufzeitbegrenzung und Verhalten bei Kommunikationsausfall.
 
 ## 12. Prüfung des ersten Protokollumfangs
 
@@ -259,4 +345,4 @@ Dies sind fachliche Prüfszenarien; eine konkrete Implementierung besteht mit di
 
 Vor einer Implementierung werden Nachrichtencodierung, Übertragungswege, sichere Identitätsprüfung, Sitzungs- und Nachrichtenkennungen, Versionsregeln sowie konkrete Zeit- und Speichergrenzen festgelegt.
 
-Für die erste Aktion werden die in Abschnitt 10 beschriebenen Regeln technisch konkretisiert: Zahlenwerte für Bewegungsgrenzen, Standardprofil und Positionstoleranz, tatsächlicher Positionsnachweis, Darstellung des benötigten Ergebnisnachweises, Gültigkeitsprüfung, Ausführungszeit und sicheres Stoppen. Die weiteren Funktionsbereiche erhalten eigene, auf diesem Grundablauf aufbauende Spezifikationen.
+Für die erste Aktion werden die in Abschnitt 10 beschriebenen Regeln technisch konkretisiert: Zahlenwerte für Bewegungsgrenzen, Standardprofil und Positionstoleranz, tatsächlicher Positionsnachweis, Darstellung des benötigten Ergebnisnachweises, Gültigkeitsprüfung, Ausführungszeit und sicheres Stoppen. Für den Leuchtring bleiben konkrete Effekt- und Anzeigeprofile, Zustandsprioritäten, Laufzeit- und Ausfallfristen sowie Rückmeldemöglichkeiten vor Implementierung festzulegen. Die weiteren Funktionsbereiche erhalten eigene, auf diesem Grundablauf aufbauende Spezifikationen.
