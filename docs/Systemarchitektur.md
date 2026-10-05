@@ -14,7 +14,7 @@ Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Ihre phys
 
 Robin besitzt einen lokal betriebenen Kern, der seinen aktuellen Kontext, sein Verhalten und seine persönlichen Informationen verwaltet. Grundlegende Interaktion und sicherer Betrieb hängen weder von einem Server noch von einer verbundenen App ab.
 
-Companion-App und Weboberfläche ermöglichen Bedienung und Verwaltung. Die Homestation ist hauptsächlich Robins Ladestation. Sie ermöglicht Robin eine Drehung um 360° im angedockten Zustand und besitzt einen Leuchtring für Disco-Modus und Zustandsanzeigen. Der Server stellt ergänzende Dienste bereit. Externe KI liefert Ergebnisse oder Handlungsvorschläge; ausführbare Aktionen werden weiterhin lokal auf Berechtigung, Sicherheit und Benutzerentscheidungen geprüft.
+Companion-App und Weboberfläche ermöglichen Bedienung und Verwaltung. Die Homestation ist hauptsächlich Robins Ladestation. Sie dreht Robin mit einem eigenen Drehantrieb um 360° im angedockten Zustand und besitzt einen Leuchtring für Disco-Modus und Zustandsanzeigen. Der Server stellt ergänzende Dienste bereit. Externe KI liefert Ergebnisse oder Handlungsvorschläge; ausführbare Aktionen werden weiterhin lokal auf Berechtigung, Sicherheit und Benutzerentscheidungen geprüft.
 
 Virtual Robin ersetzt die physische Hardware durch simulierte Fähigkeiten und verwendet möglichst denselben Robin-Kern.
 
@@ -29,7 +29,7 @@ Diese Aufteilung ist der Arbeitsstand dieses Entwurfs. Die offenen Entscheidunge
 | Kopf | Wahrnehmung, Mimik, Audio und Kopfbewegung | Meldet verfügbare Fähigkeiten an den Kern |
 | Bauch | Energieversorgung, Laden, Drehbewegung und Modulverbindungen | Für physischen Betrieb erforderlich |
 | Beinmodule | Ausführung freigegebener Bewegung und lokale Schutzreaktionen | Nur für entsprechende Bewegungsfähigkeiten erforderlich |
-| Homestation (Ladestation) | Sicherer Ladebetrieb, 360°-Drehmöglichkeit und Leuchtring | Für Laden und Stationsfunktionen erforderlich; mobiler Grundbetrieb bleibt unabhängig |
+| Homestation (Ladestation) | Sicherer Ladebetrieb, eigener Drehantrieb für Robin (360°) und Leuchtring | Für Laden und Stationsfunktionen erforderlich; mobiler Grundbetrieb bleibt unabhängig |
 | Companion-App | Einrichtung, Verwaltung und Benutzerinteraktion | Für Einrichtung und Verwaltung, nicht dauerhaft |
 | Weboberfläche | Berechtigte Fernbedienung und Verwaltung | Abhängig vom angebotenen lokalen oder externen Zugang |
 | Server | Geräteverwaltung, Updates und optionale Fernfunktionen | Ergänzend |
@@ -76,11 +76,11 @@ Der Kopf verantwortet seine Sensoren, Mimik, Audiofunktionen und Kopfbewegungen.
 
 Die Ladestation stellt die Ladeverbindung bereit. Die Zuständigkeit für Ladefreigabe, Akkuüberwachung und Abbruch bei unsicheren Bedingungen muss zwischen Bauch und Station eindeutig festgelegt werden.
 
-Die Homestation übernimmt die Rolle der Ladestation und stellt Robins definierten Aufenthalts- und Ruheort bereit. Robin kann sich auf ihr um 360° drehen. Die Ladeverbindung muss diese Drehung ermöglichen. Ob die Drehung durch Robin oder durch einen Antrieb der Station ausgeführt wird und ob beliebig viele volle Umdrehungen möglich sind, bleibt offen.
+Die Homestation übernimmt die Rolle der Ladestation und stellt Robins definierten Aufenthalts- und Ruheort bereit. Die Station besitzt einen eigenen Drehantrieb und dreht den angedockten Robin um 360°. Die Station verantwortet die Ausführung und lokale Absicherung dieser Drehbewegung; der Robin-Kern koordiniert freigegebene Drehaufträge. Die Ladeverbindung muss während der Drehung erhalten bleiben. Ob beliebig viele volle Umdrehungen möglich sind, bleibt offen.
 
 Die Homestation besitzt einen Leuchtring. Er stellt System- und Ladezustände dar und ermöglicht Lichteffekte im Disco-Modus. Der Robin-Kern koordiniert gewünschte Anzeigen und Effekte; die Station verantwortet deren lokale Ausgabe und meldet ihren tatsächlichen Zustand. Sicherheitsrelevante Zustandsanzeigen haben Vorrang vor Disco-Effekten.
 
-Die Station bietet Lade-, Licht- und gegebenenfalls Drehfähigkeiten über definierte Schnittstellen an. Bei Kommunikationsausfall bleibt der Ladebetrieb lokal abgesichert; zustandsabhängige Anzeigen dürfen keinen nicht bestätigten Normalzustand vortäuschen. Zusätzliche Rechen- oder Sicherungsdienste gehören nicht zum derzeit festgelegten Umfang.
+Die Station bietet Lade-, Licht- und Drehfähigkeiten über definierte Schnittstellen an. Bei Kommunikationsausfall bleibt der Ladebetrieb lokal abgesichert; zustandsabhängige Anzeigen dürfen keinen nicht bestätigten Normalzustand vortäuschen. Zusätzliche Rechen- oder Sicherungsdienste gehören nicht zum derzeit festgelegten Umfang.
 
 ## 6. Bedienoberflächen und externe Dienste
 
@@ -132,7 +132,7 @@ Ein vollständiger Reset entfernt persönliche Daten, Zugangsinformationen und K
 | --- | --- |
 | Kopf / Bauch / Beine ↔ Robin-Kern | Fähigkeiten, Beobachtungen, Status, freigegebene Aktionen und Fehler |
 | Companion-App ↔ Robin | Einrichtung, Benutzerentscheidungen, Konfiguration, Personenverwaltung und Status |
-| Robin ↔ Homestation | Lade- und Andockstatus, Leuchtring-Anzeigen, Disco-Effekte und gegebenenfalls Drehaufträge samt Rückmeldungen |
+| Robin ↔ Homestation | Lade- und Andockstatus, Leuchtring-Anzeigen, Disco-Effekte und Drehaufträge samt Rückmeldungen |
 | Robin ↔ Server | Berechtigte Geräteverwaltung, Updates und freigegebene externe Aufgaben |
 | Weboberfläche ↔ zuständiger lokaler oder externer Dienst | Berechtigte Bedien- und Statusfunktionen |
 | Simulator ↔ Robin-Kern | Dieselben fachlichen Fähigkeiten, Ereignisse und Aktionen wie reale Adapter |
@@ -202,7 +202,7 @@ Simulation prüft fachliche Abläufe und Regeln. Lade-, Dreh- und Leuchtring-Fun
 Vor der verbindlichen Umsetzung sind insbesondere zu klären:
 
 1. Physischer Ausführungsort des Robin-Kerns und lokale Schutzverantwortung jedes Moduls.
-2. Ausführung der 360°-Drehung auf der Homestation, Erhalt der Ladeverbindung und mögliche Begrenzung auf eine volle Umdrehung beziehungsweise endlose Rotation.
+2. Mechanische Umsetzung des stationsseitigen Drehantriebs, Erhalt der Ladeverbindung und mögliche Begrenzung auf eine volle Umdrehung beziehungsweise endlose Rotation.
 3. Betrieb und Zugangsweg der Weboberfläche sowie Umfang der Fernsteuerung.
 4. Umfang persönlicher Langzeitdaten, Aufbewahrungszeiten und optionale Synchronisation.
 5. Rechte weiterer Benutzer sowie Wiederherstellung der Ownership bei Verlust eines gekoppelten Geräts.
