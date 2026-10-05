@@ -53,7 +53,7 @@ Für jede Komponente müssen Verantwortlichkeiten, angebotene Fähigkeiten, ben�
 
 ### 5.1 Soziale Interaktion
 
-Robin muss Emotionen durch Mimik darstellen, Sprache aufnehmen und wiedergeben, Berührungen erkennen und Kopfbewegungen ausführen können. Robin muss lokal auf Sprache reagieren können.
+Robin muss Emotionen durch Mimik darstellen, Sprache aufnehmen und wiedergeben, Berührungen erkennen und Kopfbewegungen ausführen können. Robin muss lokal auf Sprache reagieren können. Das Grundverhalten muss auf dem Prozessor im Kopf ausgeführt werden; erweitertes Verhalten wird auf dem Smartphone ausgeführt. Ohne verbundenes Smartphone muss das Grundverhalten erhalten bleiben.
 
 Robin soll Mimik, Sprache und Bewegung zu einem konsistenten, situationsgerechten Verhalten verbinden. Rückmeldungen sollen verständlich sein und auch Einschränkungen oder nicht verfügbare Funktionen vermitteln.
 
@@ -152,6 +152,8 @@ Der Kopf muss:
 - lokal auf Sprache reagieren können;
 - seine Fähigkeiten und Zustände über definierte Schnittstellen bereitstellen.
 
+Der Kopf muss Prozessor, Speicher, Gesichtsanzeige, Mikrofone, Lautsprecher, eine Nickmechanik mit Motor, Lagesensor, Kamera, Touchsensor und Antennen enthalten. Ein RFID-Leser kann optional ergänzt werden; sein Einsatzzweck ist noch festzulegen.
+
 ### 10.2 Bauch
 
 Der Bauch muss:
@@ -161,6 +163,8 @@ Der Bauch muss:
 - Sensoren aufnehmen;
 - mit den Beinen und dem Kopf kommunizieren;
 - Energie- und Betriebszustände für das Gesamtsystem bereitstellen.
+
+Der Bauch muss Akku, Ladeelektronik, Radar und eine Status-LED enthalten. Eine IR-Ausstattung kann optional ergänzt werden; ihre konkrete Funktion ist noch festzulegen. Die Drehung des angedockten Robin um 360° wird durch die Homestation ausgeführt.
 
 ### 10.3 Beine
 
@@ -193,6 +197,8 @@ Der Server soll:
 Serverfunktionen müssen Berechtigungen und Datenschutzvorgaben berücksichtigen. Konflikte zwischen lokaler und serverseitiger Konfiguration sowie das Verhalten bei fehlender Verbindung müssen definiert sein.
 
 ### 10.6 Mobile Companion-App
+
+Das Smartphone muss das erweiterte Verhalten ausführen und mit dem lokalen Grundverhalten im Kopf zusammenarbeiten. Daraus abgeleitete Aktionen müssen lokal auf Sicherheit, Datenschutz, Berechtigungen und verfügbare Fähigkeiten geprüft werden. Die genaue Zuordnung der Verhaltensfunktionen muss dokumentiert werden.
 
 Die Companion-App soll:
 
