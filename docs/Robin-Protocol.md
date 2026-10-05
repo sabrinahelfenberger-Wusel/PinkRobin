@@ -8,7 +8,7 @@ Das Robin Protocol beschreibt die hardwareunabhängige Bedeutung der Kommunikati
 
 Dieser erste Entwurf behandelt die Verbindung eines bereits bewusst gekoppelten Smartphones mit Robin, den Austausch von Fähigkeiten und Zustand sowie einen begrenzten Auftrag mit Rückmeldung. Er beschreibt auch Abbruch, Ablehnung und Wiederverbindung.
 
-Übertragungswege, konkrete Nachrichtenformate und Verfahren zum Identitätsnachweis werden später festgelegt. Die Erstkopplung, Personenverwaltung, Updates, Livestreams und Synchronisation persönlicher Daten erhalten eigene Abläufe. Eine bestehende Verbindung erteilt für diese Funktionen keine pauschale Berechtigung.
+Übertragungswege, konkrete Nachrichtenformate und Verfahren zum Identitätsnachweis werden später festgelegt. Die Erstkopplung wird in Abschnitt 3 fachlich beschrieben. Personenverwaltung, Updates, Livestreams und Synchronisation persönlicher Daten erhalten eigene Abläufe. Eine bestehende Verbindung erteilt für diese Funktionen keine pauschale Berechtigung.
 
 ## 2. Rollen und Grundregeln
 
@@ -38,6 +38,107 @@ Identitätsnachweis und Schutz gegen Manipulation müssen vor der Übermittlung 
 Eine behauptete Rolle oder Gerätekennung allein ist kein Identitätsnachweis. Widerrufene Kopplungen werden abgewiesen. Ohne kompatible Version wird die Sitzung nicht für Steuerung freigegeben.
 
 Bei noch nicht gekoppelten Geräten ist ausschliesslich ein separat definierter, bewusst ausgelöster Einrichtungsablauf möglich. Dieser Entwurf führt keine automatische Kopplung ein.
+
+### 3.1 Pairing, Ownership und Sitzung
+
+Pairing ist die dauerhafte, bewusst bestätigte Zuordnung eines Smartphones zu Robin mit festgelegten Rechten. Eine Sitzung ist dagegen eine einzelne Verbindung auf Grundlage dieser Zuordnung.
+
+Die erste Besitzerzuordnung und das Hinzufügen weiterer Geräte sind unterschiedliche Vorgänge. Eine neue Kopplung darf weder eine vorhandene Ownership überschreiben noch automatisch Besitzerrechte erhalten.
+
+Als Entwurfsentscheidung wird die erste Kopplung durch eine bewusste lokale Handlung an Robin geöffnet. Die genaue Bedienhandlung bleibt offen. Alleinige Nähe, Geräteerkennung, Berührung während normaler Interaktion oder ein RFID-Kontakt begründen keine Freigabe.
+
+### 3.2 Ablauf der ersten Kopplung
+
+| Schritt | Ablauf | Schutzwirkung |
+| --- | --- | --- |
+| 1 | Benutzer öffnet bewusst die Einrichtung an Robin | Zeitlich begrenztes Pairingfenster; sichtbar auf Robins Gesichtsanzeige |
+| 2 | App erkennt Robin und startet eine Pairinganfrage | Noch keine Steuer- oder Datenrechte |
+| 3 | Robin reserviert genau einen Kopplungsversuch | Andere Versuche erhalten keine parallele Freigabe |
+| 4 | Beide Seiten bauen einen gegen Manipulation geschützten Austausch auf | Frische Nachweise werden an diesen Versuch gebunden |
+| 5 | Beide zeigen einen übereinstimmenden Prüfnachweis | Benutzer kann feststellen, dass App und Robin am selben Versuch teilnehmen |
+| 6 | Benutzer vergleicht den Nachweis und bestätigt bewusst an Robin und in der App | Kein automatisches Bestätigen aufgrund von Empfang oder Zeitablauf |
+| 7 | Robin prüft seinen Einrichtungszustand und legt die erste Besitzerzuordnung mit Rechten an | Nur ein bislang unzugeordnetes Gerät kann so übernommen werden |
+| 8 | Beide speichern die Zuordnung geschützt und bestätigen deren Abschluss | App zeigt Erfolg erst nach bestätigter Speicherung auf beiden Seiten |
+| 9 | Pairingfenster wird geschlossen; bestätigte Sitzung wird aufgebaut | Steuerung erfolgt erst mit geprüften Rechten |
+
+Der Prüfnachweis muss aus dem geschützten Austausch abgeleitet und an Identitäten, frische Versuchsdaten und vorgesehene Rechte gebunden sein. Das blosse Anzeigen desselben frei übertragenen Codes reicht nicht aus. Verfahren, Länge, Darstellung und Bestätigungselemente werden vor Implementierung festgelegt.
+
+Eine Kopplung, deren Prüfung oder Abschluss unklar bleibt, erhält keine aktiven Rechte. Vorläufige Einträge dürfen nicht als abgeschlossene Kopplung verwendet werden. Nach abgebrochenem Abschluss müssen beide Seiten den bestätigten Stand ermitteln oder den Versuch verwerfen; das technische Abschlussverfahren wird separat spezifiziert.
+
+### 3.3 Weiteres Gerät hinzufügen
+
+Bei vorhandener Ownership muss ein berechtigter Besitzer das Hinzufügen eines Geräts freigeben. Der Versuch benötigt zusätzlich die bewusste lokale Bestätigung an Robin und den gegenseitigen Prüfnachweis.
+
+Die zu vergebenden Rechte werden vor Abschluss angezeigt und bewusst gewählt. Standardmässig erhält das zusätzliche Gerät keine Besitzerrechte. Eine Erweiterung von Rechten ist ein eigener, berechtigt bestätigter Vorgang.
+
+Eine Pairinganfrage eines unbekannten Smartphones ist keine Aufforderung, bestehende Zugänge zu entfernen oder Robin zurückzusetzen.
+
+### 3.4 Rechteumfang
+
+| Rechtebereich | Möglicher Umfang |
+| --- | --- |
+| Status lesen | Freigegebene Zustände und Fähigkeiten abfragen |
+| Interaktion steuern | Freigegebene Mimik-, Audio-, Licht- und Bewegungsaufträge |
+| Persönliche Daten verwalten | Bewusste Registrierung, Erinnerungen und Kontaktverknüpfungen |
+| Einstellungen verwalten | Zulässige Konfiguration ändern |
+| Wartung | Freigegebene Diagnose und Updates |
+| Ownership verwalten | Geräte hinzufügen, Rechte ändern, Geräte widerrufen und Weitergabe veranlassen |
+| Videoübertragung | Separater Zugriff mit zusätzlichen lokalen Bedingungen |
+
+Diese Bereiche sind ein erster fachlicher Entwurf; konkrete Rollen und feine Rechte werden noch festgelegt. Ein Leserecht gewährt kein Steuerrecht. Interaktionssteuerung gewährt weder Personenverwaltung noch Videoübertragung.
+
+Jeder Auftrag wird gegen die aktuell gültigen Rechte geprüft. Persönlichkeitspräferenzen, behauptete Rollen und weitergeleitete Nachrichten erweitern keine Berechtigungen. Auch ein Besitzer kann lokale Sicherheits- oder Datenschutzbedingungen nicht umgehen.
+
+### 3.5 Wiederkehrender Verbindungsaufbau
+
+Ein bereits gekoppeltes Smartphone verwendet keinen neuen Pairingversuch, sondern weist die bestehende Zuordnung nach. Beide Seiten prüfen frische, an den aktuellen Austausch gebundene Identitätsnachweise sowie den weiterhin gültigen Kopplungsstand.
+
+Nach Prüfung der kompatiblen Version bestätigt Robin eine neue Sitzung mit ihren tatsächlich gewährten Rechten. Nachrichtenrahmen und Inhalt werden an diese Sitzung und die nachgewiesenen Beteiligten gebunden. Alte Sitzungsnachrichten dürfen nicht in einer neuen Sitzung wiederverwendet werden.
+
+Nach Neustart kann eine gültig gespeicherte Kopplung erhalten bleiben; die vorherige Sitzung bleibt ungültig. Ein Sitzungsabbruch löscht eine Kopplung nicht automatisch.
+
+### 3.6 Widerruf, Geräteverlust und Reset
+
+Der berechtigte Besitzer kann eine Kopplung widerrufen. Robin beendet deren aktive Sitzungen und blockiert neue Verbindungen. Laufende Aufträge werden nach ihren festgelegten Regeln sicher beendet; Widerruf darf keine unbeaufsichtigte Fernsteuerung zurücklassen.
+
+Ist Robin beim Widerruf nicht erreichbar, darf die App keinen wirksamen Widerruf am Roboter behaupten. Sie zeigt den Vorgang als ausstehend an. Serverunterstützung kann ergänzt werden, ersetzt aber keine noch nicht bei Robin wirksame Änderung.
+
+Ein verlorenes Smartphone wird über ein anderes berechtigtes Besitzergerät widerrufen. Der Wiederherstellungsweg, wenn kein Besitzergerät mehr vorhanden ist, bleibt offen. Ein neu geöffnetes Pairingfenster allein darf diese Situation nicht zur unbefugten Übernahme nutzbar machen.
+
+Ein vollständiger Reset entfernt persönliche Daten, Kopplungen und gespeicherte Zugangsinformationen und stellt den Einrichtungszustand her. Er erfordert einen separat definierten bewussten Ablauf. Neustart und Verbindungstrennung sind kein Reset.
+
+### 3.7 Fehler, Fristen und Datenschutz
+
+Pairingfenster und einzelne Versuche sind zeitlich begrenzt. Abbruch, abweichender Prüfnachweis, abgelaufene Frist, fehlende Bestätigung und ungültiger Einrichtungszustand verhindern den Abschluss.
+
+Fehlversuche werden lokal begrenzt. Wartezeiten und Versuchslimits müssen Missbrauch reduzieren, ohne dauerhaft eine legitime Einrichtung zu blockieren. Konkrete Werte bleiben offen.
+
+Ungekoppelte Geräte erhalten nur die zur bewussten Einrichtung notwendigen Informationen. Personeninformationen, Erinnerungen und laufende persönliche Aufgaben werden nicht offengelegt. Zugangsinformationen und private Sicherheitsnachweise dürfen nicht in Diagnoseprotokollen erscheinen.
+
+### 3.8 Nachrichten des Verbindungsaufbaus
+
+| Fachlicher Typ | Zweck |
+| --- | --- |
+| Verbindungsanfrage | Unterstützte Versionen und behauptete Rolle für einen neuen Austausch nennen |
+| Identitätsprüfung | Frische gegenseitige Nachweise austauschen und prüfen |
+| Pairinganfrage | Innerhalb des bewusst geöffneten Fensters eine neue Zuordnung anfragen |
+| Pairingprüfung | Prüfnachweis und vorgesehenen Rechteumfang für den Benutzervergleich bereitstellen |
+| Pairingbestätigung | Lokale und appseitige bewusste Bestätigung an denselben Versuch binden |
+| Pairingabschluss | Geschützte Speicherung und endgültige Rechtefreigabe bestätigen |
+| Sitzungsbestätigung | Neue Sitzung, vereinbarte Version und tatsächlich gewährte Rechte bestätigen |
+| Ablehnung oder Abbruch | Austausch mit nachvollziehbarem Grund beenden |
+
+Diese Bezeichnungen beschreiben Phasen, noch keine frei implementierbaren Sicherheitsnachrichten. Ein geeignetes etabliertes Sicherheitsverfahren muss den Austausch technisch absichern. Sicherheitsnachweise werden nicht durch selbst entworfene Verschlüsselungs- oder Identitätsverfahren ersetzt.
+
+Vor Abschluss verwendete Nachrichten besitzen einen eindeutig abgegrenzten Versuchszusammenhang; sie dürfen nicht als Nachrichten einer bestätigten Sitzung behandelt werden. Ihre technischen Felder werden erst zusammen mit dem Sicherheitsverfahren festgelegt.
+
+### 3.9 Prüfung
+
+Virtual Robin prüft bewusste Erstkopplung, Hinzufügen eines Geräts mit begrenzten Rechten, verweigerte Übernahme eines bereits zugeordneten Robin, abweichenden Prüfnachweis, fehlende Bestätigung, Fristablauf und parallele Versuche.
+
+Weitere Prüffälle sind abgebrochene Speicherung ohne Rechtefreigabe, erneuter Verbindungsaufbau, Neustart mit erhaltener Kopplung, ungültige alte Sitzungsnachrichten, Rechteänderung, wirksamer beziehungsweise ausstehender Widerruf und vollständiger Reset.
+
+Die tatsächliche Sicherheit der Identitätsprüfung und geschützten Speicherung muss zusätzlich mit der ausgewählten technischen Umsetzung geprüft werden; eine fachliche Simulation weist diese Sicherheit nicht nach.
 
 ## 4. Fähigkeiten
 
