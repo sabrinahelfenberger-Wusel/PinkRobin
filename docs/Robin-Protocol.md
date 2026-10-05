@@ -237,7 +237,7 @@ Die Homestation wird als eigene Komponente mit Lade-, Dreh- und Lichtfähigkeite
 
 Eine Stationsdrehung benötigt bestätigtes Andocken, betriebsbereiten Antrieb, zulässige Bewegungsgrenzen und die erforderlichen Ladebedingungen. Die Station setzt lokale Schutzreaktionen auch bei Kommunikationsverlust um.
 
-Leuchtring-Aufträge können Zustandsanzeigen und Disco-Effekte betreffen. Sicherheitsrelevante Anzeigen haben Vorrang vor Disco-Effekten. Die folgenden Abschnitte konkretisieren den Leuchtring. Winkelreferenz und Geschwindigkeit der Stationsdrehung sowie konkrete Farbcodierung und Choreografie bleiben offen.
+Leuchtring-Aufträge können Zustandsanzeigen und Disco-Effekte betreffen. Sicherheitsrelevante Anzeigen haben Vorrang vor Disco-Effekten. Die folgenden Abschnitte konkretisieren den Leuchtring. Die Stationsdrehung wird anschliessend als relativer Auftrag beschrieben. Konkrete Grenzwerte, Farbcodierung und Choreografie bleiben offen.
 
 ### 11.1 Fachlicher Vertrag für den Leuchtring
 
@@ -325,6 +325,91 @@ Virtual Robin prüft Standardwerte, ungültige Parameter, fehlende Station, bele
 
 Reale Hardwareprüfungen ergänzen Effektgestaltung, Helligkeit, Anzeigeerkennbarkeit, lokale Laufzeitbegrenzung und Verhalten bei Kommunikationsausfall.
 
+### 11.8 Fachlicher Vertrag für Stationsdrehung
+
+Die Homestation dreht den angedockten Robin mit ihrem eigenen Antrieb. Der erste Drehauftrag ist eine begrenzte relative Drehung aus der bei Bewegungsbeginn bestätigten Ausgangsposition. Er endet an der Zielposition und enthält keine automatische Rückfahrt.
+
+Eine angeforderte volle Umdrehung darf nur angenommen werden, wenn die Station den vollständigen Bewegungsweg aus der aktuellen Position freigeben kann. Die Anforderung einer 360°-Drehmöglichkeit allein legt weder endlose Rotation noch beliebig wiederholbare Umdrehungen fest.
+
+Absolute Ausrichtung, kontinuierliches Drehen und gekoppelte Disco-Choreografie sind spätere Erweiterungen.
+
+### 11.9 Gemeldete Drehfähigkeit
+
+| Eigenschaft | Bedeutung |
+| --- | --- |
+| Verfügbarkeit | Stationsantrieb betriebsbereit oder Einschränkungsgrund |
+| Drehrichtungen | Unterstützte Richtungen, von oben auf die Station betrachtet |
+| Winkelbereich | Unterstützte relative Drehwinkel in Grad |
+| Geschwindigkeitsbereich | Unterstützte Geschwindigkeit in Grad pro Sekunde |
+| Standardgeschwindigkeit | Lokal festgelegter Standardwert |
+| Bewegungsreferenz | Bekanntheit der Position und gegebenenfalls mechanischer Grenzen |
+| Aktuell zulässiger Weg | Noch freigegebener Drehweg je Richtung aus der aktuellen Position |
+| Ladeverbindung | Bestätigter, unbekannter oder gestörter Zustand |
+| Andockzustand | Bestätigt angedockt, nicht angedockt oder unbekannt |
+| Ergebnisnachweis | Physisch bestätigte Drehung oder nur bestätigter Bewegungsablauf |
+| Laufzeitgrenze | Maximale Ausführungsdauer in Millisekunden |
+| Revision | Stand der Fähigkeit und ihrer Grenzen |
+
+Positionswerte müssen zum Drehantrieb der Station gehören. Ein Lagesensor im Kopf ist allein kein bestätigter Nachweis des Stationswinkels. Bei mechanisch begrenzter Rotation muss die Station den bisher genutzten Drehweg berücksichtigen; mehrfach zugestellte oder neu angeforderte Umdrehungen dürfen die Grenze nicht umgehen.
+
+Zahlenwerte für Winkel, Geschwindigkeit, Positionstoleranz und Laufzeit werden nach Erprobung der Mechanik festgelegt.
+
+### 11.10 Auftragsparameter
+
+| Parameter | Festlegung |
+| --- | --- |
+| Auftragskennung und Sitzung | Entsprechend den gemeinsamen Auftragsregeln |
+| Ziel | Drehantrieb der Homestation |
+| Aktion | Begrenzte relative Drehung |
+| Richtung | Im oder gegen den Uhrzeigersinn, von oben betrachtet |
+| Winkel | Positive Winkelgrösse in Grad innerhalb des gemeldeten Bereichs |
+| Geschwindigkeit | Optional; Grad pro Sekunde innerhalb des gemeldeten Bereichs |
+| Startgültigkeit | Begrenzte Frist für den Bewegungsbeginn |
+| Erwartete Fähigkeitsrevision | Stand, auf dem der Auftrag geplant wurde |
+| Benötigter Ergebnisnachweis | Physisch bestätigte Drehung oder ausdrücklich akzeptierte Ablaufbestätigung |
+
+Richtung und Winkel sind erforderlich. Bei fehlender Geschwindigkeit wird der gemeldete Standardwert verwendet und bei Annahme bestätigt. Ein Winkel von null ist kein Bewegungsauftrag und wird abgelehnt. Ungültige Werte werden nicht stillschweigend begrenzt.
+
+Ist kein Ergebnisnachweis angegeben, wird physische Bestätigung verlangt. Eine reine Ablaufbestätigung darf nur ausdrücklich angefordert und nur für entsprechend freigegebene Anwendungen akzeptiert werden. Sie ersetzt keinen für sicheren Betrieb erforderlichen Positionsnachweis.
+
+### 11.11 Prüfung und Ausführung
+
+Der Robin-Kern prüft Sitzung, Rechte, Parameter, Gültigkeit, Revision und übergreifende Sicherheitsregeln. Die Station prüft zusätzlich bestätigtes Andocken, Antrieb, vollständigen Bewegungsweg, Ladeverbindung und ihre lokalen Schutzbedingungen.
+
+Unbekanntes Andocken oder unbekannte sicherheitsrelevante Grenzen führen zur Ablehnung. Die Station darf keine bekannte mechanische Grenze überschreiten, auch wenn der angeforderte Winkel allgemein unterstützt wird.
+
+Für den ersten Umfang ist nur ein Drehauftrag aktiv; weitere Drehaufträge werden bei belegtem Antrieb abgelehnt. Derselbe Auftrag wird nach den Wiederholungsregeln behandelt und nicht erneut ausgeführt.
+
+Die Annahme folgt erst nach Bestätigung und Reservierung durch die Station. Unmittelbar vor dem Beginn werden Voraussetzungen und Startgültigkeit erneut geprüft. Die Station erfasst die Ausgangsposition beziehungsweise Bewegungsreferenz, bestätigt die verwendeten Parameter und meldet den Beginn.
+
+Die Ladeverbindung muss während der Drehung erhalten bleiben. Das bedeutet nicht, dass ständig Ladestrom fliessen muss: Ladeabschluss oder ein regulärer Ladezustandswechsel sind keine Unterbrechung der Verbindung.
+
+Bei Verlust der Ladeverbindung, des sicheren Andockzustands oder anderer erforderlicher Schutzbedingungen wird die Drehung sicher beendet. Die konkreten Erkennungs- und Stoppverfahren werden vor Hardwarebetrieb festgelegt.
+
+### 11.12 Abschluss, Fehler und Abbruch
+
+Ein erfolgreicher physisch bestätigter Auftrag hat den angeforderten relativen Winkel innerhalb der festgelegten Toleranz erreicht und die Bewegung beendet. Eine zurückgelegte volle Umdrehung muss als Bewegungsweg bestätigt werden; dieselbe Endausrichtung wie am Anfang beweist für sich allein keine 360°-Drehung.
+
+Das Ergebnis enthält verwendete Parameter, Nachweisart, bekannten zurückgelegten Winkel, Endposition beziehungsweise Bewegungsreferenz und Endzustand. Nicht verfügbare Werte werden als unbekannt gekennzeichnet. Eine Ablaufbestätigung behauptet keine gemessene Drehung.
+
+Störung und überschrittene Laufzeit enden nach sicherem Beenden als fehlgeschlagen. Benutzerstopp oder Eingriff einer Sicherheitsregel enden als abgebrochen, mit nachvollziehbarem Grund. Erreicht die Station das Ziel bereits vor einem verspäteten Abbruchwunsch, bleibt der bestätigte Erfolgszustand erhalten.
+
+Ein Stopp führt nicht automatisch zur Ausgangsposition zurück. Eine Rückfahrt benötigt einen neuen geprüften Auftrag. Bremsen, Halten oder Freigeben des Antriebs erfolgen nach dem für die Mechanik sicheren Verfahren; ein konkretes Verfahren wird hier nicht vorweggenommen.
+
+### 11.13 Verbindungsverlust
+
+Als Entwurfsentscheidung gilt: Bei erkanntem Verlust der Smartphone-Sitzung bricht der Robin-Kern deren laufenden Drehauftrag ab. Bei Verlust der Verbindung zwischen Kern und Station beendet die Station die Drehung nach ihrer lokalen Ausfallfrist selbstständig. Die lokale Laufzeitgrenze bleibt zusätzlich wirksam.
+
+Nach Wiederverbindung werden Auftrag, Position, Andockzustand, Ladeverbindung und zulässiger Restweg abgeglichen. Der verbleibende Teil einer Drehung wird nicht automatisch fortgesetzt. Ist der Ausgang unbekannt, muss die Station vor weiteren Bewegungen eine sichere Referenz beziehungsweise sichere Grenzen herstellen.
+
+### 11.14 Beispiel und Prüfung
+
+Das Smartphone fordert eine von der Station angebotene relative Drehung im Uhrzeigersinn mit einem zulässigen Winkel an. Der Kern und die Station prüfen den Auftrag. Die Station dreht Robin, erhält dabei die Ladeverbindung und meldet nach Ende den tatsächlichen Ergebnisnachweis.
+
+Virtual Robin prüft beide Richtungen, Standardgeschwindigkeit, unzulässige Parameter, nicht bestätigtes Andocken, unbekannte Referenz, überschrittenen Restweg, belegten Antrieb, volle Umdrehung, Abbruch und Laufzeitüberschreitung.
+
+Zusätzlich werden Verlust der Ladeverbindung und beider Kommunikationsverbindungen, fehlender Positionsnachweis, verlorenes Ergebnis und doppelte Zustellung ohne zweite Drehung geprüft. Reale Hardwareprüfungen ergänzen mechanische Grenzen, Andocksicherheit, Positionsnachweis, Erhalt der Ladeverbindung und sicheren Stopp.
+
 ## 12. Prüfung des ersten Protokollumfangs
 
 Virtual Robin soll mindestens folgende Szenarien reproduzierbar abbilden:
@@ -345,4 +430,4 @@ Dies sind fachliche Prüfszenarien; eine konkrete Implementierung besteht mit di
 
 Vor einer Implementierung werden Nachrichtencodierung, Übertragungswege, sichere Identitätsprüfung, Sitzungs- und Nachrichtenkennungen, Versionsregeln sowie konkrete Zeit- und Speichergrenzen festgelegt.
 
-Für die erste Aktion werden die in Abschnitt 10 beschriebenen Regeln technisch konkretisiert: Zahlenwerte für Bewegungsgrenzen, Standardprofil und Positionstoleranz, tatsächlicher Positionsnachweis, Darstellung des benötigten Ergebnisnachweises, Gültigkeitsprüfung, Ausführungszeit und sicheres Stoppen. Für den Leuchtring bleiben konkrete Effekt- und Anzeigeprofile, Zustandsprioritäten, Laufzeit- und Ausfallfristen sowie Rückmeldemöglichkeiten vor Implementierung festzulegen. Die weiteren Funktionsbereiche erhalten eigene, auf diesem Grundablauf aufbauende Spezifikationen.
+Für die erste Aktion werden die in Abschnitt 10 beschriebenen Regeln technisch konkretisiert: Zahlenwerte für Bewegungsgrenzen, Standardprofil und Positionstoleranz, tatsächlicher Positionsnachweis, Darstellung des benötigten Ergebnisnachweises, Gültigkeitsprüfung, Ausführungszeit und sicheres Stoppen. Für den Leuchtring bleiben konkrete Effekt- und Anzeigeprofile, Zustandsprioritäten, Laufzeit- und Ausfallfristen sowie Rückmeldemöglichkeiten vor Implementierung festzulegen. Für die Stationsdrehung bleiben insbesondere mechanische Grenzen, Möglichkeit wiederholter voller Umdrehungen, Referenz- und Positionsnachweis, Andock- und Ladeverbindungsüberwachung, Stoppverfahren sowie Zeitgrenzen festzulegen. Endlose Rotation ist weiterhin offen. Die weiteren Funktionsbereiche erhalten eigene, auf diesem Grundablauf aufbauende Spezifikationen.
