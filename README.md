@@ -20,6 +20,12 @@ Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular
 | [tools/](tools/) | Entwicklungs-, Build- und Diagnosewerkzeuge |
 | [assets/](assets/) | Bilder und weitere Projektressourcen |
 
+## Ausdruck & Interaktion
+
+Pink Robin soll Emotionen und Zustände nicht nur sprachlich, sondern auch visuell über Augen, Mimik und Bewegung vermitteln.
+
+![Pink Robin – emotions](assets/images/pink-Robin_emotions.png)
+
 ## Architektur und Umsetzung
 
 Der portable C++-Kern wird von Firmware und Websimulator gemeinsam verwendet. Im Browser wird er über WebAssembly angebunden. Das Backend ergänzt API und Persistenz; es ist keine Voraussetzung für den lokalen Websimulator. Die MAUI-App ist ein eigener Client.
