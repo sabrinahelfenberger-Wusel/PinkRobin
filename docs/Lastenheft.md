@@ -109,6 +109,16 @@ Eine aktive Videoübertragung muss für anwesende Personen unmittelbar an Robin 
 
 Robin muss einen Lost Mode unterstützen, der persönliche Daten schützt und Energie schont. Funktionen müssen dabei auf Wiederfinden, Sicherheit und notwendige Kommunikation reduziert werden. Aktivierung, Rückkehr in den Normalbetrieb und erlaubte Zugriffe müssen klar definiert und geschützt sein.
 
+### 7.4 Robin finden
+
+Robin muss eine eigene Funktion „Robin finden“ zum Wiederfinden in der Nähe über das eigene, gekoppelte Smartphone bereitstellen. Die App muss Robins energiesparendes Suchsignal erkennen und nach berechtigtem Verbindungsaufbau eine begrenzte Suchhilfe durch Ton und/oder Licht anfordern können.
+
+Die Suche muss ohne Internet und ohne fremdes Suchnetzwerk funktionieren. Das Suchsignal darf unberechtigten Geräten keine persönlichen Daten oder dauerhaft öffentlich verfolgbare Besitzer- oder Roboterkennung offenlegen. Die technische Umsetzung bleibt offen.
+
+Die App muss aktuelle Erreichbarkeit von der zuletzt bestätigten Verbindung unterscheiden. Ausserhalb der Reichweite darf sie keinen aktuellen Standort behaupten. Eine genaue Entfernung oder Richtung gehört ohne geeignete technische Grundlage nicht zum festgelegten Umfang. Bei leerem Akku ist keine aktive Suche möglich.
+
+Die Suchfunktion muss im Lost Mode verfügbar bleiben, soweit Energie und sichere Betriebsbedingungen dies erlauben. Sie kann auch unabhängig vom Lost Mode genutzt werden. Ein Suchauftrag darf weder den Lost Mode beenden noch Ownership oder Zugriffsrechte verändern.
+
 ## 8. Ownership, Pairing und Lebenszyklus
 
 Robin muss eine eindeutige Zuordnung zu einem berechtigten Besitzer unterstützen. Ersteinrichtung und Pairing mit der Companion-App müssen bewusst erfolgen und unbefugte Übernahme verhindern.
