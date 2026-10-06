@@ -642,6 +642,83 @@ Virtual Robin prüft berechtigte und unberechtigte Suche, mögliche Erkennung oh
 
 Zusätzlich werden Verbindungsverlust während der Ausgabe, nicht erreichbares Gerät und Anzeige der letzten bestätigten Verbindung geprüft. Reichweite, Energieverbrauch und Schutz vor öffentlicher Verfolgbarkeit werden mit der später gewählten Umsetzung praktisch überprüft.
 
+### 11.19 Fähigkeiten für Bild, Audio und Sprache
+
+Der erste fachliche Umfang umfasst zweckgebundene Bilderkennung, begrenzte Audioerkennung/STT und TTS mit anschliessender Wiedergabe. Dauerhafte Aufnahme, Livestreams, freie Medienarchive und automatische Personenregistrierung werden dadurch nicht freigegeben.
+
+Die Beteiligten melden für jede Fähigkeit unterstützte Aufgaben, Verarbeitungspartner, Sprachen beziehungsweise Profile, Eingabegrenzen, Laufzeitgrenzen, Verfügbarkeit und Ergebnisnachweise. Die tatsächlich angebotenen Fähigkeiten bestimmen, welche Aufgaben lokal oder mit Smartphone ausführbar sind.
+
+Kontrollnachrichten verwenden den gemeinsamen Rahmen. Rohbilder und Audiodaten werden nicht pauschal in Zustandsmeldungen oder Diagnose eingebettet. Ihre technische Übertragung, Größenbegrenzung und gegebenenfalls fortlaufende Lieferung erhalten vor Umsetzung einen eigenen Vertrag.
+
+### 11.20 Freigegebene Medienreferenzen
+
+Ein Verarbeitungsauftrag verweist auf eine begrenzte Aufnahme oder eine ausdrücklich freigegebene Medienquelle. Die Referenz ist an Besitzer, Aufgabe, berechtigten Empfänger und begrenzte Lebensdauer gebunden. Eine frei angegebene Adresse oder Medienkennung begründet keinen Zugriff.
+
+Zur Referenz gehören Medienart, Quelle, Erfassungszeit beziehungsweise Altersnachweis, Umfang und Verfügbarkeit. Unbekannte oder abgelaufene Referenzen werden abgewiesen. Die Frischeprüfung muss bei unterschiedlichen Uhren zuverlässig definiert werden.
+
+Eine Freigabe unterscheidet Erfassung, Übertragung zum Smartphone, weitere externe Verarbeitung und dauerhafte Speicherung. Erlaubnis für einen Schritt erlaubt nicht automatisch die übrigen. Die konkreten Freigabe- und Rechteprofile werden vor Implementierung festgelegt.
+
+### 11.21 Bilderkennungsauftrag
+
+| Parameter | Bedeutung |
+| --- | --- |
+| Ziel | Gemeldete Bilderkennungsfähigkeit |
+| Aufgabe | Unterstützter Zweck, beispielsweise Objekterkennung oder Abgleich mit registrierten Personen |
+| Eingabe | Freigegebene Bildreferenz oder begrenzter Erfassungsauftrag |
+| Umfang | Ein Bild beziehungsweise ausdrücklich begrenzte Bildfolge |
+| Gültigkeit | Frist für Beginn und maximal zulässiges Eingabealter |
+| Fähigkeitsrevision | Erwarteter Stand der angebotenen Funktion |
+
+Ergebnisse enthalten die tatsächlich verwendete Quelle, erkannte Merkmale, Abschlussstatus und verfügbare Unsicherheitsangaben. Nicht jede Erkennung liefert vergleichbare numerische Wahrscheinlichkeiten; fehlende oder nicht kalibrierte Sicherheit wird ausdrücklich gekennzeichnet.
+
+„Keine passende Erkennung“ ist ein gültiges Ergebnis und nicht automatisch ein technischer Fehler. Veraltete Bilder, fehlende Freigabe, ausgefallene Kamera und verlorene Verarbeitung führen dagegen zu erklärten Fehlern oder Ablehnungen.
+
+Eine Personenreferenz darf nur auf einen bewusst registrierten Eintrag verweisen. Unbekannte Personen erhalten höchstens kurzfristige Interaktionsreferenzen. Wiederholte Erkennung erzeugt keine Registrierung. Der lokale Kern prüft die Aktualität eines Ergebnisses vor dessen Verwendung für Verhalten.
+
+### 11.22 Audioerkennung und STT
+
+Audioerkennung meldet beispielsweise Sprachaktivität oder ein unterstütztes Geräuschereignis. STT ist eine separate Aufgabe, die freigegebenes Audio in Text umwandelt.
+
+Ein Auftrag benennt Aufgabe, Audioquelle, unterstützte Sprache beziehungsweise automatische Sprachwahl, begrenzte Aufnahmedauer, Startgültigkeit und Fähigkeitsrevision. Sprachwahl und Geräuschklassen müssen von der Fähigkeit angeboten werden.
+
+Für den ersten Umfang wird eine begrenzte Aufnahme mit abschliessendem Ergebnis vorgesehen. Fortlaufende Teiltranskripte und dauerhafte Sprachaktivierung werden später separat beschrieben. Eine gesetzte maximale Aufnahmedauer wird lokal durchgesetzt.
+
+Das Ergebnis enthält Quelle, tatsächlich verarbeitete Dauer, erkannte Sprache, Text beziehungsweise Ereignisse und verfügbare Unsicherheitsangaben. „Keine Sprache erkannt“ ist von „Audio nicht verfügbar“ zu unterscheiden. Unvollständige Aufnahme darf nicht als vollständiges Transkript ausgegeben werden.
+
+Nach Abbruch wird die zugehörige Aufnahme beendet. Bereits erfasste Daten werden nur im erlaubten Rahmen verarbeitet beziehungsweise verworfen. Bei verlorenem Auftragspartner endet eine auftragsgebundene Aufnahme spätestens nach ihrer lokalen Ausfallfrist und Dauergrenze.
+
+Erkanntes Sprechen ist keine Authentifizierung. Ein Transkript führt nicht automatisch einen Steuerauftrag aus. Der Robin-Kern berücksichtigt Kontext, Regeln und notwendige bewusste Bestätigungen. Robins eigene Audioausgabe darf keine neue vermeintliche Benutzeranweisung auslösen.
+
+### 11.23 TTS und Wiedergabe
+
+| Schritt | Verantwortlichkeit und Rückmeldung |
+| --- | --- |
+| Sprachsynthese anfordern | Text, unterstützte Sprache/Stimme und Ausgabeprofil prüfen |
+| Audio erzeugen | Smartphone beziehungsweise angebotene Synthesefähigkeit bestätigt erzeugtes Ergebnis |
+| Wiedergabe anfordern | Robin prüft Audioquelle, Lautstärke, Dauer und Priorität |
+| Wiedergabe beginnen | Kopf bestätigt tatsächlich begonnene Audioansteuerung |
+| Wiedergabe beenden | Kopf meldet Abschluss, Abbruch oder Fehler |
+
+Synthese und Wiedergabe besitzen getrennte Auftragskennungen und eine nachvollziehbare Zuordnung. Erfolgreiche Synthese bedeutet nicht, dass Robin gesprochen hat. Ein späterer kombinierter Auftrag muss den Gesamtabschluss an bestätigte Wiedergabe binden.
+
+Der Syntheseauftrag enthält begrenzten Text, Sprache, gegebenenfalls unterstützte Stimme und Fähigkeitsrevision. Der Wiedergabeauftrag enthält eine freigegebene Audioreferenz, Lautstärke in Prozent des freigegebenen Maximums, Startgültigkeit und begrenzte Laufzeit.
+
+Für den ersten Umfang gibt es keine unbegrenzte Wiedergabewarteschlange. Bei belegter Ausgabe wird ein normaler Auftrag abgelehnt. Notwendige lokale Sicherheitsmeldungen haben Vorrang; die genauere Priorität von Sprache und Suchton bleibt festzulegen.
+
+Abbruch der Wiedergabe beendet diese sicher und wird vom Kopf bestätigt. Bereits abgespielte Inhalte können nicht rückgängig gemacht werden. Ein verloren gegangenes Ergebnis wird über dieselbe Auftragskennung abgefragt; Sprache wird nicht blind nochmals abgespielt.
+
+Als vorläufige Ausfallregel wird eine Smartphone-beauftragte Sprachausgabe bei erkanntem Sitzungsverlust abgebrochen. Unabhängige lokale Hinweise und der separat definierte Suchton behalten ihre eigenen Regeln.
+
+Audioansteuerung und tatsächlich nachgewiesene Hörbarkeit werden wie bei den anderen Ausgaben unterschieden. Lautsprecherfehler und fehlende Rückmeldung dürfen nicht als bestätigte Hörbarkeit gemeldet werden.
+
+### 11.24 Datenlebensdauer und Prüfung
+
+Rohmedien, Transkripte und erzeugtes Audio werden standardmässig aufgabenbezogen und nur für die erforderliche begrenzte Zeit gehalten. Für spätere Statusabfragen kann ein minimierter Abschlussnachweis ohne dauerhafte Rohmedien genügen. Konkrete Aufbewahrungszeiten und eine bewusst freigegebene Speicherung werden separat festgelegt.
+
+Virtual Robin prüft fehlende Freigabe, abgelaufene Medienreferenz, fehlende Kamera/Mikrofone, keine Erkennung, unsichere und veraltete Ergebnisse, Aufnahmegrenzen, Abbruch und Verbindungsverlust.
+
+Für TTS werden fehlende Sprache/Stimme, Synthesefehler, belegte Ausgabe, erfolgreicher Syntheseabschluss ohne Wiedergabe, unterbrochene Wiedergabe und doppelte Aufträge ohne doppelte Sprachausgabe geprüft. Reale Erkennungsqualität, Datenschutz der Medienübertragung und Audioverhalten werden mit der späteren Umsetzung erprobt.
+
 ## 12. Prüfung des ersten Protokollumfangs
 
 Virtual Robin soll mindestens folgende Szenarien reproduzierbar abbilden:
