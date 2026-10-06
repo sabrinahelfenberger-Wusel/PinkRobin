@@ -151,6 +151,18 @@ Verdrängung aus dem Kopf darf das Smartphone-Profil nicht löschen. Eine bewuss
 
 Abgleich muss doppelte Begegnungszählung und Wiederherstellung gelöschter Profile verhindern. Umfang, Gewichtung, Kapazität und Datenlebensdauer müssen festgelegt werden. Persönliche Daten werden standardmässig nicht auf dem Server gespeichert; Sicherung benötigt eine separate bewusste Freigabe.
 
+### 7.6 Personenprofile
+
+Der erste abgestimmte Profilumfang umfasst interne Personenkennung, Anzeigename, optionale Aussprache und Anrede, bewusst erfasste Wiedererkennungsmerkmale, optionale Referenzfotos, bewusst angelegte Kontaktverknüpfungen, gewünschte Sprache, ausdrücklich mitgeteilte Vorlieben und Grenzen sowie bewusst gespeicherte gemeinsame Erinnerungen.
+
+Speicherverwaltung muss Begegnungszähler, letzte bestätigte Begegnung, Anheftung, Freigaben und Versionsstand getrennt von persönlichen Eigenschaften halten. Das Ranking darf nicht als Beziehungsbewertung verwendet werden.
+
+Für persönliche Angaben müssen Herkunft, Bestätigungsstatus und erlaubte Nutzung nachvollziehbar sein. Vermutungen aus Gesprächen dürfen nicht automatisch als bestätigte Tatsachen gespeichert werden. Automatisch abgeleitete Personenbewertungen wie Zuverlässigkeit, Intelligenz oder psychischer Zustand gehören nicht zum Profilumfang.
+
+Der Offline-Bestand im Kopf muss auf die für Wiedererkennung und freigegebene lokale Interaktion notwendigen Angaben beschränkt sein. Kontaktverknüpfungen verbleiben standardmässig auf dem Smartphone; gemeinsame Erinnerungen werden nur als freigegebene Auswahl übertragen.
+
+Zugriffsregeln müssen unterscheiden, welche registrierte Person welche Informationen sehen oder ändern darf. Erkennen einer Person allein gewährt keine solchen Rechte. Das konkrete Verfahren zur sicheren Bestätigung berechtigter Personen wird separat festgelegt.
+
 ## 8. Ownership, Pairing und Lebenszyklus
 
 Robin muss eine eindeutige Zuordnung zu einem berechtigten Besitzer unterstützen. Ersteinrichtung und Pairing mit der Companion-App müssen bewusst erfolgen und unbefugte Übernahme verhindern.
