@@ -163,6 +163,18 @@ Der Offline-Bestand im Kopf muss auf die für Wiedererkennung und freigegebene l
 
 Zugriffsregeln müssen unterscheiden, welche registrierte Person welche Informationen sehen oder ändern darf. Erkennen einer Person allein gewährt keine solchen Rechte. Das konkrete Verfahren zur sicheren Bestätigung berechtigter Personen wird separat festgelegt.
 
+### 7.7 Themenliste pro Person und Speicherfilter
+
+Für bewusst registrierte Personen darf Robin eine begrenzte Stichwort- und Themenliste aus Gesprächen automatisch aktualisieren, wenn diese Speicherregel für die jeweilige Person freigegeben ist. Ein Eintrag enthält Thema, kurze Notiz, Herkunft und letzte Erwähnung. Gesprochenes Thema und ausdrücklich mitgeteilte persönliche Tatsache müssen unterschieden werden; Vermutungen dürfen keine bestätigten Angaben erzeugen.
+
+Die vollständige Liste liegt auf dem Smartphone. Der Kopf erhält nur eine kleine freigegebene Auswahl. Wiederkehrende Themen können stärker gewichtet werden; ältere verlieren Gewicht. Die Liste muss einsehbar, korrigierbar und löschbar sein. Robin darf freigegebene Themen für eigene Gesprächseinstiege verwenden.
+
+Gesundheits- und psychische Themen dürfen nicht dauerhaft in personenbezogenen Themenlisten, Erinnerungen, Profilnotizen oder daraus abgeleiteten Daten gespeichert werden. Der Ausschluss gilt auch bei ausdrücklicher Erwähnung oder Bestätigung und darf nicht durch andere Speicherwege umgangen werden.
+
+Ein Filter muss vor jeder dauerhaften Übernahme greifen und Stichwörter, Zusammenfassungen, indirekte Formulierungen und abgeleitete Angaben berücksichtigen. Bei unklarer Einordnung darf nicht gespeichert werden. Gefilterte Inhalte dürfen keine dauerhaften Themengewichte, Rankingmerkmale oder späteren Gesprächseinstiege erzeugen.
+
+Robin darf solche Inhalte im aktuellen Gespräch verarbeiten, soweit sie dafür erforderlich sind. Sie dürfen nicht in dauerhafte Gesprächsarchive, Diagnoseinhalte, Sicherungen oder den Offline-Bestand gelangen. Zweckgebundene temporäre Verarbeitung muss begrenzt sein und anschliessend verworfen werden.
+
 ## 8. Ownership, Pairing und Lebenszyklus
 
 Robin muss eine eindeutige Zuordnung zu einem berechtigten Besitzer unterstützen. Ersteinrichtung und Pairing mit der Companion-App müssen bewusst erfolgen und unbefugte Übernahme verhindern.
