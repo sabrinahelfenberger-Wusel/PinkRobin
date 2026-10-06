@@ -157,6 +157,20 @@ Externe KI wird für klar abgegrenzte Aufgaben aufgerufen. Nur die dafür notwen
 
 Für externe Aufgaben werden Zeitgrenzen, Abbruch und ein verständlicher Ersatz bei Nichtverfügbarkeit vorgesehen. Antworten auf bereits abgebrochene oder überholte Aufgaben werden nicht nachträglich als aktuelle Handlungsaufträge ausgeführt.
 
+### 6.4 Bild-, Audio- und Sprachverarbeitung
+
+Kamera und Mikrofone im Kopf stellen zweckgebundene Wahrnehmung bereit. Der lokale Kern koordiniert Freigaben, begrenzte Aufnahme und Nutzung der Ergebnisse. Als vorläufige Aufteilung wird vorgeschlagen: einfache unmittelbare Erkennung im Kopf, erweiterte Bilderkennung, STT und Sprachsynthese auf dem Smartphone. Der genaue lokale Umfang wird erprobt.
+
+Das Smartphone erhält nur die für eine freigegebene Aufgabe benötigten Medien und verarbeitet sie möglichst lokal. Nutzung eines externen Dienstes benötigt eine zusätzliche Freigabe und begrenzte Datenweitergabe. Smartphone-Verarbeitung bedeutet keine automatische Cloudfreigabe.
+
+Bildergebnisse enthalten erkannte Merkmale, Zeitpunkt beziehungsweise Quellbezug, Unsicherheit und gegebenenfalls eine zulässige Referenz auf bewusst registrierte Personen. STT liefert Text mit Sprach- und Vollständigkeitsangaben. Der Kopf behandelt beide als Beobachtungen, nicht als unmittelbar ausführbare Befehle.
+
+Für TTS erzeugt das Smartphone Sprache aus einem freigegebenen Text. Der Kopf übernimmt die tatsächliche Audioausgabe und meldet Beginn und Ende. Einfache lokale Reaktionen bleiben auch bei Ausfall der erweiterten Verarbeitung verfügbar.
+
+Die Erzeugung eines Transkripts, das Verstehen seiner Bedeutung, die Auswahl einer Antwort, ihre Sprachsynthese und ihre Wiedergabe sind getrennte Schritte. Jede Stufe kann ausfallen oder abgebrochen werden, ohne einen erfolgreichen Gesamtvorgang zu behaupten.
+
+Der lokale Kern koordiniert Mikrofonaufnahme und Lautsprecherausgabe, damit Robins eigene Sprache nicht unbeabsichtigt als Benutzerauftrag ausgeführt wird. Das konkrete Verfahren bleibt offen. Medienübertragung und Streaming benötigen einen eigenen technischen Transportvertrag neben den Kontrollnachrichten.
+
 ## 7. Datenhaltung und Zuständigkeit
 
 | Datenart | Führende Instanz im Entwurf | Umgang |
