@@ -83,6 +83,26 @@ Wahrnehmung muss Unsicherheit, fehlende Daten und ausgefallene Sensoren berücks
 
 Unbekannte Personen dürfen für die aktuelle Interaktion wahrgenommen und unterschieden werden. Informationen über sie dürfen ohne bewusste Registrierung nicht dauerhaft gespeichert werden. Wiederholte Erkennung allein darf keine Registrierung auslösen.
 
+### 6.1 Bilderkennung
+
+Robin muss Kameraaufnahmen für klar definierte Wahrnehmungsaufgaben verarbeiten können. Bilderkennung soll Objekte, relevante Szenenmerkmale und bewusst registrierte Personen unterscheiden können. Ergebnisse müssen Unsicherheit berücksichtigen; Erkennen einer Person und Identifizieren einer registrierten Person sind getrennte Funktionen.
+
+Erweiterte Bilderkennung soll über das gekoppelte Smartphone erfolgen. Welche grundlegenden Funktionen im Kopf laufen, wird anhand seiner Ressourcen festgelegt. Bildübertragung benötigt eine freigegebene Aufgabe, einen begrenzten Umfang und geschützten Zugriff. Sie darf nicht als verdeckter Livestream verwendet werden. Unbekannte Personen dürfen dadurch nicht dauerhaft registriert werden.
+
+### 6.2 Audioerkennung und STT
+
+Robin muss Audio über seine Mikrofone erfassen können. Er soll Sprachaktivität und relevante Geräusche erkennen sowie gesprochene Sprache mittels Speech-to-Text (STT) in Text umwandeln können. Einfache lokale Sprachreaktionen bleiben Teil des Grundverhaltens; umfangreicheres Sprachverständnis und erweiterte Verarbeitung erfolgen auf dem Smartphone.
+
+Aufnahme, Übertragung und Verarbeitung müssen an einen definierten Zweck und eine Freigabe gebunden sein. Aufnahmezustände müssen für den Benutzer verständlich erkennbar sein. Rohaufnahmen und Transkripte dürfen nicht ohne festgelegten Zweck dauerhaft gespeichert werden.
+
+Ein Transkript ist eine unsichere Wahrnehmung und kein Identitäts- oder Berechtigungsnachweis. Sicherheitsrelevante Aktionen dürfen nicht allein aufgrund eines vermeintlich erkannten Sprachbefehls freigegeben werden.
+
+### 6.3 TTS und Audioausgabe
+
+Robin muss Text-to-Speech (TTS) für die Sprachausgabe unterstützen und Sprache über die Lautsprecher im Kopf wiedergeben können. Erweiterte Sprachsynthese soll auf dem Smartphone erfolgen; einfache lokale Sprachreaktionen müssen ohne Smartphone erhalten bleiben. Ob diese lokal synthetisiert oder als vorbereitete Ausgabe bereitgestellt werden, bleibt offen.
+
+Sprachausgabe muss Lautstärke, begrenzte Dauer, Abbruch und Rückmeldungen unterstützen. Erzeugte Audiodaten und tatsächlich abgespielte Sprache müssen unterschieden werden. Prioritäten zwischen Sprache, Suchton und notwendigen Hinweisen müssen festgelegt werden.
+
 ## 7. Datenschutz und Sicherheit
 
 ### 7.1 Datenverarbeitung und Kontrolle
