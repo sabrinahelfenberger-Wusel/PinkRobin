@@ -600,6 +600,48 @@ Virtual Robin prüft beide Richtungen, Standardgeschwindigkeit, unzulässige Par
 
 Zusätzlich werden Verlust der Ladeverbindung und beider Kommunikationsverbindungen, fehlender Positionsnachweis, verlorenes Ergebnis und doppelte Zustellung ohne zweite Drehung geprüft. Reale Hardwareprüfungen ergänzen mechanische Grenzen, Andocksicherheit, Positionsnachweis, Erhalt der Ladeverbindung und sicheren Stopp.
 
+### 11.15 Robin finden: Erkennung und Sitzung
+
+Die Funktion „Robin finden“ erlaubt Suche in der Nähe über das eigene, gekoppelte Smartphone. Die Suche ist unabhängig von einer Homestation und funktioniert ohne Internet oder fremdes Suchnetzwerk.
+
+Das energiesparende Suchsignal ist eine vorgelagerte Erkennung, keine Steuerungsnachricht einer bestätigten Sitzung. Seine datenschutzgerechte technische Darstellung wird separat festgelegt. Es darf keine persönliche Information oder dauerhaft öffentlich verfolgbare Kennung enthalten. Eine blosse Signalbeobachtung ist kein sicherer Identitätsnachweis.
+
+Die App unterscheidet „möglicherweise erkannt“, „Identität und Erreichbarkeit bestätigt“ und „aktuell nicht erreichbar“. Erst der gegenseitige Identitätsnachweis bestätigt das eigene Gerät. Ein Zeitpunkt der letzten bestätigten Verbindung wird ausdrücklich als vergangener Stand angezeigt.
+
+### 11.16 Suchhilfeauftrag
+
+Nach gültigem Sitzungsaufbau wird die Suchhilfe über `action.request` angefordert. Sie verwendet Auftragskennung, Startgültigkeit und Fähigkeitsrevision nach den gemeinsamen Regeln.
+
+| Parameter | Bedeutung |
+| --- | --- |
+| Ziel | Suchhilfefunktion von Robin |
+| Aktion | Begrenzte Suchhilfe ausgeben |
+| Ausgabe | Ton, Licht oder beide, nur soweit aktuell angeboten |
+| Dauer | Begrenzte Laufzeit in Millisekunden |
+| Profil | Unterstütztes Suchprofil mit freigegebener Lautstärke beziehungsweise Helligkeit |
+
+Fehlende optionale Werte verwenden ein gemeldetes Standardprofil. Grenzwerte und Standarddauer bleiben bis zur Erprobung offen. Ein gewünschter, nicht verfügbarer Ausgabekanal wird ausdrücklich abgelehnt; er wird nicht stillschweigend durch einen anderen ersetzt.
+
+Die Suchfähigkeit meldet ihre Verfügbarkeit, Ausgabearten, Laufzeitgrenzen, Profile und gegebenenfalls Energiebeschränkungen. Auch im Lost Mode darf ein berechtigtes Gerät die dafür notwendigen reduzierten Fähigkeiten und Zustände erhalten, ohne persönlichen Kontext offenzulegen. Die konkreten Suchrechte werden mit dem Rechteprofil festgelegt; gekoppelt zu sein allein bedeutet nicht automatisch uneingeschränkte Suchsteuerung.
+
+### 11.17 Ausführung, Ende und Ausfälle
+
+Robin prüft Berechtigung, Ausgabe, Energie, Betriebszustand und Konflikte mit notwendigen Anzeigen. Er bestätigt Annahme, Beginn und Ende. Die Suchhilfe führt keine Bewegung aus, schaltet keine Kamera oder Mikrofonaufnahme ein und ändert weder Lost Mode noch Besitzerzuordnung.
+
+Ein Suchauftrag läuft nur für die lokal bestätigte begrenzte Dauer. Er kann vom berechtigten Smartphone abgebrochen werden. Als Entwurfsentscheidung darf eine bereits angenommene Suchhilfe bei Verlust der Smartphone-Verbindung bis zum Ende dieser Dauer weiterlaufen, sofern keine lokale Sicherheits- oder Energieregel sie beendet. So bleibt eine kurz verlorene Verbindung während der Suche nutzbar, ohne unbegrenzte Ausgabe zu erlauben.
+
+Doppelte Aufträge starten oder verlängern die Suchhilfe nicht erneut. Im ersten Umfang ist nur ein Suchhilfeauftrag gleichzeitig aktiv; ein weiterer wird bei belegter Ausgabe abgelehnt. Höherrangige Sicherheitsanzeigen werden nicht verdeckt.
+
+Der Ergebnisnachweis unterscheidet bestätigte Audio- beziehungsweise Lichtansteuerung von tatsächlich nachgewiesener Ausgabe. Ohne passende Rückmeldung darf Robin keine physisch überprüfte Wahrnehmbarkeit behaupten.
+
+Bei nicht erreichbarem Robin wird kein Auftrag als angenommen angezeigt. Leerem Akku oder fehlender Ausgabe folgt keine erfundene Ortungsinformation. Ein lokaler Fristablauf im Smartphone bedeutet unbekannten Ausgang; nach Wiederverbindung wird derselbe Auftrag abgefragt.
+
+### 11.18 Prüfung von Robin finden
+
+Virtual Robin prüft berechtigte und unberechtigte Suche, mögliche Erkennung ohne bestätigte Identität, begrenzte Ton- und Lichtausgabe, Lost Mode, niedrige Energie, fehlende Ausgabekanäle, Benutzerabbruch und doppelte Zustellung ohne Verlängerung.
+
+Zusätzlich werden Verbindungsverlust während der Ausgabe, nicht erreichbares Gerät und Anzeige der letzten bestätigten Verbindung geprüft. Reichweite, Energieverbrauch und Schutz vor öffentlicher Verfolgbarkeit werden mit der später gewählten Umsetzung praktisch überprüft.
+
 ## 12. Prüfung des ersten Protokollumfangs
 
 Virtual Robin soll mindestens folgende Szenarien reproduzierbar abbilden:
