@@ -741,6 +741,26 @@ Virtual Robin prüft automatische Auswahl nur registrierter Personen, Begegnung 
 
 Weitere Szenarien sind Offline-Begegnungen, doppelte Übertragung ohne Doppelzählung, unterbrochene Bestandsübernahme, ausstehende Löschung und verspäteter Altbestand nach Löschung. Die genaue Rankingformel und Datengrenzen bleiben offen.
 
+### 11.27 Personenprofil und Feldfreigaben
+
+Ein Personenprofil verwendet eine interne registrierte Personenreferenz. Der fachliche Umfang umfasst Identität, Wiedererkennungsmerkmale, optionale Kontaktverknüpfung, Interaktionsangaben, gemeinsame Erinnerungen und getrennte Speicherverwaltungsdaten nach Abschnitt 7.3 der Systemarchitektur.
+
+Persönliche Angaben benötigen neben dem Wert eine nachvollziehbare Herkunft, einen Bestätigungsstatus, einen Versionsstand und erlaubte Nutzung einschliesslich möglicher Offline-Übertragung. Die genaue Codierung dieser Angaben wird später festgelegt. Fehlende Werte bedeuten unbekannt beziehungsweise nicht hinterlegt, nicht eine automatisch zu ergänzende Eigenschaft.
+
+Profilabfragen und Änderungen benötigen eigene berechtigte Abläufe. Allgemeine Statusrechte, Suchrechte und lokale Wiedererkennung erlauben keine Profilansicht oder Änderung. Der Empfänger erhält nur den für ihn freigegebenen Umfang; ein vollständiger Profilabgleich an jedes gekoppelte Gerät ist nicht vorgesehen.
+
+Kontaktverknüpfungen werden standardmässig nicht in den Kopf übertragen. Referenzfotos und Gesprächsinhalte werden nicht automatisch Bestandteil des Offline-Bestands. Wiedererkennungsmerkmale benötigen denselben Schutz wie andere persönliche Daten.
+
+Änderungen unterscheiden bewusst mitgeteilte Angaben, beobachtete Informationen und unbestätigte Vermutungen. Ein Verarbeitungsergebnis darf weder automatisch eine Vermutung bestätigen noch unzulässige Personenbewertungen einführen. Rankingdaten dienen ausschliesslich der Bestandsauswahl.
+
+Bei gemeinsamen Erinnerungen müssen die Freigaben aller betroffenen Informationen berücksichtigt werden. Eine einzelne Personenfreigabe erteilt keine pauschale Freigabe fremder Angaben.
+
+### 11.28 Prüfung des Personenprofils
+
+Virtual Robin prüft Profile mit fehlenden optionalen Feldern, erlaubte und unerlaubte Feldabfragen, Trennung von Ranking und Beziehung, Herkunft und Bestätigungsstatus, begrenzte Kopf-Übertragung sowie Korrektur und Löschung.
+
+Weitere Fälle sind eine unbestätigte Gesprächsvermutung, nicht freigegebene Kontaktverknüpfung oder Referenzaufnahme, gemeinsame Erinnerung mit unterschiedlichen Rechten und ein erkanntes Gesicht ohne Berechtigung zur Profiländerung.
+
 ## 12. Prüfung des ersten Protokollumfangs
 
 Virtual Robin soll mindestens folgende Szenarien reproduzierbar abbilden:
