@@ -211,6 +211,31 @@ Dauerhafte Erinnerungen entstehen bewusst oder nach einer ausdrücklich erlaubte
 
 Kapazität, Größe einzelner Profile, Abgrenzung einer Begegnung, Gewichtung von Häufigkeit und Aktualität, Mindestbedingungen für Aufnahme und Wechsel sowie Aufbewahrungsgrenzen der Zähler werden vor Implementierung festgelegt. Bei zu vielen angepinnten Personen wird ein Kapazitätskonflikt gemeldet; angepinnte Einträge werden nicht stillschweigend verdrängt.
 
+### 7.3 Erster abgestimmter Personenprofilumfang
+
+| Bereich | Angaben | Offline-Bestand im Kopf |
+| --- | --- | --- |
+| Identität | Interne Kennung, Anzeigename, optionale Aussprache und Anrede | Benötigte freigegebene Angaben |
+| Wiedererkennung | Bewusst erfasste Erkennungsmerkmale; optionales Referenzfoto | Nur benötigte Erkennungsmerkmale; Foto nicht automatisch |
+| Kontaktverknüpfung | Bewusster Verweis auf Smartphone-Kontakt | Standardmässig keine Übertragung |
+| Interaktion | Gewünschte Sprache, ausdrücklich mitgeteilte Vorlieben und Grenzen | Ausgewählte freigegebene Angaben |
+| Gemeinsame Erinnerungen | Bewusst gespeicherte Ereignisse und Gesprächsinhalte | Nur ausdrücklich freigegebene Auswahl |
+| Speicherverwaltung | Begegnungszähler, letzte bestätigte Begegnung, Anheftung, Freigaben und Versionsstand | Soweit lokal erforderlich |
+
+Optionale Felder dürfen fehlen; ein unbekannter Wert wird nicht durch eine Vermutung ersetzt. Referenzfotos sind keine Voraussetzung für jedes Profil und werden nicht pauschal im Kopf gespeichert.
+
+Persönliche Angaben tragen Herkunft, Bestätigungsstatus und erlaubten Nutzungsumfang. Eine ausdrücklich mitgeteilte Angabe wird von einer technischen Beobachtung oder unbestätigten Vermutung unterschieden. Eine Vermutung wird nicht automatisch als Tatsache übernommen. Das Profil enthält keine automatisch abgeleiteten Bewertungen von Zuverlässigkeit, Intelligenz oder psychischem Zustand.
+
+Die gemeinsame Erinnerung kann mehrere Personen betreffen. Freigabe einer einzelnen Person darf nicht automatisch Informationen anderer Beteiligter offenlegen. Eine Kontaktverknüpfung bedeutet weiterhin keine Übernahme des gesamten Adressbuchs.
+
+### 7.4 Personenbezogene Zugriffsregeln
+
+Speicherort auf dem Besitzer-Smartphone und Berechtigung zur Ansicht oder Änderung sind getrennte Fragen. Für Profile und einzelne Angaben werden zulässige Leser und Bearbeiter nachvollziehbar festgelegt. Registrierte Personen können unterschiedliche Rechte auf eigene und gemeinsame Informationen haben; die konkreten Rollen und Bestätigungswege bleiben offen.
+
+Lokale Gesichtserkennung, Name, Stimme oder eine Personenreferenz allein erteilen keine Datenzugriffsrechte. Eine Profiländerung oder Ausgabe persönlicher Informationen benötigt die jeweils festgelegte sichere Berechtigungsprüfung.
+
+Die App macht erlaubte Nutzung, Kopf-Übertragung, Herkunft und Bestätigung sichtbar. Korrektur, Löschung und Freigabeänderung folgen den bereits beschriebenen Abgleichregeln. Grenzen für Umfang und Aufbewahrung der Profilfelder werden vor Umsetzung festgelegt.
+
 ## 8. Kommunikationswege und Robin Protocol
 
 | Verbindung | Ausgetauschte Informationen |
