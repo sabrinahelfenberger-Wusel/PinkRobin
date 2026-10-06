@@ -176,20 +176,40 @@ Der lokale Kern koordiniert Mikrofonaufnahme und Lautsprecherausgabe, damit Robi
 | Datenart | Führende Instanz im Entwurf | Umgang |
 | --- | --- | --- |
 | Aktueller Kontext und unbekannte Personen | Robin-Kern | Kurzfristig; begrenzte Lebensdauer; keine automatische Registrierung |
-| Registrierte Personen und Beziehungen | Lokale Datenverwaltung des Robin-Kerns | Bewusste Registrierung; einsehbar, korrigierbar und löschbar |
-| Persönlichkeit und Präferenzen | Einfache Ausprägung im Robin-Kern; Weiterentwicklung auf dem Smartphone | Datenhaltung und Abgleich noch offen; Grundpersönlichkeit bleibt ohne Smartphone verfügbar |
-| Erinnerungen und persönliche Einstellungen | Robin-Kern | Lokal verfügbar; App dient der Verwaltung |
+| Registrierte Personen und Beziehungen | Smartphone | Bewusste Registrierung; begrenzte freigegebene Offline-Kopie im Kopf |
+| Persönlichkeit und Präferenzen | Smartphone | Grundpersönlichkeit und zuletzt bestätigte freigegebene Einstellungen im Kopf |
+| Erinnerungen und persönliche Einstellungen | Smartphone | Ausdrücklich übertragene Erinnerungen und benötigte Einstellungen für lokale Ausführung im Kopf |
 | Ownership und Geräteberechtigungen | Lokale Zugriffsverwaltung | Geschützt; Kopplungen bewusst erteilen und widerrufen |
 | Technischer Zustand | Zuständiges Modul, zusammengeführt im Kern | Aktuell; mit Quelle und Verfügbarkeit |
 | Diagnoseereignisse | Erzeugende Komponente | Datenarm, zugriffsgeschützt und zeitlich begrenzt |
 | Verfügbare Updatepakete | Updatebereitstellung des Servers | Herkunft, Unversehrtheit und Kompatibilität lokal prüfen |
 | Gewünschte serverseitige Konfiguration | Server | Änderungsvorschlag; lokale Annahme und Bestätigung erforderlich |
 
-Für persönliche Roboterinformationen ist der lokale Stand führend. Eine optionale Synchronisation oder Sicherung auf einem Server muss bewusst eingerichtet werden. Sie benötigt Regeln für Konflikte, Löschung, Wiederherstellung und Zugriff; sie ist in diesem Entwurf noch nicht festgelegt.
+Für langfristige persönliche Informationen ist das Smartphone der führende Speicher. Der Kopf hält einen begrenzten Offline-Bestand. Lokale Ownership und Zugriffsprüfung bleiben davon unabhängig bei Robin. Eine optionale Synchronisation oder Sicherung auf einem Server muss bewusst eingerichtet werden. Sie benötigt Regeln für Konflikte, Löschung, Wiederherstellung und Zugriff; sie ist in diesem Entwurf noch nicht festgelegt.
 
 Kontaktverknüpfungen werden bewusst in der App vorgenommen. Daraus folgt keine pauschale Übertragung des gesamten Adressbuchs an Robin oder einen Server.
 
 Ein vollständiger Reset entfernt persönliche Daten, Zugangsinformationen und Kopplungen. Falls später externe Kopien eingeführt werden, muss deren Löschung oder Trennung im Ablauf ebenfalls definiert werden.
+
+### 7.1 Automatischer Personenbestand im Kopf
+
+Nur bewusst registrierte Personen kommen für den Offline-Bestand infrage. Das Smartphone verwaltet vollständige Profile, Kontaktverknüpfungen und längerfristigen Beziehungskontext. Der Kopf erhält nur freigegebene Informationen für Wiedererkennung und vertraute lokale Reaktionen.
+
+Ein Begegnungszähler sowie die Aktualität der Begegnungen bestimmen das Speicher-Ranking. Eine zusammenhängende Begegnung zählt einmal, nicht jedes Kamerabild. Unsichere Identifikation zählt nicht als bestätigte Begegnung einer registrierten Person. Ranking und Zähler sind keine Bewertung von Menschen und bestimmen weder Beziehung noch Berechtigungen.
+
+Der Offline-Bestand darf anhand dieses Rankings automatisch aktualisiert werden. Bewusst angepinnte Personen haben Vorrang. Nicht angepinnte Einträge werden bei knapper Kapazität verdrängt; das Profil auf dem Smartphone bleibt dabei erhalten. Die App zeigt den Offline-Bestand und erlaubt bewusste Übersteuerung.
+
+Das Smartphone berechnet und bestätigt die Auswahl aus den zusammengeführten Begegnungsinformationen. Der Kopf kann Begegnungen mit bereits lokal verfügbaren registrierten Personen ohne Smartphone erfassen. Bei Wiederverbindung werden diese ohne Doppelzählung abgeglichen. Eine offline unbekannte Person wird nicht dauerhaft verfolgt, um sie später nachträglich einem Profil zuzuordnen.
+
+### 7.2 Abgleich, Löschung und Grenzen
+
+Jeder übertragene Personenbestand trägt einen nachvollziehbaren Versionsstand. Unterbrochene Übertragung darf keinen teilweise gültigen Bestand aktivieren. Freigegebene neue Daten werden erst nach vollständiger Prüfung übernommen; währenddessen bleibt der letzte gültige Bestand verfügbar.
+
+Entfernen aus dem Offline-Bestand und Löschen eines Profils sind getrennte Vorgänge. Profil-Löschung und Widerruf einer Datenfreigabe entfernen auch die entsprechende lokale Kopie und zugehörige Begegnungsdaten, sobald Robin erreichbar ist. Bis zur Bestätigung zeigt die App die Löschung am Kopf als ausstehend an. Alte Übertragungen dürfen gelöschte Einträge nicht wiederherstellen.
+
+Dauerhafte Erinnerungen entstehen bewusst oder nach einer ausdrücklich erlaubten Speicherregel. Das Smartphone verwaltet und plant sie; der Kopf führt nur ausdrücklich übertragene Erinnerungen aus. Persönlichkeit und lokale Erinnerungen bleiben an Benutzerentscheidungen und Sicherheitsregeln gebunden.
+
+Kapazität, Größe einzelner Profile, Abgrenzung einer Begegnung, Gewichtung von Häufigkeit und Aktualität, Mindestbedingungen für Aufnahme und Wechsel sowie Aufbewahrungsgrenzen der Zähler werden vor Implementierung festgelegt. Bei zu vielen angepinnten Personen wird ein Kapazitätskonflikt gemeldet; angepinnte Einträge werden nicht stillschweigend verdrängt.
 
 ## 8. Kommunikationswege und Robin Protocol
 
