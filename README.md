@@ -1,6 +1,6 @@
 # Pink Robin
 
-Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche. Das GitHub-Repository trägt derzeit den Namen **PinkRobin**.
+Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
 
 **Stand:** Konzept und Verzeichnisgerüst. Die unten genannten Anwendungen sind noch nicht implementiert.
 
