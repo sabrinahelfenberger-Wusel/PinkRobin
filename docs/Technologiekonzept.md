@@ -20,6 +20,7 @@ Dieses Dokument ergänzt [Systemarchitektur](Systemarchitektur.md) und [Robin Pr
 | Browser-Anbindung | Kleine typisierte Schnittstelle mit Angular-Service | Initialisierung, Eingaben, Aktionen und Rückmeldungen verbinden |
 | Simulationsadapter | TypeScript | Hardwareaktionen animieren und nachvollziehbare Ergebnisse liefern |
 | Roboter-Anbindung | C++ mit separaten Hardwareadaptern | Anzeige, Sensoren, Motoren, Audio und lokale Schutzfunktionen |
+| Webbereitstellung | Docker-Image mit statischem Webserver | Versionierte Angular- und WebAssembly-Dateien ausliefern |
 | Erweitertes Smartphone-Verhalten | Noch offen | Erweiterte Wahrnehmung, Gespräche und langfristige persönliche Daten |
 
 Emscripten unterstützt das Übersetzen nach WebAssembly und die Verbindung von C++ mit JavaScript. Angular-Komponenten bilden die Oberfläche; ein Service kapselt den Zugriff auf den geladenen Kern. Details zur Schnittstellenbindung werden beim ersten Prototyp ausgewählt.
@@ -143,7 +144,47 @@ Die öffentliche Demo verwendet ausschliesslich synthetische Personen und Beispi
 
 Vor tatsächlicher Aufteilung werden Lizenz, Veröffentlichungsumfang, Abhängigkeiten und Verteilung der Kernpakete festgelegt. Hosting und öffentliche Freischaltung werden als eigener Schritt behandelt.
 
-## 8. Erster Umsetzungsumfang und Nachweis
+## 8. Bereitstellung der Webseite mit Docker
+
+Docker wird als Bereitstellungsoption für Virtual Robin vorgesehen. Ein versioniertes Container-Image liefert die fertig gebaute Angular-Anwendung und die dazu passende WebAssembly-Ausgabe aus. Der C++-Kern läuft beim Besucher im Browser; der Container stellt die Dateien bereit.
+
+### 8.1 Build und Laufzeit
+
+Ein mehrstufiger Docker-Build trennt Erstellung und Betrieb:
+
+1. Den festgelegten Kernstand mit Emscripten nach WebAssembly übersetzen oder dessen geprüfte versionierte Ausgabe beziehen.
+2. Die Angular-Anwendung mit festgelegten Abhängigkeiten für die Produktion bauen.
+3. Nur freigegebene Webdateien und Webserver-Konfiguration in das Laufzeit-Image übernehmen.
+
+Das Laufzeit-Image benötigt weder C++-Compiler noch Emscripten oder Angular-Entwicklungsserver. Für die erste Version ist eine statische, im Browser ausgeführte Angular-Anwendung vorgesehen. Die konkrete Wahl des Webservers und der Basis-Images bleibt offen.
+
+### 8.2 Auslieferung und Betrieb
+
+Der Webserver muss Angular-Routen bei direktem Aufruf korrekt auf die Einstiegseite zurückführen. Fehlende statische Dateien dürfen dagegen keine HTML-Ersatzantwort erhalten. WebAssembly-Dateien werden mit passendem Inhaltstyp ausgeliefert.
+
+Versionierte Ressourcen dürfen zwischengespeichert werden; die Einstiegseite muss neue Releases zuverlässig auffindbar machen. Angular-Dateien, WebAssembly und Bindung müssen aus einem zusammenpassenden Release stammen.
+
+Für öffentliches Hosting werden Domain und HTTPS eingerichtet. Die TLS-Terminierung kann durch den Hostinganbieter oder einen Reverse Proxy erfolgen. Anbieter, Registry, Ports und konkrete Betriebsumgebung werden bei der Umsetzung ausgewählt.
+
+Das Image wird mit Releasekennung und Kernversion dokumentiert. Ein vorheriges Image bleibt für Rückkehr zu einem funktionsfähigen Stand verfügbar. Eine Gesundheitsprüfung des Webservers prüft die Auslieferung; die korrekte Kerninitialisierung wird zusätzlich durch einen Browsertest geprüft.
+
+Zugangsinformationen und private Daten gehören weder in das Image noch in ausgelieferte Dateien. Für die reine öffentliche Simulation sind keine produktiven Roboterschlüssel erforderlich.
+
+### 8.3 Bereitstellungsübersicht
+
+```mermaid
+flowchart LR
+    Core["Versionierter C++-Kern"] --> Build["Mehrstufiger Docker-Build"]
+    App["Angular-Websimulator"] --> Build
+    Build --> Image["Laufzeit-Image: Webserver und Webdateien"]
+    Image --> Host["Docker-Host"]
+    Host --> HTTPS["HTTPS-Zugang"]
+    HTTPS --> Browser["Browser / iPad: Angular und WebAssembly"]
+```
+
+Docker ist die Verpackung und Betriebsoption, nicht der öffentliche Hostingdienst selbst. Ein geeigneter Docker-Host ist für diesen Bereitstellungsweg erforderlich. Das Konzept allein veröffentlicht noch keine Webseite.
+
+## 9. Erster Umsetzungsumfang und Nachweis
 
 Der erste Prototyp umfasst:
 
@@ -156,15 +197,18 @@ Der erste Prototyp umfasst:
 
 Erst danach folgen Stationslicht, Stationsdrehung und weitere Wahrnehmungs- beziehungsweise Datenfunktionen. Eine öffentliche Portfolio-Version erklärt sichtbar, welche Funktionen real implementiert und welche simuliert sind.
 
-## 9. Offene Umsetzungsentscheidungen
+## 10. Offene Umsetzungsentscheidungen
 
 Offen bleiben Zielprozessor, C++-Standard, konkrete Toolchain-Versionen, Bindungsverfahren, internes Speichermodell, Paketverteilung, Lizenz, Hosting sowie unterstützte iPad-/Browserstände.
 
 Diese Details werden beim durchgängigen Prototyp festgelegt und überprüft. Die Kombination C++-Kern, WebAssembly und Angular ist die abgestimmte Technologierichtung.
 
-## 10. Technische Referenzen
+## 11. Technische Referenzen
 
 - [Emscripten: Building to WebAssembly](https://emscripten.org/docs/compiling/WebAssembly.html)
 - [Emscripten: Connecting C++ and JavaScript](https://emscripten.org/docs/porting/connecting_cpp_and_javascript/index.html)
 - [Angular: Components](https://angular.dev/guide/components)
 - [Angular: Creating and using services](https://angular.dev/guide/di/creating-and-using-services)
+
+- [Docker: Multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
+- [Angular: Deployment](https://angular.dev/tools/cli/deployment)
