@@ -236,6 +236,26 @@ Lokale Gesichtserkennung, Name, Stimme oder eine Personenreferenz allein erteile
 
 Die App macht erlaubte Nutzung, Kopf-Übertragung, Herkunft und Bestätigung sichtbar. Korrektur, Löschung und Freigabeänderung folgen den bereits beschriebenen Abgleichregeln. Grenzen für Umfang und Aufbewahrung der Profilfelder werden vor Umsetzung festgelegt.
 
+### 7.5 Themenliste und Filter vor der Speicherung
+
+Das Smartphone verwaltet pro bewusst registrierter Person eine begrenzte Themenliste. Nach personenspezifischer Freigabe der automatischen Speicherregel darf es Gespräche zu nicht sensiblen Themen zusammenfassen und bestehende Einträge aktualisieren.
+
+Ein Eintrag enthält Thema beziehungsweise Stichwort, kurze Notiz, Herkunft, letzte Erwähnung und die nötigen Freigabe- und Bestätigungsangaben. „Über Tomaten gesprochen“ ist ein Gesprächsthema; „baut Tomaten an“ setzt eine entsprechende ausdrückliche Mitteilung voraus. Themengewichtung und Aktualität unterstützen Auswahl und Begrenzung, nicht die Bewertung einer Person.
+
+Robin darf aus freigegebenen Einträgen eigene Gesprächseinstiege erzeugen. Die Kopf-Kopie enthält nur eine kleine erlaubte Auswahl und unterliegt denselben Regeln wie die vollständige Liste.
+
+Vor Speicherung wird ein inhaltlicher Filter angewendet. Gesundheit und Psyche sind ausgeschlossen, einschliesslich Diagnosen, Behandlung, Therapie, Symptomen und vermuteten Zuständen. Auch indirekte Notizen, Zusammenfassungen und persönliche Ableitungen werden geprüft. Bei unklarer Einordnung wird der betreffende Eintrag nicht übernommen.
+
+Die Prüfung erfolgt vor der dauerhaften Übernahme und erneut am erzeugten Zusammenfassungsergebnis. Eine nicht sensible Formulierung darf sensible Bedeutung nicht verbergen. Gemischte Inhalte dürfen nur übernommen werden, wenn eine eindeutig unbedenkliche Aussage abtrennbar ist; sonst wird die Notiz verworfen.
+
+Der Filter gilt für Themenlisten, gemeinsame Erinnerungen, Profilangaben, Offline-Kopien und weitere dauerhafte Ablagen personenbezogener Gesprächsinhalte. Ausdrückliche Bestätigung hebt den Ausschluss nicht auf. Auch Gesprächsarchive, Protokolle, Suchindizes und Sicherungen dürfen keinen Ersatzspeicher für ausgeschlossene Inhalte bilden.
+
+Im laufenden Gespräch bleibt die erforderliche temporäre Verarbeitung möglich. Nach Ende des begrenzten Verarbeitungskontexts werden entsprechende Daten verworfen; konkrete Fristen werden vor Umsetzung festgelegt. Eine kurzzeitige Übergabe an das Smartphone darf nicht zur dauerhaften Speicherung werden.
+
+Gefilterte Inhalte erzeugen weder dauerhafte Themengewichte noch Merkmale für Beziehungen oder Ranking. Der unabhängig gezählte bestätigte Kontakt darf weiterhin als Begegnung zählen; sein Gesprächsinhalt beeinflusst das Personen-Speicherranking nicht.
+
+Grenzen der Themenzahl, Alterung, Gewichtung und konkrete Filterprüfung bleiben umzusetzen und zu erproben. Bestehende Daten müssen vor Einführung dieses Filters geprüft und unzulässige Einträge samt abgeleiteten Kopien entfernt werden. Filterentscheidungen werden höchstens in datenarmen technischen Kennzahlen dokumentiert, ohne ausgeschlossene Inhalte oder personenbeziehbare sensible Kategorien zu protokollieren.
+
 ## 8. Kommunikationswege und Robin Protocol
 
 | Verbindung | Ausgetauschte Informationen |
