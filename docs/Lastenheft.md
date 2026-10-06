@@ -139,6 +139,18 @@ Die App muss aktuelle Erreichbarkeit von der zuletzt bestätigten Verbindung unt
 
 Die Suchfunktion muss im Lost Mode verfügbar bleiben, soweit Energie und sichere Betriebsbedingungen dies erlauben. Sie kann auch unabhängig vom Lost Mode genutzt werden. Ein Suchauftrag darf weder den Lost Mode beenden noch Ownership oder Zugriffsrechte verändern.
 
+### 7.5 Persönliche Daten und Offline-Bestand
+
+Das Smartphone muss der führende Speicher für registrierte Personen, längerfristigen Beziehungskontext, Persönlichkeit und Erinnerungen sein. Der Kopf muss einen begrenzten freigegebenen Offline-Bestand halten, damit Grundpersönlichkeit, lokale Wiedererkennung und ausdrücklich übertragene Erinnerungen ohne Smartphone verfügbar bleiben.
+
+Der Personenbestand im Kopf darf automatisch anhand bestätigter Begegnungshäufigkeit und Aktualität aktualisiert werden. Eine zusammenhängende Begegnung zählt einmal. Nur bewusst registrierte Personen dürfen aufgenommen werden; unsichere Identifikationen und unbekannte Personen dürfen keine dauerhaften Profile oder Begegnungshistorien erzeugen.
+
+Bewusst angepinnte Personen müssen Vorrang haben. Das Ranking darf ausschliesslich die Datenhaltung steuern und weder Personen bewerten noch Berechtigungen oder Beziehungen festlegen. Die App muss Bestand und bewusste Übersteuerung ermöglichen.
+
+Verdrängung aus dem Kopf darf das Smartphone-Profil nicht löschen. Eine bewusste Profil-Löschung muss dagegen auch lokale Kopien und zugehörige Begegnungsdaten entfernen. Bei nicht erreichbarem Kopf muss der noch ausstehende Abgleich erkennbar bleiben.
+
+Abgleich muss doppelte Begegnungszählung und Wiederherstellung gelöschter Profile verhindern. Umfang, Gewichtung, Kapazität und Datenlebensdauer müssen festgelegt werden. Persönliche Daten werden standardmässig nicht auf dem Server gespeichert; Sicherung benötigt eine separate bewusste Freigabe.
+
 ## 8. Ownership, Pairing und Lebenszyklus
 
 Robin muss eine eindeutige Zuordnung zu einem berechtigten Besitzer unterstützen. Ersteinrichtung und Pairing mit der Companion-App müssen bewusst erfolgen und unbefugte Übernahme verhindern.
