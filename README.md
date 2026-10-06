@@ -40,7 +40,7 @@ Die Ordner sind zunächst im bestehenden privaten Repository angelegt. Die gepla
 - [Systemarchitektur](docs/Systemarchitektur.md)
 - [Technologiekonzept](docs/Technologiekonzept.md)
 - [Robin Protocol](docs/Robin-Protocol.md)
-- [Robin Principles](docs/Robin-Principles.md)
+- [Robin Principles – Privatsphäre & Ethik](docs/Robin-Principles.md)
 - [Architekturübersicht der Verzeichnisse](docs/architecture/README.md)
 - [API-Dokumentation](docs/api/README.md)
 - [Entscheidungsprotokolle](docs/decisions/README.md)
