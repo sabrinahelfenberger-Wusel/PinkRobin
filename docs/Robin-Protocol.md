@@ -761,6 +761,28 @@ Virtual Robin prüft Profile mit fehlenden optionalen Feldern, erlaubte und uner
 
 Weitere Fälle sind eine unbestätigte Gesprächsvermutung, nicht freigegebene Kontaktverknüpfung oder Referenzaufnahme, gemeinsame Erinnerung mit unterschiedlichen Rechten und ein erkanntes Gesicht ohne Berechtigung zur Profiländerung.
 
+### 11.29 Themenaktualisierung und ausgeschlossene Inhalte
+
+Themenaktualisierung ist ein eigener berechtigter Datenvorgang für bewusst registrierte Personen mit freigegebener automatischer Speicherregel. Er verwendet Personenreferenz, erwarteten Profil-/Listenstand und eindeutige Änderungskennung, damit Wiederholung keine zusätzlichen Erwähnungen oder Gewichte erzeugt.
+
+Erlaubte Einträge beschreiben Thema, kurze Notiz, Herkunft, letzte Erwähnung, Bestätigungsstatus und Nutzungsfreigabe. Eine Gesprächsthemennennung und eine bestätigte persönliche Tatsache müssen unterscheidbar sein. Das Smartphone verwaltet den vollständigen Stand; Kopf-Übertragung verwendet den begrenzten Bestandsabgleich.
+
+Gesundheit und Psyche werden vor dauerhafter Übernahme ausgeschlossen. Die Prüfung betrifft Eingaben, Zusammenfassungen, indirekte Formulierungen und abgeleitete Angaben. Unklare Einträge werden nicht gespeichert. Eine Bestätigung des Benutzers oder eine andere Nachricht darf diesen Ausschluss nicht umgehen.
+
+Die gleiche Regel gilt für Themenaktualisierung, allgemeine Profiländerung, gemeinsame Erinnerungen, Offline-Abgleich und Sicherung. Ausgeschlossene Gesprächsinhalte dürfen nicht als freier Zusatztext in Status, Ergebnis, Fehler oder Diagnose erscheinen.
+
+Der laufende Gesprächskontext darf notwendige Inhalte temporär verarbeiten. Medienreferenzen und Transkripte behalten ihre begrenzte Lebensdauer; sie bilden kein dauerhaftes Gesprächsarchiv. Eine dauerhafte Übernahme darf nur nach erfolgreicher Filterprüfung erfolgen.
+
+Abschlussmeldungen unterscheiden übernommene zulässige Änderungen von nicht übernommenen Inhalten, ohne sensible Details in Fehlern oder Protokollen zu wiederholen. Ablehnung darf keine vorbereitete dauerhafte Kopie zurücklassen. Filterfehler oder Nichtverfügbarkeit führen zum Aussetzen der Speicherung, nicht zu ungeprüfter Übernahme.
+
+### 11.30 Prüfung der Themenliste
+
+Virtual Robin prüft automatische Aktualisierung nach Freigabe, fehlende Freigabe, Themen- versus Tatsachenangabe, wiederholte Änderung ohne Doppelgewichtung, begrenzte Kopf-Auswahl, Korrektur, Löschung und erlaubten Gesprächseinstieg.
+
+Weitere Fälle sind explizite Gesundheits- und psychische Angaben, indirekte Umschreibungen, sensible Zusammenfassungen, gemischte Inhalte, unklare Einordnung, ausgeschlossene Inhalte über alternative Profil- oder Erinnerungsnachrichten und Ausfall des Filters.
+
+Die Prüfung muss auch temporäre Verarbeitung ohne dauerhafte Übernahme, inhaltsarme Fehlermeldungen und fehlende ausgeschlossene Inhalte in Diagnose, Sicherung und Offline-Bestand berücksichtigen. Konkrete Testdaten und Qualitätskriterien des Filters werden vor Implementierung festgelegt.
+
 ## 12. Prüfung des ersten Protokollumfangs
 
 Virtual Robin soll mindestens folgende Szenarien reproduzierbar abbilden:
