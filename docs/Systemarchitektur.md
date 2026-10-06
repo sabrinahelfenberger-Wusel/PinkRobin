@@ -225,6 +225,18 @@ Ein berechtigter Benutzer fordert Videoübertragung an. Robin prüft die definie
 
 Die lokale Updatekoordination prüft Paket, Kompatibilität, Energie und Betriebszustand. Robin nimmt einen sicheren Zustand ein, führt das Update aus und bestätigt anschliessend seine Betriebsfähigkeit. Bei Fehlern bleibt ein funktionsfähiger Stand oder Wiederherstellungsmodus verfügbar.
 
+### 9.6 Robin finden
+
+„Robin finden“ ist eine lokale Suchfunktion zwischen Robin und seinem gekoppelten Smartphone. Robin stellt ein energiesparendes, datenschutzgerechtes Suchsignal bereit. Die App erkennt das eigene Gerät und unterscheidet bestätigte Erreichbarkeit, letzte Verbindung und aktuell unbekannten Zustand.
+
+Das Suchsignal allein erlaubt keine Steuerung. Nach geschütztem Verbindungsaufbau prüft der Robin-Kern einen Suchhilfeauftrag und koordiniert eine zeitlich begrenzte Ton- oder Lichtausgabe. Ohne aktive Smartphone-Verbindung muss Robin im Ruhe- und Lost Mode weiterhin auffindbar bleiben, soweit seine Energiereserven dies erlauben.
+
+Robins Lautsprecher und Gesichtsanzeige sind mögliche Suchhilfen; weitere lokale Anzeigen werden nur bei gemeldeter Fähigkeit verwendet. Der Leuchtring der Homestation kann ergänzen, ersetzt aber keine Suchhilfe an einem Robin ausserhalb der Station.
+
+Die Suche benötigt weder Internet noch fremde Geräte oder ein Suchnetzwerk. Genaue Entfernung, Richtung und Kartenortung sind nicht festgelegt. Die App kann lokal den Zeitpunkt der letzten bestätigten Verbindung halten; dies ist kein aktueller Standortnachweis.
+
+Suchsignal, Energieprofil, erreichbare Reichweite und geschützte Geräteerkennung müssen vor Umsetzung konkretisiert werden. Der Suchauftrag hebt den Lost Mode nicht auf.
+
 ## 10. Betrieb bei Ausfällen
 
 | Ausfall | Erwartetes Verhalten |
