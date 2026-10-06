@@ -8,6 +8,8 @@ Dieses Dokument beschreibt die fachlichen Komponenten, ihre Zuständigkeiten, Da
 
 Massgeblich sind das [Lastenheft](Lastenheft.md) und die [Robin Principles](Robin-Principles.md). Die Architektur bevorzugt lokale Verarbeitung, erhält wesentliche Offline-Funktionen und ordnet Persönlichkeit den Sicherheitsregeln, Datenschutzvorgaben und bewussten Benutzerentscheidungen unter.
 
+Die abgestimmte Technologierichtung mit C++-Kern, WebAssembly und Angular-Websimulator ist im [Technologiekonzept](Technologiekonzept.md) beschrieben. Dieses Dokument beschreibt weiterhin die fachlichen Verantwortlichkeiten.
+
 Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Das Grundverhalten läuft auf dem Prozessor im Kopf; erweitertes Verhalten läuft auf dem Smartphone. Die weitere Aufteilung der Softwarekomponenten und ihrer Daten wird nachfolgend konkretisiert. Konkrete Prozessoren, Betriebssysteme, Frameworks, Sensorchips und Nachrichtenformate bleiben offen.
 
 ## 2. Ausgangspunkt des Entwurfs
