@@ -719,6 +719,28 @@ Virtual Robin prüft fehlende Freigabe, abgelaufene Medienreferenz, fehlende Kam
 
 Für TTS werden fehlende Sprache/Stimme, Synthesefehler, belegte Ausgabe, erfolgreicher Syntheseabschluss ohne Wiedergabe, unterbrochene Wiedergabe und doppelte Aufträge ohne doppelte Sprachausgabe geprüft. Reale Erkennungsqualität, Datenschutz der Medienübertragung und Audioverhalten werden mit der späteren Umsetzung erprobt.
 
+### 11.25 Personenbestand und Begegnungsabgleich
+
+Das Smartphone ist der führende Speicher langfristiger persönlicher Informationen. Ein freigegebener, begrenzter Personenbestand wird an den Kopf übertragen. Seine Auswahl darf automatisch anhand bestätigter Begegnungshäufigkeit, Aktualität und bewusster Anheftung erfolgen.
+
+Diese Daten werden über einen eigenen berechtigten Abgleich übertragen, nicht in allgemeinen Statusmeldungen. Ein Eintrag enthält eine registrierte Personenreferenz, Profilversion, freigegebenen Umfang und die für lokale Wiedererkennung beziehungsweise Reaktion benötigten Informationen. Er verleiht keine Geräte- oder Steuerrechte.
+
+Für den Abgleich werden Bestandversion, Bezug auf den bestätigten Vorgängerstand, begrenzter Umfang und Übernahmebestätigung vorgesehen. Der Kopf prüft Freigaben und Kapazität und aktiviert einen neuen Bestand erst vollständig. Nach Unterbrechung wird der tatsächlich bestätigte Stand abgefragt.
+
+Eine lokal bestätigte Begegnung erhält eine eindeutige Ereigniskennung und verweist nur auf eine bereits registrierte Person. Wiederholt übertragene Begegnungen werden nicht mehrfach gezählt. Uhrabweichung, Neustart, Ereignisgrenzen und Speicherlimit müssen vor Umsetzung konkretisiert werden.
+
+Das Smartphone berechnet aus abgeglichenen Informationen das Speicher-Ranking. Unbekannte oder unsicher erkannte Personen werden nicht dauerhaft für späteren Profilabgleich protokolliert.
+
+Entfernung aus dem Offline-Bestand, Profil-Löschung und Widerruf einer Freigabe sind unterschiedliche Operationen. Löschstände müssen auch nach Wiederverbindung Vorrang vor älteren Bestandsübertragungen haben. Der genaue Konflikt- und Wiederherstellungsvertrag wird vor Implementierung festgelegt.
+
+Die App darf Löschung am Kopf erst nach dessen Bestätigung als wirksam melden. Im Lost Mode werden diese persönlichen Daten nicht durch Such- oder allgemeine Statusrechte zugänglich.
+
+### 11.26 Prüfung der Datenhaltung
+
+Virtual Robin prüft automatische Auswahl nur registrierter Personen, Begegnung statt Kamerabildzählung, unsichere Identifikation, Vorrang angepinnter Einträge, Kapazitätskonflikte, Verdrängung ohne Profillöschung und bewusst übersteuerte Auswahl.
+
+Weitere Szenarien sind Offline-Begegnungen, doppelte Übertragung ohne Doppelzählung, unterbrochene Bestandsübernahme, ausstehende Löschung und verspäteter Altbestand nach Löschung. Die genaue Rankingformel und Datengrenzen bleiben offen.
+
 ## 12. Prüfung des ersten Protokollumfangs
 
 Virtual Robin soll mindestens folgende Szenarien reproduzierbar abbilden:
