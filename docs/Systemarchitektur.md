@@ -8,7 +8,7 @@ Dieses Dokument beschreibt die fachlichen Komponenten, ihre Zuständigkeiten, Da
 
 Massgeblich sind das [Lastenheft](Lastenheft.md) und die [Robin Principles](Robin-Principles.md). Die Architektur bevorzugt lokale Verarbeitung, erhält wesentliche Offline-Funktionen und ordnet Persönlichkeit den Sicherheitsregeln, Datenschutzvorgaben und bewussten Benutzerentscheidungen unter.
 
-Die abgestimmte Technologierichtung mit C++-Kern, WebAssembly und Angular-Websimulator ist im [Technologiekonzept](Technologiekonzept.md) beschrieben. Dieses Dokument beschreibt weiterhin die fachlichen Verantwortlichkeiten.
+Die abgestimmte Technologierichtung mit portablem C++-Kern, Angular-Websimulator und serverseitiger Ausführung hinter ASP.NET Core ist im [Technologiekonzept](Technologiekonzept.md) beschrieben. Dieses Dokument beschreibt weiterhin die fachlichen Verantwortlichkeiten.
 
 Die hier beschriebenen Komponenten sind logische Verantwortlichkeiten. Das Grundverhalten läuft auf dem Prozessor im Kopf; erweitertes Verhalten läuft auf dem Smartphone. Die weitere Aufteilung der Softwarekomponenten und ihrer Daten wird nachfolgend konkretisiert. Konkrete Prozessoren, Betriebssysteme, Frameworks, Sensorchips und Nachrichtenformate bleiben offen.
 
@@ -34,7 +34,7 @@ Diese Aufteilung ist der Arbeitsstand dieses Entwurfs. Die offenen Entscheidunge
 | Homestation (Ladestation) | Sicherer Ladebetrieb, eigener Drehantrieb für Robin (360°) und Leuchtring | Für Laden und Stationsfunktionen erforderlich; mobiler Grundbetrieb bleibt unabhängig |
 | Smartphone / Companion-App | Erweitertes Verhalten, Einrichtung, Verwaltung und Benutzerinteraktion | Für erweitertes Verhalten erforderlich; Grundverhalten bleibt unabhängig |
 | Weboberfläche | Berechtigte Fernbedienung und Verwaltung | Abhängig vom angebotenen lokalen oder externen Zugang |
-| Server | Geräteverwaltung, Updates und optionale Fernfunktionen | Ergänzend |
+| Server | Geräteverwaltung, Updates, optionale Fernfunktionen und serverseitiger Virtual-Robin-Core | Ergänzend für den Roboter; erforderlich für die Websimulation |
 | Externe KI-Dienste | Komplexe Verarbeitung und Vorschläge | Ergänzend |
 | Virtual Robin / Smartphone-Simulator | Simulation von Fähigkeiten und Testszenarien | Entwicklungsumgebung |
 
@@ -153,7 +153,7 @@ Ob sie lokal auf Robin oder über den Server bereitgestellt wird, bleibt offen. 
 
 ### 6.3 Server und externe KI
 
-Der Server stellt Geräteverwaltung, Updatebereitstellung, Konfigurationsdienste, eine Programmierschnittstelle und geschützte Fernfunktionen bereit.
+Der Server stellt Geräteverwaltung, Updatebereitstellung, Konfigurationsdienste, eine Programmierschnittstelle und geschützte Fernfunktionen bereit. Für die öffentliche Websimulation führt er zusätzlich den nativen Robin-Kern in getrennten Demo-Sitzungen aus. Diese Simulation hat keinen Zugriff auf reale Geräte oder persönliche Produktivdaten.
 
 Externe KI wird für klar abgegrenzte Aufgaben aufgerufen. Nur die dafür notwendigen und freigegebenen Daten werden übertragen. Ergebnisse besitzen keine unmittelbare Befugnis, Bewegungen, Registrierung, Livestreams oder dauerhafte Datenspeicherung auszulösen.
 
@@ -322,7 +322,7 @@ Suchsignal, Energieprofil, erreichbare Reichweite und geschützte Geräteerkennu
 
 | Ausfall | Erwartetes Verhalten |
 | --- | --- |
-| Internet oder Server nicht verfügbar | Lokale Interaktion, Sicherheit und Energiemanagement bleiben verfügbar; externe Aufgaben melden Einschränkung |
+| Internet oder Server nicht verfügbar | Beim physischen Robin bleiben lokale Interaktion, Sicherheit und Energiemanagement verfügbar; die serverseitige Websimulation meldet Nichtverfügbarkeit |
 | Smartphone nicht verbunden oder erweitertes Verhalten nicht verfügbar | Grundverhalten im Kopf bleibt erhalten; laufende Smartphone-Aufträge werden definiert beendet oder eingeschränkt; veraltete Aufträge werden nicht nachträglich ausgeführt |
 | Homestation nicht verfügbar | Mobiler Grundbetrieb bleibt erhalten; Laden, Stationslicht und stationsgebundene Drehfähigkeit melden Nichtverfügbarkeit |
 | Sensor oder Modul ausgefallen | Fähigkeit wird eingeschränkt; betroffene Aktionen werden begrenzt oder gestoppt |
@@ -333,7 +333,9 @@ Suchsignal, Energieprofil, erreichbare Reichweite und geschützte Geräteerkennu
 
 ## 11. Virtual Robin und Diagnose
 
-Virtual Robin führt möglichst denselben Kern aus wie der physische Roboter. Simulierte Adapter ersetzen Wahrnehmung, Ausdruck, Bewegung und Energieversorgung. Testwerkzeuge können Ereignisse, Fehler und Verbindungszustände reproduzierbar erzeugen.
+Virtual Robin verwendet denselben portablen C++-Quellcode wie der physische Roboter. Für die öffentliche Webdemo läuft der Kern nativ auf dem Server hinter ASP.NET Core; Angular übernimmt Darstellung und simulierte Ein-/Ausgaben. Der Core wird nicht als WebAssembly an den Browser ausgeliefert. Die Webdemo benötigt eine Serververbindung; der physische Roboter behält seinen lokalen Offline-Grundbetrieb.
+
+Jede Demo-Sitzung hält getrennten Zustand und begrenzte Ressourcen. Bei Verbindungsverlust, Sitzungsablauf oder Serverneustart werden alte Aufträge nicht blind wiederholt; vor Fortsetzung wird der Serverstand abgeglichen. Native Bibliothek oder eigener C++-Prozess bleibt eine Umsetzungsentscheidung. Simulierte Adapter ersetzen Wahrnehmung, Ausdruck, Bewegung und Energieversorgung. Testwerkzeuge können Ereignisse, Fehler und Verbindungszustände reproduzierbar erzeugen.
 
 Ein Smartphone-Simulator kann seine vorhandenen Fähigkeiten anbieten und fehlende Robotermodule simulieren. Die genaue Nutzung von Kamera, Audio und Bewegungssensorik wird später festgelegt.
 
