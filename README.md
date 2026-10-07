@@ -10,9 +10,9 @@ Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular
 
 | Verzeichnis | Aufgabe / vorgesehene Technologien |
 | --- | --- |
-| [core/](core/) | Portabler C++-Verhaltenskern; native Tests und WebAssembly-Bindung |
+| [core/](core/) | Portabler C++-Verhaltenskern; native Tests und serverseitige Anbindung |
 | [firmware/](firmware/) | Hardwareadapter und Roboter-Firmware; ESP32-S3, C/C++, ESP-IDF und FreeRTOS als vorgesehener Einstieg |
-| [backend/](backend/) | ASP.NET Core / C# REST API, Entity Framework Core und SQL |
+| [backend/](backend/) | ASP.NET Core / C# API, Demo-Sitzungen und nativer C++-Core; später EF Core / SQL |
 | [web/](web/) | Angular, TypeScript und HTML/CSS; Websimulator und spätere Status-/Konfigurationsoberfläche |
 | [mobile/](mobile/) | Companion-App mit .NET MAUI, C# und MVVM |
 | [docs/](docs/) | Anforderungen, Systemarchitektur, Protokoll und Technologieentscheidungen |
@@ -28,11 +28,17 @@ Pink Robin soll Emotionen und Zustände nicht nur sprachlich, sondern auch visue
 
 ## Architektur und Umsetzung
 
-Der portable C++-Kern wird von Firmware und Websimulator gemeinsam verwendet. Im Browser wird er über WebAssembly angebunden. Das Backend ergänzt API und Persistenz; es ist keine Voraussetzung für den lokalen Websimulator. Die MAUI-App ist ein eigener Client.
+Der portable C++-Core läuft auf dem Roboter lokal und für Virtual Robin nativ auf dem Server hinter ASP.NET Core. Angular stellt den Simulator dar und kommuniziert über HTTPS sowie den vorgesehenen SignalR-Echtzeitkanal. Bibliothek oder eigener C++-Prozess bleibt als Backend-Anbindung offen. Der Websimulator benötigt eine Serververbindung; der physische Grundbetrieb bleibt offline verfügbar.
 
-Zuerst bleibt der im [Technologiekonzept](docs/Technologiekonzept.md) beschriebene Kern-/Simulator-Prototyp vorgesehen. Als erster späterer Full-Stack-Nachweis bietet sich an: Gerätestatus empfangen, speichern und in Angular anzeigen. Simulierte Daten werden als solche gekennzeichnet.
+Die statische Startseite ist bereits unter https://pinkrobin.wanderwusel.ch über einen NGINX-Container und Synology-Reverse-Proxy mit HTTPS erreichbar. Angular, Backend, Core und Pipeline sind noch nicht implementiert.
 
-Die Ordner sind zunächst im bestehenden privaten Repository angelegt. Die geplante spätere Auslagerung von Kern und Simulator in eigene öffentliche Repositories bleibt eine separate Aufgabe.
+Der erste Prototyp verbindet einen kleinen C++-Core, getrennte Backend-Sitzungen und Angular-Gesicht mit Berührungsreaktion und Nickauftrag. Details: [Technologiekonzept](docs/Technologiekonzept.md).
+
+## Repository und CI/CD
+
+PinkRobin ist die zentrale Entwicklungsbasis; Ziel ist ein privates Repository. Der tatsächliche Sichtbarkeitsstatus muss separat in GitHub eingestellt werden. Der Core bleibt privat. Ein weiteres öffentliches Repository erhält nur ausdrücklich freigegebene Inhalte; es wird nicht automatisch aus main gespiegelt.
+
+CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionierte Frontend-/Backend-Releases bereitstellen. Die Synology soll freigegebene Releases mit begrenzten Leserechten abholen. Webseitenbereitstellung und öffentliche Quellcode-Freigabe sind getrennte Abläufe.
 
 ## Dokumentation
 
