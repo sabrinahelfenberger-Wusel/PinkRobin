@@ -1,9 +1,11 @@
 # Robin-Backend
 
-Vorgesehen: C# / ASP.NET Core Web API, REST-Schnittstellen, Entity Framework Core und SQL-Persistenz. Hier liegen künftig Backend-Code und komponentennahe Tests.
+Vorgesehen: C# / ASP.NET Core Web API für den serverseitigen Virtual-Robin-Core. Das Backend verwaltet getrennte Demo-Sitzungen, validiert Aufträge und Rückmeldungen und bindet den nativen C++-Core an. Native Bibliothek mit C-ABI/P\u002fInvoke oder eigener Prozess bleibt offen.
 
-Erster möglicher Umfang: Gerätestatus mit Akkustand und letztem Kontakt entgegennehmen, validieren, speichern und für die Angular-Oberfläche bereitstellen. API-Verträge werden unter [docs/api/](../docs/api/) dokumentiert.
+Angular kommuniziert über HTTPS; SignalR ist für Zustände und Aktionen in Echtzeit vorgesehen. Bei Verbindungsverlust oder Sitzungsablauf werden alte Aufträge nicht automatisch wiederholt. Sitzung, Zeit, Speicher und Nachrichten werden begrenzt.
 
-Das Backend ergänzt den gemeinsamen C++-Kern und ist keine Voraussetzung für den lokalen Websimulator. Es legt die noch offene Umsetzung des erweiterten Smartphone-Verhaltens nicht fest.
+Spätere Dienste können Geräteverwaltung, Updates und EF-Core-/SQL-Persistenz ergänzen. Der erste Simulationsprototyp benötigt keine dauerhaften persönlichen Daten. API-Verträge liegen unter [docs/api/](../docs/api/).
 
-Stand: Verzeichnisgerüst; noch keine API oder Datenbank implementiert.
+Das Backend ist für den Websimulator erforderlich, nicht für das lokale Grundverhalten des physischen Roboters. Die Companion-App behält ihre eigenen Verantwortlichkeiten.
+
+Stand: Verzeichnisgerüst; noch keine API, Core-Anbindung oder Datenbank implementiert. Siehe [Technologiekonzept](../docs/Technologiekonzept.md).
