@@ -1,7 +1,9 @@
 # Robin-Weboberfläche
 
-Vorgesehen: Angular, TypeScript und HTML/CSS. Der Websimulator umfasst Gesicht, Bedienung, simulierte Sensoren und Diagnose. Ein Angular-Service kapselt den gemeinsamen C++-Kern in WebAssembly; Simulationsadapter werden in TypeScript umgesetzt.
+Vorgesehen: Angular, TypeScript und HTML/CSS für Gesicht, Bedienung, simulierte Sensoren und Diagnose. Ein typisierter Angular-Service verbindet die Oberfläche über HTTPS und den vorgesehenen SignalR-Echtzeitkanal mit dem [ASP.NET-Core-Backend](../backend/).
 
-Später ergänzt eine REST-Anbindung die Status- und Konfigurationsoberfläche für das [Backend](../backend/). Der lokale Simulator bleibt ohne Backend nutzbar. Die Docker-Bereitstellung ist im [Technologiekonzept](../docs/Technologiekonzept.md) beschrieben.
+Der C++-Core läuft nativ auf dem Server; Angular enthält weder Core-Quellcode noch dessen WebAssembly-Ausgabe. TypeScript-Adapter zeigen freigegebene simulierte Aktionen und melden zugeordnete Ergebnisse zurück.
 
-Stand: Verzeichnisgerüst; noch kein Angular-Projekt initialisiert.
+Der Simulator benötigt eine Serververbindung. Verbindungsverlust, Wiederverbindung und Sitzungsablauf werden sichtbar behandelt; vor neuen Aufträgen erfolgt ein Zustandsabgleich. Die erste Demo verwendet synthetische Daten ohne Kamera-/Mikrofonzugriff.
+
+Stand: Verzeichnisgerüst; noch kein Angular-Projekt initialisiert. Die statische Startseite ist bereits auf der Synology erreichbar. Docker und CI/CD: [Technologiekonzept](../docs/Technologiekonzept.md).
