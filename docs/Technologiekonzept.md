@@ -1,214 +1,178 @@
-# Technologiekonzept: gemeinsamer Robin-Kern und Websimulator
+# Technologiekonzept: serverseitiger Robin-Kern und Websimulator
 
-Status: abgestimmte Technologierichtung mit noch offenen Umsetzungsdetails. Die beschriebenen Komponenten sind noch nicht implementiert.
+Status: abgestimmte Zielarchitektur. Der C++-Kern, Angular-Websimulator, ASP.NET-Core-Backend und CI/CD sind noch nicht implementiert. Die statische Startseite ist bereits über NGINX, Synology-Reverse-Proxy und HTTPS unter https://pinkrobin.wanderwusel.ch erreichbar.
 
 ## 1. Ziel und Einordnung
 
-Robin erhält einen gemeinsamen Grundverhaltenskern in C++. Der Websimulator verwendet Angular mit TypeScript und lädt eine WebAssembly-Ausgabe dieses Kerns. Für den späteren Roboter wird derselbe portable C++-Quellcode mit einer passenden Hardwareanbindung gebaut.
+Robin erhält einen portablen Grundverhaltenskern in C++. Auf dem physischen Roboter läuft er lokal; Virtual Robin betreibt denselben fachlichen Quellcode nativ auf dem Server hinter ASP.NET Core. Angular stellt Gesicht, Bedienung, simulierte Wahrnehmung und Diagnose im Browser dar.
 
-Der Websimulator soll im Browser, auch auf dem iPad, nutzbar sein und als öffentliche Portfolio-Demo dienen. Die tatsächliche iPad-Kompatibilität wird mit dem ersten durchgängigen Prototyp geprüft.
+Diese Entscheidung ersetzt den bisherigen WebAssembly-/Emscripten-Ansatz für die öffentliche Webdemo. Weder C++-Quelldateien noch eine kompilierte Core-Binärdatei werden an Besucher ausgeliefert. Frontend-Dateien und über die API übermittelte Ergebnisse bleiben öffentlich zugänglich.
 
-Dieses Dokument ergänzt [Systemarchitektur](Systemarchitektur.md) und [Robin Protocol](Robin-Protocol.md). Das [Lastenheft](Lastenheft.md) bleibt technologieunabhängig. Die [Robin Principles](Robin-Principles.md) gelten auch für Simulation und öffentliche Demo.
+Die Serverabhängigkeit gilt für Virtual Robin, nicht für den physischen Roboter. Dessen Grundverhalten, Sicherheit und Energiemanagement bleiben offline verfügbar. Die Verantwortung der Companion-App für erweitertes Verhalten und persönliche Langzeitdaten bleibt erhalten.
+
+Grundlagen: [Systemarchitektur](Systemarchitektur.md), [Robin Protocol](Robin-Protocol.md), [Lastenheft](Lastenheft.md) und [Robin Principles](Robin-Principles.md).
 
 ## 2. Technologierichtung
 
 | Bereich | Entscheidung | Verantwortung |
 | --- | --- | --- |
-| Gemeinsamer Grundverhaltenskern | C++ | Zustände, grundlegende Reaktionen, fachliche Auftragsprüfung und Aktionskoordination |
-| Browser-Ausgabe des Kerns | WebAssembly über Emscripten | Portablen Kern im Browser ausführen |
-| Websimulator | Angular und TypeScript, HTML/CSS | Gesicht, Bedienung, simulierte Sensoren und Diagnoseansicht |
-| Browser-Anbindung | Kleine typisierte Schnittstelle mit Angular-Service | Initialisierung, Eingaben, Aktionen und Rückmeldungen verbinden |
-| Simulationsadapter | TypeScript | Hardwareaktionen animieren und nachvollziehbare Ergebnisse liefern |
-| Roboter-Anbindung | C++ mit separaten Hardwareadaptern | Anzeige, Sensoren, Motoren, Audio und lokale Schutzfunktionen |
-| Webbereitstellung | Docker-Image mit statischem Webserver | Versionierte Angular- und WebAssembly-Dateien ausliefern |
-| Erweitertes Smartphone-Verhalten | Noch offen | Erweiterte Wahrnehmung, Gespräche und langfristige persönliche Daten |
+| Gemeinsamer Core | Portables C++ | Zustände, Reaktionen, fachliche Auftragsprüfung und Aktionskoordination |
+| Webfrontend | Angular, TypeScript, HTML/CSS | Darstellung, Eingaben und simulierte Ausgaben |
+| Backend | ASP.NET Core / C# | API, Sitzungsverwaltung, Validierung und serverseitige Core-Anbindung |
+| Browserkommunikation | HTTPS-API; SignalR als vorgesehener Echtzeitkanal | Aufträge, Zustände und Rückmeldungen |
+| Native Anbindung | C-ABI mit P/Invoke oder eigener C++-Prozess | Private serverseitige Core-Ausführung |
+| Physischer Robin | Nativer C++-Build mit Hardwareadaptern | Lokales Verhalten und lokale Schutzfunktionen |
+| Companion-App | .NET MAUI / C#, MVVM | Einrichtung, Verwaltung und erweitertes Verhalten |
+| Persistenz | EF Core / SQL für spätere Backend-Daten | Erst bei tatsächlich benötigter dauerhafter Datenhaltung |
+| Bereitstellung | Separate Frontend- und Backend-Container auf Synology DS1517+ | Statische Dateien und serverseitige Ausführung |
+| CI/CD | GitHub Actions im Hauptrepository PinkRobin, Branch main | Prüfen, bauen und versionierte Releases bereitstellen |
 
-Emscripten unterstützt das Übersetzen nach WebAssembly und die Verbindung von C++ mit JavaScript. Angular-Komponenten bilden die Oberfläche; ein Service kapselt den Zugriff auf den geladenen Kern. Details zur Schnittstellenbindung werden beim ersten Prototyp ausgewählt.
+Toolchain- und Runtime-Versionen werden bei der Umsetzung festgelegt. Linux-x64, Docker-Engine und gewähltes Runtime-Image müssen auf DSM 7.1.1 praktisch geprüft werden. Zusätzlicher RAM ersetzt keine Last- und Kompatibilitätsprüfung.
 
 ## 3. Komponenten und gemeinsame Kernlogik
 
 ```mermaid
 flowchart TB
-    Source["Gemeinsamer C++-Kern: Quellcode"]
-    Source --> Wasm["Emscripten-Build: WebAssembly"]
-    Source --> Native["Build fuer den Prozessor im Kopf"]
-
-    subgraph Browser["Virtual Robin im Browser / iPad"]
-        UI["Angular: Gesicht, Bedienung und Diagnose"]
-        Bridge["TypeScript-Service und WebAssembly-Bindung"]
-        Wasm
-        Sim["Simulationsadapter"]
-        UI -->|"Ereignisse und Auftraege"| Bridge
-        Bridge --> Wasm
-        Wasm -->|"Aktionsanforderungen"| Bridge
-        Bridge --> Sim
-        Sim -->|"Ergebnisse"| Bridge
-        Bridge -->|"Bestaetigter Zustand"| UI
+    Source["Privater portabler C++-Quellcode"]
+    Source --> ServerCore["Nativer Server-Core"]
+    Source --> RobotCore["Nativer Core auf dem Roboter"]
+    subgraph Browser["Browser / iPad"]
+        UI["Angular: Gesicht, Eingaben und Diagnose"]
+        Sim["TypeScript-Simulationsadapter"]
+        UI <--> Sim
     end
-
-    subgraph Robot["Physischer Robin"]
-        Native
-        Hardware["Hardwareadapter und lokale Schutzfunktionen"]
-        Native -->|"Aktionen"| Hardware
-        Hardware -->|"Beobachtungen und Ergebnisse"| Native
+    subgraph Server["Synology: Backend"]
+        API["ASP.NET Core: API und Sitzungen"]
+        Binding["Native Anbindung"]
+        ServerCore
+        API <--> Binding
+        Binding <--> ServerCore
     end
+    UI <-->|"HTTPS / Echtzeitnachrichten"| API
+    Sim <-->|"Freigegebene Aktionen / simulierte Ergebnisse"| API
+    RobotCore <--> Hardware["Hardwareadapter und lokale Schutzfunktionen"]
 ```
 
-Die beiden Builds verwenden dieselbe fachliche Kernlogik, nicht dieselbe Binärdatei. Unterschiede der Umgebung liegen in Adaptern und dünnen Bindungen.
+Beide Builds verwenden dieselbe Kernlogik, nicht dieselbe Binärdatei. Der Core greift nicht direkt auf Netzwerk, Browser, Betriebssystem oder konkrete Hardware zu. Adapter liefern Ereignisse, Zeit und Ergebnisse.
 
-Der Kern greift nicht direkt auf Browseroberfläche, konkrete Motoren, Netzwerk oder ein bestimmtes Betriebssystem zu. Er empfängt Ereignisse und Aufträge und erzeugt Aktionen, Zustandsänderungen und Ergebnisse.
+Es entsteht keine unabhängige C#- oder TypeScript-Nachimplementierung des Grundverhaltens. Smartphone-Verhalten kann als eigener Auftraggeber simuliert werden.
 
-Der Simulator kann Smartphone-Verhalten als separaten Auftraggeber nachbilden. Dieses erweiterte Verhalten gehört nicht allein dadurch zum C++-Grundverhaltenskern, dass die Simulation auf einem iPad läuft.
+## 4. Native Anbindung an ASP.NET Core
 
-## 4. Grenze zwischen Kern und Umgebung
+Der Betriebsort Server ist beschlossen; Bibliothek oder eigener Prozess bleibt eine Umsetzungsentscheidung.
 
-| Richtung | Beispiel | Bedeutung |
+| Variante | Umsetzung | Konsequenz |
 | --- | --- | --- |
-| Umgebung → Kern | Berührung erkannt | Fachliches Wahrnehmungsereignis |
-| Umgebung → Kern | Nickauftrag eingegangen | Auftrag mit bereits zugeordneter Identität und Rechten |
-| Umgebung → Kern | Zeit fortgeschritten | Kontrollierbare Zeitbasis fuer Fristen und Abläufe |
-| Kern → Adapter | Begrenzte Nickbewegung ausführen | Freigegebene Aktion |
-| Adapter → Kern | Begonnen, beendet oder fehlgeschlagen | Tatsächlicher Ausführungsstatus |
-| Kern → Oberfläche | Neuer Zustand oder Erklärung | Darstellung des bestätigten Stands |
+| Native Bibliothek | Linux-.so mit kleiner C-Schnittstelle, Aufruf aus C# über P/Invoke | Weniger Kommunikationsaufwand; native Abstürze können das Backend beenden |
+| Eigener Prozess | Nativer C++-Dienst mit begrenztem internem Nachrichtenvertrag | Bessere Fehlertrennung; zusätzliche Prozess-, Transport- und Wiederanlaufverwaltung |
 
-Die Umgebung übernimmt Transport und sichere Identitätsprüfung. Der Kern prüft die fachlich gewährten Rechte und Regeln; eine frei behauptete Identität aus einer Oberfläche ist keine Authentifizierung. Die öffentliche Demo arbeitet mit ausdrücklich simulierten Sitzungen und Rechten und behauptet keine implementierte Pairingsicherheit.
+Für einen ersten Prototyp ist die Bibliotheksvariante ein möglicher Einstieg, keine bereits implementierte Entscheidung. Speicherbesitz, Lebensdauer, Fehlercodes, Datentypen und ABI-Version werden explizit definiert. C++-Exceptions überschreiten die C-Grenze nicht. Ein Prozessdienst wird nicht direkt öffentlich erreichbar gemacht.
 
-Zeit und gegebenenfalls Zufall werden kontrolliert eingespeist, damit Szenarien reproduzierbar sind. Der Kern arbeitet in kurzen, nicht blockierenden Verarbeitungsschritten. Eine Animation oder ein Browser-Timer darf nicht der einzige Nachweis für eine sichere physische Bewegung sein.
+Pro Demo-Sitzung existiert eine eigene Core-Instanz mit getrenntem Kontext und Auftragsbestand. Gleichzeitige Zugriffe auf eine Instanz werden geordnet; gemeinsam veränderlicher globaler Zustand ist zu vermeiden. Sitzungen, Eingaben, Rechenzeit, Speicher, Nachrichten und Warteschlangen werden begrenzt. Inaktive Sitzungen werden nach festgelegter Frist beendet und ihre temporären Daten verworfen.
 
-Speicher- und Rechenbedarf werden begrenzt und gemessen. Benötigter C++-Sprachstandard, Bibliotheksumfang und Speicherstrategie werden auf die spätere Zielhardware abgestimmt. Threads und besondere WebAssembly-Erweiterungen sind keine Voraussetzung fuer den ersten Umfang.
+## 5. Aufträge, Zeit und Rückmeldungen
 
-## 5. Ablauf eines simulierten Nickauftrags
+Das Backend ordnet eine tatsächlich serverseitig verwaltete Demo-Sitzung zu und prüft Eingaben, Rechte, Version und Grenzen. Die öffentliche Demo verwendet synthetische Daten und simulierte Geräteberechtigungen; sie gewährt keine Rechte auf reale Roboter.
+
+Zeit und gegebenenfalls Zufall werden kontrolliert eingespeist. Der Core prüft fachliche Rechte, Zustand und Grenzen. Der Server führt Simulationszeit und Auftragsfristen; ein Browser-Timer ist kein verlässlicher Abschlussnachweis.
 
 ```mermaid
 sequenceDiagram
     actor Visitor as Besucher
-    participant UI as Angular-Oberflaeche
-    participant Bridge as Kern-Service
-    participant Core as C++-Kern in WebAssembly
-    participant Adapter as Nick-Simulationsadapter
+    participant UI as Angular
+    participant API as ASP.NET Core
+    participant Core as Sitzungsbezogener C++-Core
+    participant Sim as Browser-Simulationsadapter
     Visitor->>UI: Nicken anfordern
-    UI->>Bridge: Fachlicher Auftrag
-    Bridge->>Core: Auftrag mit simuliertem Sitzungsbezug
-    Core->>Core: Rechte, Zustand und Grenzen pruefen
-    alt Auftrag zulaessig
-        Core-->>Bridge: Angenommen und Aktion bereit
-        Bridge->>Adapter: Animation ausfuehren
-        Adapter-->>Bridge: Beginn bestaetigt
-        Bridge->>Core: Ausfuehrung begonnen
-        Adapter-->>Bridge: Simuliertes Ergebnis
-        Bridge->>Core: Ergebnis uebernehmen
-        Core-->>Bridge: Endzustand
-        Bridge-->>UI: Zustand und Ergebnis anzeigen
-    else Auftrag unzulaessig
-        Core-->>Bridge: Abgelehnt mit Grund
-        Bridge-->>UI: Ablehnung anzeigen
+    UI->>API: Auftrag mit Kennung
+    API->>API: Sitzung und Eingabe prüfen
+    API->>Core: Zugeordneter Auftrag
+    Core->>Core: Rechte, Zustand und Grenzen prüfen
+    alt Zulässig
+        Core-->>API: Angenommen und Aktion
+        API-->>Sim: Freigegebene simulierte Aktion
+        Sim->>API: Simulierter Beginn und Ergebnis
+        API->>Core: Zugeordnete Rückmeldung
+        Core-->>API: Bestätigter Simulationszustand
+        API-->>UI: Zustand und Ergebnis
+    else Abgelehnt
+        Core-->>API: Ablehnungsgrund
+        API-->>UI: Ablehnung anzeigen
     end
 ```
 
-Annahme, Beginn und Erfolg bleiben getrennt. Simulierte Ergebnisse sind gekennzeichnet und ersetzen keinen physischen Nachweis. Doppelte Aufträge, Abbruch und verlorene Rückmeldungen folgen dem Robin Protocol.
+Annahme, Beginn und Abschluss bleiben getrennt. Browserrückmeldungen sind untrusted Eingaben und werden auf Sitzung, Auftrag und zulässigen Ablauf geprüft. Simulierter Erfolg beweist keine physische Bewegung. Duplikate, Abbruch und verlorene Ergebnisse folgen dem Robin Protocol.
+
+Bei Verbindungsverlust werden neue Eingaben gesperrt und laufende browserabhängige Aktionen nach einer definierten Frist abgebrochen oder als unbestätigt beendet. Wiederverbindung gleicht den tatsächlichen Serverstand ab; alte Aufträge werden nicht blind erneut gesendet. Serverneustart macht bisherige Sitzungen ungültig, sofern keine ausdrücklich implementierte Wiederherstellung existiert.
 
 ## 6. Angular-Websimulator und iPad
 
-Die erste Darstellung ist eine interaktive 2D-Version. Angular-Komponenten übernehmen Gesicht, Stationsdarstellung, Bedienelemente und Diagnose. Ein zentraler Kern-Service kapselt Laden, Lebenszyklus und Aufrufe des WebAssembly-Moduls.
+Die erste Darstellung ist eine interaktive 2D-Version. Angular zeigt Gesicht, Bedienung, Stationsdarstellung und Diagnose. Ein typisierter Service kapselt API und Echtzeitverbindung.
 
-Da die WebAssembly-Initialisierung asynchron erfolgt, werden Bedienelemente erst nach erfolgreicher Initialisierung freigegeben. Ladefehler erhalten eine verständliche Anzeige. Eine zweite, unabhängige TypeScript-Implementierung des Grundverhaltens wird nicht als Ersatz eingeführt.
+Bedienelemente werden erst nach erfolgreichem Sitzungs- und Zustandsabgleich freigegeben. Verbindungsaufbau, Backend-Ausfall, Wiederverbindung und Sitzungsablauf erhalten verständliche Anzeigen. Der Websimulator benötigt für Verhalten eine Serververbindung; eine gecachte Oberfläche ermöglicht keine Offline-Core-Ausführung.
 
-Die Oberfläche wird für Touch und unterschiedliche Bildschirmgrößen gestaltet. Die erste Demo benötigt weder Kamera noch Mikrofon; diese werden zunächst durch Ereignisse simuliert. Spätere echte Medienfunktionen benötigen bewusste Browserfreigaben und eigene Adapter.
+Die erste Demo verwendet simulierte Sensorereignisse und benötigt weder Kamera noch Mikrofon. Oberfläche und Abläufe werden für Touch, iPad-Hintergrundbetrieb, Wiederaufnahme und erneuten Seitenaufruf geprüft. 3D und echte Medienfunktionen sind spätere Erweiterungen.
 
-Browser auf dem iPad dürfen nicht als dauerhaft laufende Robotersteuerung vorausgesetzt werden. Unterbrechung, Hintergrundbetrieb und erneuter Seitenaufruf werden praktisch geprüft. Bei Wiederaufnahme werden Zeit und Zustand abgeglichen; alte Aktionen dürfen nicht nachträglich unkontrolliert starten.
+## 7. Repository und Veröffentlichung
 
-Web Worker, 3D-Darstellung und Offline-Installation können später ergänzt werden, wenn Bedarf und Geräteprüfung dies rechtfertigen.
+PinkRobin ist die zentrale Entwicklungsbasis für Core, Firmware, Backend, Angular, Companion-App, Dokumentation und Pipeline. Ziel ist ein privates Repository. Die tatsächliche Sichtbarkeit muss in GitHub separat eingerichtet werden; dieses Dokument ändert keine Repository-Einstellungen.
 
-## 7. Repository-Aufteilung
+Ein zusätzliches öffentliches Repository erhält ausschliesslich bewusst freigegebene Inhalte. Name und Freigabeprozess bleiben festzulegen. Es gibt keine automatische Spiegelung von main. Core-Quellcode bleibt privat; Companion-App und Backend werden ebenfalls nicht automatisch veröffentlicht. Die frühere Planung separater öffentlicher robin-core- und virtual-robin-Repositories ist ersetzt.
 
-Die folgende Aufteilung ist die geplante Struktur. Dieses Dokument erstellt keine neuen Repositories und veröffentlicht keine bestehenden Inhalte.
+Webdeployment und Quellcode-Veröffentlichung sind getrennte Vorgänge. Die Pipeline veröffentlicht nur erforderliche Laufzeitdateien. C++-Quellen, native Core-Binärdateien, private Dokumentation, Schlüssel und interne Debug-Artefakte gelangen nicht ins Frontend. Auch Build-Logs, Container-Registry und Release-Artefakte benötigen passende Zugriffsrechte.
 
-| Vorgesehener Name | Sichtbarkeit | Inhalt |
-| --- | --- | --- |
-| robin-core | Öffentlich | Portabler C++-Kern, fachliche Schnittstellen, Tests und Browser-Bindung |
-| virtual-robin | Öffentlich | Angular-Websimulator, Simulationsadapter und Portfolio-Darstellung |
-| RedRobin | Privat | Hardwareintegration, interne Entwicklung und nicht zur Veröffentlichung freigegebene Unterlagen |
+## 8. Docker, Domain und Synology
 
-```mermaid
-flowchart LR
-    Core["robin-core: oeffentlich"]
-    Web["virtual-robin: oeffentlich"]
-    Private["RedRobin: privat"]
-    Core -->|"Versionierte WebAssembly-Ausgabe"| Web
-    Core -->|"Versionierter C++-Stand"| Private
-```
+Bereits eingerichtet: NGINX-Container pinkrobin-web, NAS-Port 8080 auf Container-Port 80, Reverse Proxy und HTTPS für pinkrobin.wanderwusel.ch. Die vorhandene HTML-Startseite ist noch kein Angular-Simulator.
 
-Beide Verbraucher beziehen einen festgelegten Kernstand. Sie kopieren die Kernlogik nicht in unabhängig weiterentwickelte Varianten. Kernversion und Protokollversion sind unterschiedliche Angaben; ihre Kompatibilität muss dokumentiert werden.
+Geplant:
+- Frontend-Container mit fertig gebautem Angular und statischem NGINX.
+- Backend-Container mit ASP.NET-Runtime und nativer Core-Bibliothek; bei Prozessvariante ein getrennt verwalteter interner Core-Dienst.
+- Synology-Reverse-Proxy als TLS-Einstieg; / führt zum Frontend. /api und der vorgesehene SignalR-Pfad /hubs werden zum Backend geroutet, etwa über einen vorgeschalteten NGINX innerhalb des Deployment-Netzes. Die konkrete Pfadweiterleitung muss implementiert und geprüft werden; die bisherige Hostregel allein richtet sie nicht ein.
 
-Die öffentliche Demo verwendet ausschliesslich synthetische Personen und Beispieldaten. Zugangsinformationen, private Gesprächsinhalte und interne Dateien gelangen nicht in veröffentlichte Browserdateien. Im Browser ausgelieferte Dateien sind für Besucher zugänglich, auch wenn ihre ursprüngliche Quelle privat war.
+Mehrstufige Builds trennen Compiler und Laufzeit. Angular wird auf CI gebaut. C++ und Backend werden für zusammenpassende Linux-ABI, Architektur und Bibliotheken gebaut; nur benötigte Runtime-Dateien kommen ins Backend-Image. Der Browser erhält keine .wasm-Ausgabe des Cores.
 
-Vor tatsächlicher Aufteilung werden Lizenz, Veröffentlichungsumfang, Abhängigkeiten und Verteilung der Kernpakete festgelegt. Hosting und öffentliche Freischaltung werden als eigener Schritt behandelt.
+NGINX unterstützt Angular-Routen, ohne fehlende Assets oder API-Aufrufe als HTML zu beantworten. Versionierte Ressourcen können gecacht werden; Einstiegseite und Releasewechsel müssen neue Versionen zuverlässig laden. Frontend, Backend, Core und Protokollversion werden gemeinsam dokumentiert.
 
-## 8. Bereitstellung der Webseite mit Docker
+Bei SignalR muss die gesamte Proxy-Kette den gewählten Transport, insbesondere WebSocket-Upgrades und passende Zeitgrenzen, unterstützen. Backend-Port und interner Core-Dienst erhalten keine direkte öffentliche Routerfreigabe.
 
-Docker wird als Bereitstellungsoption für Virtual Robin vorgesehen. Ein versioniertes Container-Image liefert die fertig gebaute Angular-Anwendung und die dazu passende WebAssembly-Ausgabe aus. Der C++-Kern läuft beim Besucher im Browser; der Container stellt die Dateien bereit.
+## 9. CI/CD auf main
 
-### 8.1 Build und Laufzeit
+Die Pipeline liegt im zentralen PinkRobin-Repository:
+1. Änderungen prüfen; native Core-Tests, Backend-Integration und Angular-Build ausführen.
+2. Versionsgebundene Frontend-/Backend-Artefakte aus demselben Commit erstellen.
+3. Geprüftes Deployment-Release mit kompatiblen Versionen und Prüfsummen in einer zugriffsgeschützten Ablage bereitstellen.
+4. Synology holt freigegebene Releases über einen begrenzten Lesezugang ab. Speicherort, Abrufintervall und Authentifizierung werden noch festgelegt.
+5. Neues Release vorbereiten, Gesundheits- und durchgängige Sitzungs-/Auftragstests durchführen und kontrolliert aktivieren.
+6. Vorherigen funktionsfähigen Stand für Rollback behalten; fehlgeschlagenes Release nicht dauerhaft aktivieren.
 
-Ein mehrstufiger Docker-Build trennt Erstellung und Betrieb:
+CI/CD ist geplant, noch nicht eingerichtet. Quellcode-Freigaben ins öffentliche Repository gehören nicht in den automatischen main-Deployment-Ablauf. Zugangsinformationen werden über geschützte CI- und NAS-Konfiguration bereitgestellt, nicht committed oder in Images eingebaut.
 
-1. Den festgelegten Kernstand mit Emscripten nach WebAssembly übersetzen oder dessen geprüfte versionierte Ausgabe beziehen.
-2. Die Angular-Anwendung mit festgelegten Abhängigkeiten für die Produktion bauen.
-3. Nur freigegebene Webdateien und Webserver-Konfiguration in das Laufzeit-Image übernehmen.
+Ein dauerhaft allgemeine GitHub-Aufträge ausführender NAS-Runner ist keine Voraussetzung für diesen Abrufweg. Container-Registry, Image-Versionen, Rollback-Verfahren und spätere Datenbankmigrationen müssen konkretisiert werden.
 
-Das Laufzeit-Image benötigt weder C++-Compiler noch Emscripten oder Angular-Entwicklungsserver. Für die erste Version ist eine statische, im Browser ausgeführte Angular-Anwendung vorgesehen. Die konkrete Wahl des Webservers und der Basis-Images bleibt offen.
+## 10. Erster Umsetzungsumfang und Nachweis
 
-### 8.2 Auslieferung und Betrieb
+1. Portabler C++-Core mit Zustand, Berührungsreaktion und Nickauftrag sowie nativen Tests.
+2. ASP.NET-Core-Anbindung und begrenzte, getrennte Demo-Sitzungen.
+3. API für Ereignis, Auftrag, Status und simuliertes Ergebnis; konkrete DTOs und Transportverträge dokumentieren.
+4. Angular-Gesicht, Touch-Eingabe, Nickanimation und bestätigte Zustandsanzeige.
+5. Duplikate, Ablehnung, Abbruch, fehlende Rückmeldung, Verbindungsverlust und Serverneustart prüfen.
+6. Zwei gleichzeitige Sitzungen ohne gegenseitige Beeinflussung nachweisen.
+7. Linux-Container auf DS1517+ und Browser/iPad durchgängig prüfen.
+8. CI/CD, Proxy-Routing und Rollback erproben.
 
-Der Webserver muss Angular-Routen bei direktem Aufruf korrekt auf die Einstiegseite zurückführen. Fehlende statische Dateien dürfen dagegen keine HTML-Ersatzantwort erhalten. WebAssembly-Dateien werden mit passendem Inhaltstyp ausgeliefert.
+Die Portfolio-Demo kennzeichnet implementierte und simulierte Funktionen. Physische Sicherheit und Hardwarequalität werden separat geprüft.
 
-Versionierte Ressourcen dürfen zwischengespeichert werden; die Einstiegseite muss neue Releases zuverlässig auffindbar machen. Angular-Dateien, WebAssembly und Bindung müssen aus einem zusammenpassenden Release stammen.
+## 11. Offene Entscheidungen
 
-Für öffentliches Hosting werden Domain und HTTPS eingerichtet. Die TLS-Terminierung kann durch den Hostinganbieter oder einen Reverse Proxy erfolgen. Anbieter, Registry, Ports und konkrete Betriebsumgebung werden bei der Umsetzung ausgewählt.
+Native Bibliothek oder eigener Prozess; C++-Standard und Toolchains; unterstützte .NET-/Angular-Versionen; ABI oder internes Prozessprotokoll; API-/SignalR-Vertrag; konkrete Sitzungs- und Ressourcenlimits; Linux-Container-Kompatibilität; Releaseablage und NAS-Abruf; öffentliches Repository und Freigaben; unterstützte Browser; spätere Persistenz.
 
-Das Image wird mit Releasekennung und Kernversion dokumentiert. Ein vorheriges Image bleibt für Rückkehr zu einem funktionsfähigen Stand verfügbar. Eine Gesundheitsprüfung des Webservers prüft die Auslieferung; die korrekte Kerninitialisierung wird zusätzlich durch einen Browsertest geprüft.
+Die Plattformwahl für Virtual Robin ist beschlossen: Angular im Browser, ASP.NET Core und nativer C++-Core auf dem Server. Die lokale Firmware bleibt unabhängig.
 
-Zugangsinformationen und private Daten gehören weder in das Image noch in ausgelieferte Dateien. Für die reine öffentliche Simulation sind keine produktiven Roboterschlüssel erforderlich.
+## 12. Technische Referenzen
 
-### 8.3 Bereitstellungsübersicht
-
-```mermaid
-flowchart LR
-    Core["Versionierter C++-Kern"] --> Build["Mehrstufiger Docker-Build"]
-    App["Angular-Websimulator"] --> Build
-    Build --> Image["Laufzeit-Image: Webserver und Webdateien"]
-    Image --> Host["Docker-Host"]
-    Host --> HTTPS["HTTPS-Zugang"]
-    HTTPS --> Browser["Browser / iPad: Angular und WebAssembly"]
-```
-
-Docker ist die Verpackung und Betriebsoption, nicht der öffentliche Hostingdienst selbst. Ein geeigneter Docker-Host ist für diesen Bereitstellungsweg erforderlich. Das Konzept allein veröffentlicht noch keine Webseite.
-
-## 9. Erster Umsetzungsumfang und Nachweis
-
-Der erste Prototyp umfasst:
-
-1. Kleinen C++-Kern mit Zustand, Berührungsreaktion und Nickauftrag.
-2. Native Ausführung desselben Kerns für reproduzierbare fachliche Tests.
-3. WebAssembly-Build mit schmaler TypeScript-Anbindung.
-4. Angular-Gesicht, Touch-Eingabe, Nickanimation und Auftragsanzeige.
-5. Szenarien für Ablehnung, doppelte Nachrichten, Abbruch und Verbindungsverlust.
-6. Praktische Prüfung im iPad-Browser.
-
-Erst danach folgen Stationslicht, Stationsdrehung und weitere Wahrnehmungs- beziehungsweise Datenfunktionen. Eine öffentliche Portfolio-Version erklärt sichtbar, welche Funktionen real implementiert und welche simuliert sind.
-
-## 10. Offene Umsetzungsentscheidungen
-
-Offen bleiben Zielprozessor, C++-Standard, konkrete Toolchain-Versionen, Bindungsverfahren, internes Speichermodell, Paketverteilung, Lizenz, Hosting sowie unterstützte iPad-/Browserstände.
-
-Diese Details werden beim durchgängigen Prototyp festgelegt und überprüft. Die Kombination C++-Kern, WebAssembly und Angular ist die abgestimmte Technologierichtung.
-
-## 11. Technische Referenzen
-
-- [Emscripten: Building to WebAssembly](https://emscripten.org/docs/compiling/WebAssembly.html)
-- [Emscripten: Connecting C++ and JavaScript](https://emscripten.org/docs/porting/connecting_cpp_and_javascript/index.html)
-- [Angular: Components](https://angular.dev/guide/components)
-- [Angular: Creating and using services](https://angular.dev/guide/di/creating-and-using-services)
-
-- [Docker: Multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
+- [Microsoft: Native interoperability](https://learn.microsoft.com/dotnet/standard/native-interop)
+- [Microsoft: P/Invoke](https://learn.microsoft.com/en-us/dotnet/standard/native-interop/pinvoke)
+- [Microsoft: ASP.NET Core SignalR](https://learn.microsoft.com/en-us/aspnet/core/signalr/introduction)
 - [Angular: Deployment](https://angular.dev/tools/cli/deployment)
+- [Docker: Multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
