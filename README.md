@@ -1,5 +1,7 @@
 # Pink Robin
 
+🌐 **Projektwebsite:** [pinkrobin.wanderwusel.ch](https://pinkrobin.wanderwusel.ch)
+
 ![Pink Robin concept](assets/images/pink-robin-concept.png)
 
 Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
