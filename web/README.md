@@ -47,6 +47,12 @@ bei Fehlern. Einrichtung und Migration des bestehenden Containers:
 [Synology-Deployment](../deploy/synology/README.md).
 
 Robins Herz reagiert auf Klick, Touch und Tastatur (Enter/Leertaste): eine kurze
-Nachricht, Blinzeln und sanftes Leuchten. Bei reduzierter Bewegung erscheint nur
-die Nachricht. Berührungen unterbrechen bei Bedarf die Begrüssung; Wiederholen
+Nachricht, Blinzeln und sanftes Leuchten. Bei reduzierter Bewegung erfolgt die Reaktion ohne
+Blinzeln und Leuchten. Berührungen unterbrechen bei Bedarf die Begrüssung; Wiederholen
 und Seitenwechsel räumen auch die Reaktionstimer auf.
+
+Robins Stimmung wird zentral als schlafend, aufwachend, neugierig oder glücklich
+geführt. Neugier zeigt die grossen offenen Augen; nach einer Herzberührung lächelt
+Robin mit fröhlichen Augen und breiterem Mund. Nach sechs Sekunden wird er wieder
+neugierig. Weitere Berührungen verlängern die glückliche Stimmung. Auch mit
+reduzierter Bewegung wechselt der statische Ausdruck ohne Animation.

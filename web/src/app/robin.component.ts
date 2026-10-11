@@ -1,4 +1,13 @@
-import { Component, DestroyRef, afterNextRender, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+
+type RobinMood = 'sleeping' | 'waking' | 'curious' | 'happy';
+
+const MOOD_LABELS: Record<RobinMood, string> = {
+  sleeping: 'Robin träumt gerade',
+  waking: 'Robin entdeckt die Welt',
+  curious: 'Robin ist wach und neugierig',
+  happy: 'Robin ist glücklich und freut sich über deine Nähe',
+};
 
 @Component({
   selector: 'pr-robin',
@@ -7,12 +16,13 @@ import { Component, DestroyRef, afterNextRender, inject, signal } from '@angular
   styleUrl: './robin.component.css',
 })
 export class RobinComponent {
-  readonly awake = signal(false);
+  readonly mood = signal<RobinMood>('sleeping');
+  readonly awake = computed(() => this.mood() !== 'sleeping');
   readonly blinking = signal(false);
   readonly heartGlowing = signal(false);
   readonly look = signal<'left' | 'right' | null>(null);
   readonly speech = signal('Pssst … Robin schläft noch.');
-  readonly state = signal('Robin träumt gerade');
+  readonly state = computed(() => MOOD_LABELS[this.mood()]);
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private reducedMotion?: MediaQueryList;
@@ -42,18 +52,15 @@ export class RobinComponent {
     this.look.set(null);
 
     if (this.reducedMotion?.matches) {
-      this.awake.set(true);
       this.finishGreeting();
       return;
     }
 
-    this.awake.set(false);
+    this.mood.set('sleeping');
     this.speech.set('Pssst … Robin schläft noch.');
-    this.state.set('Robin träumt gerade');
     this.later(() => {
-      this.awake.set(true);
       this.speech.set('Oh! Da ist ja jemand. …');
-      this.state.set('Robin entdeckt die Welt');
+      this.mood.set('waking');
     }, 4000);
     this.later(() => this.blink(), 4800);
     this.later(() => this.look.set('left'), 5300);
@@ -69,12 +76,15 @@ export class RobinComponent {
     if (this.destroyed) return;
     // Touch takes over the greeting and keeps just one idle loop.
     this.clearTimers();
-    this.awake.set(true);
+    this.mood.set('happy');
     this.blinking.set(false);
     this.look.set(null);
     this.speech.set('Das tut gut. Schön, dass du da bist. ♡');
-    this.state.set('Robin freut sich über deine Nähe');
     this.heartGlowing.set(!this.reducedMotion?.matches);
+    this.later(() => {
+      this.mood.set('curious');
+      this.speech.set('Was entdecken wir als Nächstes?');
+    }, 6000);
     if (this.reducedMotion?.matches) return;
     this.blink();
     this.later(() => this.heartGlowing.set(false), 850);
@@ -83,7 +93,7 @@ export class RobinComponent {
 
   private finishGreeting(): void {
     this.speech.set('Hallo, ich bin Robin! Schön, dass du da bist. ♡');
-    this.state.set('Robin ist wach und neugierig');
+    this.mood.set('curious');
   }
 
   private blink(): void {
