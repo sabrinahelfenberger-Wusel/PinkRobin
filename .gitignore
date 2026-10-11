@@ -16,7 +16,7 @@
 # Angular / Node.js
 node_modules/
 dist/
-.angular/cache/
+**/.angular/cache/
 coverage/
 
 # Local configuration and secrets

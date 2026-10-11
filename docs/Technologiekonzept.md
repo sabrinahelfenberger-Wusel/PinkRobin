@@ -146,7 +146,12 @@ Die Pipeline liegt im zentralen PinkRobin-Repository:
 5. Neues Release vorbereiten, Gesundheits- und durchgängige Sitzungs-/Auftragstests durchführen und kontrolliert aktivieren.
 6. Vorherigen funktionsfähigen Stand für Rollback behalten; fehlgeschlagenes Release nicht dauerhaft aktivieren.
 
-CI/CD ist geplant, noch nicht eingerichtet. Quellcode-Freigaben ins öffentliche Repository gehören nicht in den automatischen main-Deployment-Ablauf. Zugangsinformationen werden über geschützte CI- und NAS-Konfiguration bereitgestellt, nicht committed oder in Images eingebaut.
+Die Frontend-Pipeline ist unter `.github/workflows/web-container.yml` vorbereitet:
+Angular- und Containerprüfung auf dev, Veröffentlichung geprüfter main-Images auf
+GHCR und ein NAS-Abrufskript mit Gesundheitsprüfung und Rollback.
+Die einmalige NAS-Einrichtung und der erste echte Auslieferungstest stehen noch aus;
+Anleitung: [Synology-Deployment](../deploy/synology/README.md).
+Backend-/Core-CI/CD bleibt geplant. Quellcode-Freigaben ins öffentliche Repository gehören nicht in den automatischen main-Deployment-Ablauf. Zugangsinformationen werden über geschützte CI- und NAS-Konfiguration bereitgestellt, nicht committed oder in Images eingebaut.
 
 Ein dauerhaft allgemeine GitHub-Aufträge ausführender NAS-Runner ist keine Voraussetzung für diesen Abrufweg. Container-Registry, Image-Versionen, Rollback-Verfahren und spätere Datenbankmigrationen müssen konkretisiert werden.
 
