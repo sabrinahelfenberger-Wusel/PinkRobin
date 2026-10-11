@@ -55,7 +55,8 @@ function fixture(reduce = false) {
 
 const f = fixture();
 assert.equal(f.robin.awake(), false);
-f.tick(1000); assert.equal(f.robin.awake(), true);
+f.tick(3999); assert.equal(f.robin.awake(), false);
+f.tick(1); assert.equal(f.robin.awake(), true);
 f.tick(800); assert.equal(f.robin.blinking(), true);
 f.tick(160); assert.equal(f.robin.blinking(), false);
 f.tick(340); assert.equal(f.robin.look(), 'left');
@@ -64,7 +65,7 @@ f.robin.greet();
 assert.equal(f.timers.size, 5); // Old greeting timers were cancelled.
 assert.equal(f.robin.awake(), false);
 assert.equal(f.robin.look(), null);
-f.tick(4100);
+f.tick(7100);
 assert.equal(f.robin.speech(), 'Hallo, ich bin Robin! Schön, dass du da bist. ♡');
 assert.equal(f.robin.look(), null);
 assert.equal(f.timers.size, 1); // One idle loop.
@@ -87,7 +88,7 @@ reduced.destroy();
 console.log('Greeting, restart, reduced motion, preference changes and destroy cleanup passed.');
 
 const touched = fixture();
-touched.tick(2300);
+touched.tick(5300);
 touched.robin.touchHeart();
 assert.equal(touched.robin.awake(), true);
 assert.equal(touched.robin.look(), null);
@@ -97,7 +98,7 @@ touched.tick(160);
 assert.equal(touched.robin.blinking(), false);
 touched.tick(690);
 assert.equal(touched.robin.heartGlowing(), false);
-touched.tick(4100);
+touched.tick(7100);
 assert.equal(touched.robin.speech(), 'Das tut gut. Schön, dass du da bist. ♡');
 for (let i = 0; i < 20; i++) touched.robin.touchHeart();
 assert.equal(touched.timers.size, 3);

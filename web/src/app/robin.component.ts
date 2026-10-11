@@ -54,15 +54,15 @@ export class RobinComponent {
       this.awake.set(true);
       this.speech.set('Oh! Da ist ja jemand. …');
       this.state.set('Robin entdeckt die Welt');
-    }, 1000);
-    this.later(() => this.blink(), 1800);
-    this.later(() => this.look.set('left'), 2300);
-    this.later(() => this.look.set('right'), 3100);
+    }, 4000);
+    this.later(() => this.blink(), 4800);
+    this.later(() => this.look.set('left'), 5300);
+    this.later(() => this.look.set('right'), 6100);
     this.later(() => {
       this.look.set(null);
       this.finishGreeting();
       this.idle();
-    }, 4100);
+    }, 7100);
   }
 
   touchHeart(): void {
