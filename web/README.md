@@ -37,3 +37,11 @@ laufende Timer auf; beim Abbau wird auch der Media-Query-Listener entfernt.
 Die Navigation verwendet Hash-URLs (`/#/virtual-robin`), damit auch eine
 statische Auslieferung ohne spezielle Serverregeln und direktes Neuladen
 funktioniert. Die Originale `index.html` und `virtual-robin/` bleiben unverändert.
+
+## CI/CD und Synology
+
+GitHub Actions prüft `dev` und Pull Requests. Nach einem Push auf `main` wird das
+geprüfte NGINX-Image auf GHCR veröffentlicht. Ein Synology-Auftrag holt es alle fünf
+Minuten ab, prüft es und wechselt den Container mit Rückkehr zum bisherigen Stand
+bei Fehlern. Einrichtung und Migration des bestehenden Containers:
+[Synology-Deployment](../deploy/synology/README.md).

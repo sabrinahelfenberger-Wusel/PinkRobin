@@ -1,0 +1,81 @@
+name: Web CI and release
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install, test and build Angular
+        working-directory: web
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Check NAS deployment decisions
+        run: python3 deploy/synology/test_update.py
+      - name: Build runtime image
+        run: docker build --build-arg REVISION="$GITHUB_SHA" -t pinkrobin-web:test web
+      - name: Check runtime image
+        run: |
+          docker run -d --name web-test -p 127.0.0.1:8080:80 pinkrobin-web:test
+          trap 'docker logs web-test; docker rm -f web-test' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/healthz; then break; fi
+            sleep 2
+          done
+          curl --fail --silent http://127.0.0.1:8080/index.html | grep -q '<pr-root>'
+          test "$(curl --fail --silent http://127.0.0.1:8080/version.txt)" = "$GITHUB_SHA"
+          test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing.js)" = 404
+          test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/test)" = 404
+      - name: Save verified main image
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: docker save pinkrobin-web:test -o /tmp/web-image.tar
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          name: verified-web-image
+          path: /tmp/web-image.tar
+          retention-days: 1
+
+  publish:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-web-image
+          path: /tmp
+      - run: docker load -i /tmp/web-image.tar
+      - name: Publish verified main image
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-web"
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag pinkrobin-web:test "$image:sha-$GITHUB_SHA"
+          docker tag pinkrobin-web:test "$image:main"
+          docker push "$image:sha-$GITHUB_SHA"
+          docker push "$image:main"
