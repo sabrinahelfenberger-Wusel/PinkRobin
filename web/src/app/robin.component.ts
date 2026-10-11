@@ -4,6 +4,7 @@ import { Component, DestroyRef, afterNextRender, inject, signal } from '@angular
   selector: 'pr-robin',
   standalone: true,
   templateUrl: './robin.component.html',
+  styleUrl: './robin.component.css',
 })
 export class RobinComponent {
   readonly awake = signal(false);

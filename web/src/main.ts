@@ -1,7 +1,15 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter, withHashLocation, withInMemoryScrolling } from '@angular/router';
 import { AppComponent } from './app/app.component';
+import { routes } from './app/app.routes';
 
 bootstrapApplication(AppComponent, {
-  providers: [provideZonelessChangeDetection()],
+  providers: [
+    provideZonelessChangeDetection(),
+    provideRouter(routes, withHashLocation(), withInMemoryScrolling({
+      scrollPositionRestoration: 'enabled',
+      anchorScrolling: 'enabled',
+    })),
+  ],
 }).catch(console.error);

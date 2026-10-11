@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { RobinComponent } from './robin.component';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'pr-root',
   standalone: true,
-  imports: [RobinComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
 })
 export class AppComponent {}

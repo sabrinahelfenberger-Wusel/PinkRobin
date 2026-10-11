@@ -26,8 +26,14 @@ Bewegungseinstellung und Timer-Aufräumen mit einer deterministischen Uhr.
 
 Die Angular-Demo übernimmt SVG, dunkles Layout und Begrüssungsablauf aus
 `virtual-robin/`. Die statischen Originaldateien bleiben als Referenz erhalten.
-`AppComponent` enthält die Seite und den Wiederholen-Button; `RobinComponent`
+`AppComponent` enthält die Navigation zwischen Startseite (`/`) und Robin
+(`/virtual-robin`). `HomeComponent` übernimmt die statische Projektstartseite;
+`RobinPageComponent` enthält die Robin-Seite und den Wiederholen-Button; `RobinComponent`
 verwaltet Figur, Sprechblase und Animationen mit Signalen für zoneless Angular.
 Bei reduzierter Bewegung erscheint die Begrüssung sofort ohne Animationen.
 Wiederholen, Änderungen der Bewegungseinstellung und Komponentenabbau räumen
 laufende Timer auf; beim Abbau wird auch der Media-Query-Listener entfernt.
+
+Die Navigation verwendet Hash-URLs (`/#/virtual-robin`), damit auch eine
+statische Auslieferung ohne spezielle Serverregeln und direktes Neuladen
+funktioniert. Die Originale `index.html` und `virtual-robin/` bleiben unverändert.
