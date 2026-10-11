@@ -6,4 +6,28 @@ Der C++-Core läuft nativ auf dem Server; Angular enthält weder Core-Quellcode 
 
 Der Simulator benötigt eine Serververbindung. Verbindungsverlust, Wiederverbindung und Sitzungsablauf werden sichtbar behandelt; vor neuen Aufträgen erfolgt ein Zustandsabgleich. Die erste Demo verwendet synthetische Daten ohne Kamera-/Mikrofonzugriff.
 
-Stand: Verzeichnisgerüst; noch kein Angular-Projekt initialisiert. Die statische Startseite ist bereits auf der Synology erreichbar. Docker und CI/CD: [Technologiekonzept](../docs/Technologiekonzept.md).
+Stand: Angular-Demo mit Virtual Robin vorhanden. Die statische Startseite ist bereits auf der Synology erreichbar. Docker und CI/CD: [Technologiekonzept](../docs/Technologiekonzept.md).
+
+## Angular-Demo lokal starten
+
+Voraussetzung: Node.js 22.12 oder neuer aus der 22er-LTS-Reihe.
+
+```sh
+git switch dev
+git pull --ff-only origin dev
+cd web
+npm install
+npm start
+```
+
+Danach http://localhost:4200 öffnen. `npm run build` erzeugt die Ausgabe unter
+`dist/pinkrobin-web/browser/`. `npm test` prüft Begrüssung, Wiederholen,
+Bewegungseinstellung und Timer-Aufräumen mit einer deterministischen Uhr.
+
+Die Angular-Demo übernimmt SVG, dunkles Layout und Begrüssungsablauf aus
+`virtual-robin/`. Die statischen Originaldateien bleiben als Referenz erhalten.
+`AppComponent` enthält die Seite und den Wiederholen-Button; `RobinComponent`
+verwaltet Figur, Sprechblase und Animationen mit Signalen für zoneless Angular.
+Bei reduzierter Bewegung erscheint die Begrüssung sofort ohne Animationen.
+Wiederholen, Änderungen der Bewegungseinstellung und Komponentenabbau räumen
+laufende Timer auf; beim Abbau wird auch der Media-Query-Listener entfernt.
