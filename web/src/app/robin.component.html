@@ -1,8 +1,8 @@
-    <section class="stage" [class.awake]="awake()" [class.heart-touched]="heartGlowing()" [class.blinking]="blinking()" [class.look-left]="look() === 'left'" [class.look-right]="look() === 'right'" aria-label="Pink Robin stellt sich vor">
+    <section class="stage" [class.awake]="awake()" [class.happy]="mood() === 'happy'" [class.heart-touched]="heartGlowing()" [class.blinking]="blinking()" [class.look-left]="look() === 'left'" [class.look-right]="look() === 'right'" aria-label="Pink Robin stellt sich vor">
       <div class="speech" id="speech" role="status" aria-live="polite">{{ speech() }}</div>
       <div class="robot-frame">
       <svg class="robot" viewBox="0 0 500 570" role="img" aria-labelledby="robot-title robot-description">
-        <title id="robot-title">Pink Robin</title><desc id="robot-description">Ein cremefarbener kleiner Roboter mit grossen Augen, rosa Wangen und einem Herz auf der Brust.</desc>
+        <title id="robot-title">Pink Robin</title><desc id="robot-description">Ein cremefarbener kleiner Roboter mit grossen Augen, rosa Wangen und einem Herz auf der Brust. {{ state() }}.</desc>
         <defs>
           <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff8ee"/><stop offset=".5" stop-color="#e8dcd0"/><stop offset="1" stop-color="#bcada3"/></linearGradient>
           <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffaf2"/><stop offset="1" stop-color="#d5bfb0"/></linearGradient>
@@ -31,12 +31,16 @@
         <rect x="108" y="88" width="284" height="224" rx="53" fill="url(#rim)"/>
         <rect x="119" y="99" width="262" height="202" rx="43" fill="url(#screen)" stroke="#8e7c72" stroke-width="3"/>
         <path d="M142 118Q245 103 351 120" fill="none" stroke="#fff" stroke-opacity=".07" stroke-width="8" stroke-linecap="round"/>
-        <g class="eyes" id="eyes">
+        <g class="eyes curious-eyes" id="eyes">
           <g class="eye eye-left"><ellipse cx="191" cy="203" rx="32" ry="41" fill="#fff4f7"/><g class="pupil"><ellipse cx="196" cy="207" rx="23" ry="32" fill="#08090c"/><ellipse cx="201" cy="188" rx="9" ry="11" fill="white"/><circle cx="185" cy="223" r="4" fill="#ffbad9"/><circle cx="209" cy="222" r="3" fill="white"/></g></g>
           <g class="eye eye-right"><ellipse cx="309" cy="203" rx="32" ry="41" fill="#fff4f7"/><g class="pupil"><ellipse cx="304" cy="207" rx="23" ry="32" fill="#08090c"/><ellipse cx="299" cy="188" rx="9" ry="11" fill="white"/><circle cx="315" cy="223" r="4" fill="#ffbad9"/><circle cx="291" cy="222" r="3" fill="white"/></g></g>
         </g>
+        <g class="eyes happy-eyes" fill="none" stroke="#fff4f7" stroke-width="8" stroke-linecap="round">
+          <g class="eye"><path d="M162 209Q191 167 220 209"/></g>
+          <g class="eye"><path d="M280 209Q309 167 338 209"/></g>
+        </g>
         <g class="closed-eyes"><path d="M169 207Q191 221 213 207M287 207Q309 221 331 207" fill="none" stroke="#fff4f7" stroke-width="6" stroke-linecap="round"/></g>
-        <path d="M236 240Q250 266 264 240" fill="none" stroke="#ff5c9a" stroke-width="5" stroke-linecap="round"/>
+        <path [attr.d]="mood() === 'happy' ? 'M224 239Q250 281 276 239' : 'M236 240Q250 266 264 240'" fill="none" stroke="#ff5c9a" stroke-width="5" stroke-linecap="round"/>
         <g stroke="#ff75aa" stroke-width="5" stroke-linecap="round"><path d="M158 249l-4 4m15-4-4 4m173-4-4 4m15-4-4 4"/></g>
       </svg>
       <button class="heart-button" type="button" aria-label="Robins Herz berühren"

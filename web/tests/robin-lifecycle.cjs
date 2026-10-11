@@ -22,6 +22,7 @@ function fixture(reduce = false) {
     DestroyRef: {},
     inject: () => ({ onDestroy: fn => { destroy = fn; } }),
     afterNextRender: fn => { render = fn; },
+    computed: read => read,
     signal: value => {
       const read = () => value;
       read.set = next => { value = next; };
@@ -98,10 +99,14 @@ touched.tick(160);
 assert.equal(touched.robin.blinking(), false);
 touched.tick(690);
 assert.equal(touched.robin.heartGlowing(), false);
-touched.tick(7100);
-assert.equal(touched.robin.speech(), 'Das tut gut. Schön, dass du da bist. ♡');
+assert.equal(touched.robin.mood(), 'happy');
+touched.tick(5149);
+assert.equal(touched.robin.mood(), 'happy');
+touched.tick(1);
+assert.equal(touched.robin.mood(), 'curious');
+assert.equal(touched.robin.speech(), 'Was entdecken wir als Nächstes?');
 for (let i = 0; i < 20; i++) touched.robin.touchHeart();
-assert.equal(touched.timers.size, 3);
+assert.equal(touched.timers.size, 4);
 touched.robin.greet();
 assert.equal(touched.robin.heartGlowing(), false);
 assert.equal(touched.robin.blinking(), false);
@@ -116,6 +121,10 @@ quietTouch.robin.touchHeart();
 assert.equal(quietTouch.robin.speech(), 'Das tut gut. Schön, dass du da bist. ♡');
 assert.equal(quietTouch.robin.blinking(), false);
 assert.equal(quietTouch.robin.heartGlowing(), false);
+assert.equal(quietTouch.timers.size, 1);
+assert.equal(quietTouch.robin.mood(), 'happy');
+quietTouch.tick(6000);
+assert.equal(quietTouch.robin.mood(), 'curious');
 assert.equal(quietTouch.timers.size, 0);
 quietTouch.motion(false);
 quietTouch.robin.touchHeart();
@@ -125,3 +134,19 @@ assert.equal(quietTouch.robin.blinking(), false);
 assert.equal(quietTouch.timers.size, 0);
 quietTouch.destroy();
 console.log('Heart response, interrupted greeting, repeated touches and reduced motion passed.');
+
+const refreshed = fixture(true);
+refreshed.robin.touchHeart();
+refreshed.tick(5000);
+refreshed.robin.touchHeart();
+refreshed.tick(1000);
+assert.equal(refreshed.robin.mood(), 'happy');
+refreshed.tick(5000);
+assert.equal(refreshed.robin.mood(), 'curious');
+refreshed.robin.touchHeart();
+refreshed.robin.greet();
+assert.equal(refreshed.robin.mood(), 'curious');
+refreshed.tick(6000);
+assert.equal(refreshed.robin.speech(), 'Hallo, ich bin Robin! Schön, dass du da bist. ♡');
+refreshed.destroy();
+console.log('Mood transitions, six-second happiness and renewed touch duration passed.');

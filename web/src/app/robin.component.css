@@ -12,3 +12,7 @@
 @keyframes heart-light{0%,100%{filter:brightness(1)}45%{filter:brightness(1.25)}}
 @media(max-width:760px){.robot-frame{width:min(100%,360px)}}
 @media(prefers-reduced-motion:reduce){.heart-touched .heart-glow,.heart-touched .heart-mark{animation:none}}
+
+.happy-eyes{display:none}
+.happy .curious-eyes{opacity:0}
+.happy .happy-eyes{display:inline}
