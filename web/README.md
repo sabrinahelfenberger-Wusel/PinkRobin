@@ -45,3 +45,8 @@ geprüfte NGINX-Image auf GHCR veröffentlicht. Ein Synology-Auftrag holt es all
 Minuten ab, prüft es und wechselt den Container mit Rückkehr zum bisherigen Stand
 bei Fehlern. Einrichtung und Migration des bestehenden Containers:
 [Synology-Deployment](../deploy/synology/README.md).
+
+Robins Herz reagiert auf Klick, Touch und Tastatur (Enter/Leertaste): eine kurze
+Nachricht, Blinzeln und sanftes Leuchten. Bei reduzierter Bewegung erscheint nur
+die Nachricht. Berührungen unterbrechen bei Bedarf die Begrüssung; Wiederholen
+und Seitenwechsel räumen auch die Reaktionstimer auf.

@@ -1,5 +1,6 @@
-    <section class="stage" [class.awake]="awake()" [class.blinking]="blinking()" [class.look-left]="look() === 'left'" [class.look-right]="look() === 'right'" aria-label="Pink Robin stellt sich vor">
+    <section class="stage" [class.awake]="awake()" [class.heart-touched]="heartGlowing()" [class.blinking]="blinking()" [class.look-left]="look() === 'left'" [class.look-right]="look() === 'right'" aria-label="Pink Robin stellt sich vor">
       <div class="speech" id="speech" role="status" aria-live="polite">{{ speech() }}</div>
+      <div class="robot-frame">
       <svg class="robot" viewBox="0 0 500 570" role="img" aria-labelledby="robot-title robot-description">
         <title id="robot-title">Pink Robin</title><desc id="robot-description">Ein cremefarbener kleiner Roboter mit grossen Augen, rosa Wangen und einem Herz auf der Brust.</desc>
         <defs>
@@ -20,8 +21,8 @@
           <path d="M179 355Q250 338 321 355Q346 363 352 409L361 481Q360 511 333 514H167Q140 511 139 481L148 409Q154 363 179 355Z"/>
         </g>
         <rect x="184" y="377" width="132" height="113" rx="24" fill="url(#rim)" stroke="#b8a49a" stroke-width="2"/>
-        <path d="M250 466C230 450 204 433 219 413C232 398 248 413 250 418C255 405 273 400 283 413C299 434 273 451 250 466Z" fill="#ff5c9a" opacity=".5" filter="url(#glow)"/>
-        <path d="M250 466C230 450 204 433 219 413C232 398 248 413 250 418C255 405 273 400 283 413C299 434 273 451 250 466Z" fill="url(#heart)" stroke="#ffe4f0" stroke-width="2"/>
+        <path d="M250 466C230 450 204 433 219 413C232 398 248 413 250 418C255 405 273 400 283 413C299 434 273 451 250 466Z" class="heart-glow" fill="#ff5c9a" opacity=".5" filter="url(#glow)"/>
+        <path d="M250 466C230 450 204 433 219 413C232 398 248 413 250 418C255 405 273 400 283 413C299 434 273 451 250 466Z" class="heart-mark" fill="url(#heart)" stroke="#ffe4f0" stroke-width="2"/>
         <rect x="58" y="147" width="48" height="129" rx="24" fill="url(#shell)" stroke="#a89b95" stroke-width="2"/>
         <rect x="394" y="147" width="48" height="129" rx="24" fill="url(#shell)" stroke="#a89b95" stroke-width="2"/>
         <rect x="66" y="168" width="29" height="85" rx="15" fill="#655f60" stroke="#ff84b0" stroke-width="3"/>
@@ -38,5 +39,9 @@
         <path d="M236 240Q250 266 264 240" fill="none" stroke="#ff5c9a" stroke-width="5" stroke-linecap="round"/>
         <g stroke="#ff75aa" stroke-width="5" stroke-linecap="round"><path d="M158 249l-4 4m15-4-4 4m173-4-4 4m15-4-4 4"/></g>
       </svg>
+      <button class="heart-button" type="button" aria-label="Robins Herz berühren"
+        aria-describedby="heart-hint" (click)="touchHeart()"></button>
+      </div>
+      <p class="heart-hint" id="heart-hint">Berühre mein Herz. ♡</p>
       <p class="stage-caption"><span class="status-dot"></span><span id="state">{{ state() }}</span><span class="version">Virtual Robin · 0.1</span></p>
     </section>

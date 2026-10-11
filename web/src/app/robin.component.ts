@@ -9,6 +9,7 @@ import { Component, DestroyRef, afterNextRender, inject, signal } from '@angular
 export class RobinComponent {
   readonly awake = signal(false);
   readonly blinking = signal(false);
+  readonly heartGlowing = signal(false);
   readonly look = signal<'left' | 'right' | null>(null);
   readonly speech = signal('Pssst … Robin schläft noch.');
   readonly state = signal('Robin träumt gerade');
@@ -37,6 +38,7 @@ export class RobinComponent {
     if (this.destroyed) return;
     this.clearTimers();
     this.blinking.set(false);
+    this.heartGlowing.set(false);
     this.look.set(null);
 
     if (this.reducedMotion?.matches) {
@@ -52,15 +54,31 @@ export class RobinComponent {
       this.awake.set(true);
       this.speech.set('Oh! Da ist ja jemand. …');
       this.state.set('Robin entdeckt die Welt');
-    }, 1000);
-    this.later(() => this.blink(), 1800);
-    this.later(() => this.look.set('left'), 2300);
-    this.later(() => this.look.set('right'), 3100);
+    }, 4000);
+    this.later(() => this.blink(), 4800);
+    this.later(() => this.look.set('left'), 5300);
+    this.later(() => this.look.set('right'), 6100);
     this.later(() => {
       this.look.set(null);
       this.finishGreeting();
       this.idle();
-    }, 4100);
+    }, 7100);
+  }
+
+  touchHeart(): void {
+    if (this.destroyed) return;
+    // Touch takes over the greeting and keeps just one idle loop.
+    this.clearTimers();
+    this.awake.set(true);
+    this.blinking.set(false);
+    this.look.set(null);
+    this.speech.set('Das tut gut. Schön, dass du da bist. ♡');
+    this.state.set('Robin freut sich über deine Nähe');
+    this.heartGlowing.set(!this.reducedMotion?.matches);
+    if (this.reducedMotion?.matches) return;
+    this.blink();
+    this.later(() => this.heartGlowing.set(false), 850);
+    this.idle();
   }
 
   private finishGreeting(): void {
