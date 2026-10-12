@@ -6,7 +6,7 @@
 
 Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
 
-**Stand:** Konzept und Verzeichnisgerüst. VirtualRobin zeigt erste Stimmungen und Berührungsreaktionen; Core und Backend folgen
+**Stand:** Konzept und Verzeichnisgerüst. VirtualRobin zeigt erste Stimmungen und Berührungsreaktionen; Core und Backend folgen.
 
 ## Projektstruktur
 
@@ -32,7 +32,7 @@ Pink Robin soll Emotionen und Zustände nicht nur sprachlich, sondern auch visue
 
 Der portable C++-Core läuft auf dem Roboter lokal und für Virtual Robin nativ auf dem Server hinter ASP.NET Core. Angular stellt den Simulator dar und kommuniziert über HTTPS sowie den vorgesehenen SignalR-Echtzeitkanal. Bibliothek oder eigener C++-Prozess bleibt als Backend-Anbindung offen. Der Websimulator benötigt eine Serververbindung; der physische Grundbetrieb bleibt offline verfügbar.
 
-Die statische Startseite ist bereits unter https://pinkrobin.wanderwusel.ch über einen NGINX-Container und Synology-Reverse-Proxy mit HTTPS erreichbar. Angular, Backend, Core und Pipeline sind noch nicht implementiert.
+Die statische Startseite ist bereits unter https://pinkrobin.wanderwusel.ch über einen NGINX-Container und Synology-Reverse-Proxy mit HTTPS erreichbar. Angular: Die startseite und die erste Version von Robinist bereits erreichbar; Backend, Core folgen.
 
 Der erste Prototyp verbindet einen kleinen C++-Core, getrennte Backend-Sitzungen und Angular-Gesicht mit Berührungsreaktion und Nickauftrag. Details: [Technologiekonzept](docs/Technologiekonzept.md).
 
@@ -40,7 +40,7 @@ Der erste Prototyp verbindet einen kleinen C++-Core, getrennte Backend-Sitzungen
 
 PinkRobin ist die zentrale Entwicklungsbasis; Ziel ist ein privates Repository. Der tatsächliche Sichtbarkeitsstatus muss separat in GitHub eingestellt werden. Der Core bleibt privat. Ein weiteres öffentliches Repository erhält nur ausdrücklich freigegebene Inhalte; es wird nicht automatisch aus main gespiegelt.
 
-CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionierte Frontend-/Backend-Releases bereitstellen. Die Synology soll freigegebene Releases mit begrenzten Leserechten abholen. Webseitenbereitstellung und öffentliche Quellcode-Freigabe sind getrennte Abläufe.
+CI/CD ist im PinkRobin-Repository auf main implementiert: prüfen, bauen und versionierte Frontend-/Backend-Releases bereitstellen. Die Synology soll freigegebene Releases mit begrenzten Leserechten abholen. Webseitenbereitstellung und öffentliche Quellcode-Freigabe sind getrennte Abläufe.
 
 ## Dokumentation
 
