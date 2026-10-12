@@ -56,3 +56,9 @@ geführt. Neugier zeigt die grossen offenen Augen; nach einer Herzberührung lä
 Robin mit fröhlichen Augen und breiterem Mund. Nach sechs Sekunden wird er wieder
 neugierig. Weitere Berührungen verlängern die glückliche Stimmung. Auch mit
 reduzierter Bewegung wechselt der statische Ausdruck ohne Animation.
+
+Kopfstreicheln: Auf der Schale oberhalb des Displays mit Maus oder Finger gedrückt
+halten und bewegen. Robin zeigt zuerst fröhliche Augen, nach fünf Sekunden
+Herzaugen. Loslassen, Verlassen der Zone, Abbruch oder Fensterwechsel stellt den
+neugierigen Ausdruck wieder her. Per Tastatur Enter/Leertaste gedrückt halten;
+bei reduzierter Bewegung wechseln die statischen Ausdrücke ohne Animation.
