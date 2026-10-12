@@ -16,3 +16,14 @@
 .happy-eyes{display:none}
 .happy .curious-eyes{opacity:0}
 .happy .happy-eyes{display:inline}
+
+.head-button{position:absolute;left:27%;top:11.75%;width:46%;height:5.62%;min-height:24px;padding:0;border:0;border-radius:50% 50% 0 0;background:transparent;touch-action:none;user-select:none;-webkit-tap-highlight-color:transparent;cursor:grab}
+.head-button:hover{background:transparent}
+.head-button:active{cursor:grabbing}
+.head-button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.heart-eyes{display:none}
+.heart-eyes-active .happy-eyes{display:none}
+.heart-eyes-active .heart-eyes{display:inline}
+
+/* Keep the head under the pointer when the response changes line count. */
+.speech{min-height:96px}

@@ -1,12 +1,13 @@
 import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 
-type RobinMood = 'sleeping' | 'waking' | 'curious' | 'happy';
+type RobinMood = 'sleeping' | 'waking' | 'curious' | 'happy' | 'affectionate';
 
 const MOOD_LABELS: Record<RobinMood, string> = {
   sleeping: 'Robin träumt gerade',
   waking: 'Robin entdeckt die Welt',
   curious: 'Robin ist wach und neugierig',
   happy: 'Robin ist glücklich und freut sich über deine Nähe',
+  affectionate: 'Robin geniesst das Streicheln mit Herzaugen',
 };
 
 @Component({
@@ -17,6 +18,9 @@ const MOOD_LABELS: Record<RobinMood, string> = {
 })
 export class RobinComponent {
   readonly mood = signal<RobinMood>('sleeping');
+  readonly petting = signal(false);
+  readonly smiling = computed(() => this.mood() === 'happy' || this.mood() === 'affectionate');
+  private activePointer: number | null = null;
   readonly awake = computed(() => this.mood() !== 'sleeping');
   readonly blinking = signal(false);
   readonly heartGlowing = signal(false);
@@ -47,6 +51,8 @@ export class RobinComponent {
   greet(): void {
     if (this.destroyed) return;
     this.clearTimers();
+    this.petting.set(false);
+    this.activePointer = null;
     this.blinking.set(false);
     this.heartGlowing.set(false);
     this.look.set(null);
@@ -76,6 +82,8 @@ export class RobinComponent {
     if (this.destroyed) return;
     // Touch takes over the greeting and keeps just one idle loop.
     this.clearTimers();
+    this.petting.set(false);
+    this.activePointer = null;
     this.mood.set('happy');
     this.blinking.set(false);
     this.look.set(null);
@@ -88,6 +96,67 @@ export class RobinComponent {
     if (this.reducedMotion?.matches) return;
     this.blink();
     this.later(() => this.heartGlowing.set(false), 850);
+    this.idle();
+  }
+
+  onHeadPointerDown(event: PointerEvent): void {
+    if (!event.isPrimary || event.button !== 0) return;
+    this.activePointer = event.pointerId;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.startPetting();
+  }
+
+  onHeadPointerMove(event: PointerEvent): void {
+    if (event.pointerId !== this.activePointer) return;
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) this.stopPetting();
+  }
+
+  onPointerEnd(event: PointerEvent): void {
+    if (event.pointerId === this.activePointer) this.stopPetting();
+  }
+
+  onHeadKeyDown(event: KeyboardEvent): void {
+    if (event.key !== ' ' && event.key !== 'Enter') return;
+    event.preventDefault();
+    this.startPetting();
+  }
+
+  onHeadKeyUp(event: KeyboardEvent): void {
+    if (event.key === ' ' || event.key === 'Enter') this.stopPetting();
+  }
+
+  onVisibilityChange(): void {
+    if (document.hidden) this.stopPetting();
+  }
+
+  startPetting(): void {
+    if (this.destroyed || this.petting()) return;
+    this.clearTimers();
+    this.petting.set(true);
+    this.mood.set('happy');
+    this.look.set(null);
+    this.blinking.set(false);
+    this.heartGlowing.set(false);
+    this.speech.set('Oh, das fühlt sich schön an. ♡');
+    this.blink();
+    this.later(() => {
+      this.mood.set('affectionate');
+      this.speech.set('Bei dir fühle ich mich wohl. ♡');
+    }, 5000);
+  }
+
+  stopPetting(): void {
+    if (this.destroyed || !this.petting()) return;
+    this.clearTimers();
+    this.petting.set(false);
+    this.activePointer = null;
+    this.mood.set('curious');
+    this.blinking.set(false);
+    this.heartGlowing.set(false);
+    this.look.set(null);
+    this.speech.set('Was entdecken wir als Nächstes?');
     this.idle();
   }
 
