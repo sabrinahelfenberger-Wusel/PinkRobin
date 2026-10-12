@@ -5,4 +5,7 @@
     @media(max-width:800px){.wrap{width:calc(100% - 40px)}.hero{gap:32px;padding:60px 0;grid-template-columns:1fr}.specimen{transform:none;max-width:420px;width:100%;margin-top:5px}.monogram{font-size:8rem;padding:0 20px 10px 0}.section-head{grid-template-columns:1fr;gap:12px}.cards{grid-template-columns:1fr}.development{grid-template-columns:1fr;gap:25px;padding:25px}.section{padding:45px 0}h3{margin-top:12px}}
     @media(max-width:440px){header{align-items:flex-start}nav{gap:14px;flex-wrap:wrap;justify-content:flex-end}nav a{font-size:.875rem}footer{flex-direction:column;gap:8px}.intro{font-size:1.05rem}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-  
+
+.github-link{display:inline-flex;align-items:center;gap:7px}
+.github-link svg{flex-shrink:0}
+nav{align-items:center}
