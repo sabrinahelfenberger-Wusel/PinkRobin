@@ -1,6 +1,6 @@
 # Technologiekonzept: serverseitiger Robin-Kern und Websimulator
 
-Status: abgestimmte Zielarchitektur. Der C++-Kern, Angular-Websimulator, ASP.NET-Core-Backend und CI/CD sind noch nicht implementiert. Die statische Startseite ist bereits über NGINX, Synology-Reverse-Proxy und HTTPS unter https://pinkrobin.wanderwusel.ch erreichbar.
+Status: abgestimmte Zielarchitektur mit implementierter Angular-Frontend-Demo und Frontend-CI/CD. Startseite, Gesichtsausdrücke und Berührungsreaktionen sind über NGINX, Synology-Reverse-Proxy und HTTPS unter https://pinkrobin.wanderwusel.ch erreichbar. C++-Kern und ASP.NET-Core-Backend sind noch nicht implementiert.
 
 ## 1. Ziel und Einordnung
 
@@ -123,7 +123,7 @@ Webdeployment und Quellcode-Veröffentlichung sind getrennte Vorgänge. Die Pipe
 
 ## 8. Docker, Domain und Synology
 
-Bereits eingerichtet: NGINX-Container pinkrobin-web, NAS-Port 8080 auf Container-Port 80, Reverse Proxy und HTTPS für pinkrobin.wanderwusel.ch. Die vorhandene HTML-Startseite ist noch kein Angular-Simulator.
+Bereits eingerichtet: NGINX-Container pinkrobin-web, NAS-Port 8080 auf Container-Port 80, Reverse Proxy und HTTPS für pinkrobin.wanderwusel.ch. Der Container liefert inzwischen die Angular-Demo mit Startseite und Virtual Robin aus. Die Reaktionen laufen derzeit im Browser; Backend und Core folgen.
 
 Geplant:
 - Frontend-Container mit fertig gebautem Angular und statischem NGINX.
@@ -146,10 +146,10 @@ Die Pipeline liegt im zentralen PinkRobin-Repository:
 5. Neues Release vorbereiten, Gesundheits- und durchgängige Sitzungs-/Auftragstests durchführen und kontrolliert aktivieren.
 6. Vorherigen funktionsfähigen Stand für Rollback behalten; fehlgeschlagenes Release nicht dauerhaft aktivieren.
 
-Die Frontend-Pipeline ist unter `.github/workflows/web-container.yml` vorbereitet:
+Die Frontend-Pipeline ist unter `.github/workflows/web-container.yml` eingerichtet und erfolgreich ausgeführt:
 Angular- und Containerprüfung auf dev, Veröffentlichung geprüfter main-Images auf
 GHCR und ein NAS-Abrufskript mit Gesundheitsprüfung und Rollback.
-Die einmalige NAS-Einrichtung und der erste echte Auslieferungstest stehen noch aus;
+Die NAS-Einrichtung und Auslieferung wurden durchgeführt; der geplante Auftrag läuft als root. Änderungen am NAS-Skript müssen separat auf die NAS kopiert werden;
 Anleitung: [Synology-Deployment](../deploy/synology/README.md).
 Backend-/Core-CI/CD bleibt geplant. Quellcode-Freigaben ins öffentliche Repository gehören nicht in den automatischen main-Deployment-Ablauf. Zugangsinformationen werden über geschützte CI- und NAS-Konfiguration bereitgestellt, nicht committed oder in Images eingebaut.
 

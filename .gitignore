@@ -27,3 +27,7 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Python test caches
+__pycache__/
+*.pyc

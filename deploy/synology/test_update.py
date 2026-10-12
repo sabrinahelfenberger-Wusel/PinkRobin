@@ -16,6 +16,10 @@ s = json.loads(p.read_text())
 a = sys.argv[1:]
 s['calls'].append(a)
 def finish(code=0, output=''):
+    if s.get('signal_after') == cmd and not s.get('signal_sent'):
+        s['signal_sent'] = True
+        p.write_text(json.dumps(s))
+        os.kill(os.getppid(), 15)
     p.write_text(json.dumps(s))
     if output: print(output)
     sys.exit(code)
@@ -41,7 +45,9 @@ if cmd == 'run':
     finish(output='container-id')
 if cmd == 'exec': finish()
 if cmd == 'stop': s['containers'][a[1]]['running']=False; finish()
-if cmd == 'start': s['containers'][a[1]]['running']=True; finish()
+if cmd == 'start':
+    if s.get('fail_rollback'): finish(1)
+    s['containers'][a[1]]['running']=True; finish()
 if cmd == 'rename': s['containers'][a[2]]=s['containers'].pop(a[1]); finish()
 if cmd == 'rm':
     for name in a[1:]:
@@ -52,7 +58,7 @@ finish(2, 'Unexpected Docker invocation')
 
 
 class DeploymentTests(unittest.TestCase):
-    def run_case(self, **changes):
+    def run_case(self, preexisting_lock=False, **changes):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             state = {
@@ -70,8 +76,9 @@ class DeploymentTests(unittest.TestCase):
             docker.chmod(0o755)
             env = {**os.environ, 'PATH': f"{root}:{os.environ['PATH']}",
                    'FAKE_DOCKER_STATE': str(file), 'PINKROBIN_LOCK': str(root / 'lock')}
+            if preexisting_lock: (root / 'lock').mkdir()
             result = subprocess.run(['sh', str(SCRIPT)], env=env, capture_output=True, text=True)
-            self.assertFalse((root / 'lock').exists())
+            self.assertEqual((root / 'lock').exists(), preexisting_lock)
             state = json.loads(file.read_text())
             self.assertNotIn('pinkrobin-web-candidate', state['containers'])
             return result, state
@@ -110,6 +117,26 @@ class DeploymentTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(state['containers'], legacy)
         self.assertFalse(any(call[0] == 'pull' for call in state['calls']))
+
+    def test_interruption_during_stop_or_rename_restores_site(self):
+        for operation in ['stop', 'rename']:
+            with self.subTest(operation=operation):
+                result, state = self.run_case(signal_after=operation)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(state['containers']['pinkrobin-web']['image'], 'old-image')
+                self.assertTrue(state['containers']['pinkrobin-web']['running'])
+
+    def test_existing_lock_reports_failure_without_touching_docker(self):
+        result, state = self.run_case(preexisting_lock=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('lock', result.stderr)
+        self.assertEqual(state['calls'], [])
+
+    def test_failed_rollback_releases_lock_and_reports_manual_recovery(self):
+        result, state = self.run_case(fail_start=True, fail_rollback=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Rollback failed', result.stderr)
+        self.assertEqual(state['containers']['pinkrobin-web']['image'], 'old-image')
 
     def test_first_install(self):
         result, state = self.run_case(containers={})
