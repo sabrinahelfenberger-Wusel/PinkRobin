@@ -6,7 +6,7 @@
 
 Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
 
-**Stand:** Konzept und Verzeichnisgerüst. Die unten genannten Anwendungen sind noch nicht implementiert.
+**Stand:** Konzept und Verzeichnisgerüst. VirtualRobin zeigt erste Stimmungen und Berührungsreaktionen; Core und Backend folgen
 
 ## Projektstruktur
 
