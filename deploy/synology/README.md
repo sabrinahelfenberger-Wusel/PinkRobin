@@ -11,6 +11,7 @@ Lokal muss vorher kein Build ausgeführt werden.
 Image: `ghcr.io/sabrinahelfenberger-wusel/pinkrobin-web:main`.
 Zusätzlich erhält jeder Stand einen Tag `sha-<vollständige Git-Commit-ID>`.
 Das Image enthält nur NGINX und fertige Frontend-Dateien, keinen Repository-Quellcode.
+Das Update-Skript selbst wird nicht mit dem Web-Image aktualisiert.
 Die Veröffentlichung macht das Paket nicht automatisch öffentlich.
 
 ## Einmal auf GitHub
@@ -86,16 +87,51 @@ frühere Images bleiben für Rückkehr erhalten; Speicherverbrauch gelegentlich 
 
 Konfiguration: `PINKROBIN_PORT` (Standard 8080), `PINKROBIN_BIND` (127.0.0.1) und
 `PINKROBIN_IMAGE`. Änderungen müssen auch im geplanten Auftrag gesetzt werden.
-Die Sperre `/tmp/pinkrobin-web-deploy.lock` verhindert parallele Durchläufe. Nach
+Die Sperre `/tmp/pinkrobin-web-deploy.lock` verhindert parallele Durchläufe.
+Eine nicht verfügbare Sperre liefert einen Fehlerstatus, damit DSM die konfigurierte
+Fehlerbenachrichtigung versendet. Auch bei Rollback-Fehlern wird die eigene Sperre
+freigegeben und die nötige manuelle Wiederherstellung gemeldet. Nach
 Stromausfall kann eine verwaiste Sperre verbleiben: erst sicherstellen, dass kein
 Deployment läuft, dann das leere Sperrverzeichnis entfernen.
 
 ## Nachweis und Grenzen
 
 CI prüft npm ci, Timer-Tests, Angular-Build, Docker-Build, HTTP-Einstieg, Revision,
-fehlende Assets und nicht vorhandene API-Pfade. Die lokale Arbeitsumgebung hat kein
-Docker; der Container- und NAS-Test wird erstmals durch GitHub bzw. auf der NAS
-bestätigt. Einrichtung, GHCR-Zugang und Aufgabenplaner sind einmalige NAS-Schritte.
+fehlende Assets und nicht vorhandene API-Pfade. Diese Prüfungen und die echte
+NAS-Auslieferung wurden erfolgreich durchgeführt. Deploymenttests decken auch
+Abbruch beim Stoppen/Umbenennen, blockierte Sperren und fehlgeschlagenen Rollback ab.
+Ein Stromausfall oder SIGKILL kann nicht vom Skript abgefangen werden; dann Container
+und Sperre vor der Wiederaufnahme manuell prüfen.
 
 Quellen: [GitHub: Docker-Images veröffentlichen](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images),
 [GHCR-Zugang](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
+## Eine aktualisierte Skriptversion installieren
+
+Änderungen am Skript kommen durch den Image-Pull nicht auf die NAS. Nach einem Pull
+von dev die Datei `deploy/synology/update-web.sh` auf der NAS unter
+`/volume1/docker/pinkrobin-deploy/update-web.sh` ersetzen. Währenddessen den geplanten
+Auftrag deaktivieren und einen bereits laufenden Durchlauf erst beenden lassen.
+Datei mit Unix-Zeilenenden (LF) übertragen. Container-Stop und Umbenennung aus der
+Erstmigration sind dafür nicht nötig.
+
+Per SSH als root:
+
+```sh
+chown root:root /volume1/docker/pinkrobin-deploy/update-web.sh
+chmod 700 /volume1/docker/pinkrobin-deploy/update-web.sh
+sh -n /volume1/docker/pinkrobin-deploy/update-web.sh
+sh /volume1/docker/pinkrobin-deploy/update-web.sh
+```
+
+Auch vorhandene DSM-ACLs prüfen: nur Administratoren sollen Schreibrechte auf das
+als root ausgeführte Skript besitzen. Anschliessend den geplanten Auftrag wieder
+aktivieren. Zum Speichern der Ausgaben kann dessen Befehl lauten:
+
+```sh
+sh /volume1/docker/pinkrobin-deploy/update-web.sh >> /volume1/docker/pinkrobin-deploy/update.log 2>&1
+```
+
+Die Protokolldatei muss regelmässig archiviert oder begrenzt werden; automatische
+Rotation ist aktuell nicht im Update-Skript implementiert. Fehlerbenachrichtigung
+in DSM nur für unnormal beendete Durchläufe aktivieren und E-Mail-Versand testen.

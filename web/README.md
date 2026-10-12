@@ -6,7 +6,7 @@ Der C++-Core läuft nativ auf dem Server; Angular enthält weder Core-Quellcode 
 
 Der Simulator benötigt eine Serververbindung. Verbindungsverlust, Wiederverbindung und Sitzungsablauf werden sichtbar behandelt; vor neuen Aufträgen erfolgt ein Zustandsabgleich. Die erste Demo verwendet synthetische Daten ohne Kamera-/Mikrofonzugriff.
 
-Stand: Angular-Demo mit Virtual Robin vorhanden. Die statische Startseite ist bereits auf der Synology erreichbar. Docker und CI/CD: [Technologiekonzept](../docs/Technologiekonzept.md).
+Stand: Angular-Demo mit Projektstartseite und Virtual Robin ist auf der Synology veröffentlicht. Die ursprünglichen statischen Dateien bleiben als Referenz erhalten. Docker und CI/CD: [Technologiekonzept](../docs/Technologiekonzept.md).
 
 ## Angular-Demo lokal starten
 

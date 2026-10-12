@@ -12,24 +12,40 @@ CANDIDATE=pinkrobin-web-candidate
 LOCK=${PINKROBIN_LOCK:-/tmp/pinkrobin-web-deploy.lock}
 
 if ! mkdir "$LOCK" 2>/dev/null; then
-    echo 'Another deployment is running (or a stale lock needs checking).'
-    exit 0
+    echo "Deployment lock unavailable: $LOCK. Check for a running deployment or a stale lock." >&2
+    exit 1
 fi
-switched=false
-restore=false
+rollback_needed=false
+previous_image=
 cleanup() {
     result=$?
-    trap - EXIT
-    docker rm -f "$CANDIDATE" >/dev/null 2>&1 || true
-    if [ "$result" -ne 0 ] && [ "$switched" = true ]; then
-        docker rm -f "$NAME" >/dev/null 2>&1 || true
-        if [ "$restore" = true ]; then
-            docker rename "$PREVIOUS" "$NAME"
-            docker start "$NAME" >/dev/null
-            echo 'Deployment failed; previous container restored.' >&2
+    trap - EXIT HUP INT TERM
+    # Cleanup must release the lock even if Docker or the rollback fails.
+    set +e
+    docker rm -f "$CANDIDATE" >/dev/null 2>&1
+    if [ "$result" -ne 0 ] && [ "$rollback_needed" = true ]; then
+        remaining_image=$(docker inspect --format '{{.Image}}' "$NAME" 2>/dev/null)
+        if [ "$remaining_image" = "$previous_image" ]; then
+            # Interrupted during stop, before the old container was renamed.
+            if docker start "$NAME" >/dev/null; then
+                echo 'Deployment failed; previous container restarted.' >&2
+            else
+                echo 'ERROR: Previous container could not be restarted. Manual recovery required.' >&2
+            fi
+        else
+            # Rename may have finished just before a signal interrupted the shell.
+            docker rm -f "$NAME" >/dev/null 2>&1
+            if docker rename "$PREVIOUS" "$NAME" && docker start "$NAME" >/dev/null; then
+                echo 'Deployment failed; previous container restored.' >&2
+            else
+                echo 'ERROR: Rollback failed. Check both container names before retrying.' >&2
+            fi
         fi
     fi
-    rmdir "$LOCK"
+    if ! rmdir "$LOCK"; then
+        echo "ERROR: Could not release deployment lock: $LOCK" >&2
+        result=1
+    fi
     exit "$result"
 }
 trap cleanup EXIT
@@ -77,14 +93,12 @@ docker exec "$CANDIDATE" wget -q -O /dev/null http://127.0.0.1/index.html
 if exists "$NAME"; then
     # The earlier successful container is retained until the next deployment.
     if exists "$PREVIOUS"; then docker rm "$PREVIOUS" >/dev/null; fi
+    previous_image=$(docker inspect --format '{{.Image}}' "$NAME")
+    # Arm recovery before the first operation that can stop the live site.
+    rollback_needed=true
     docker stop "$NAME" >/dev/null
-    if ! docker rename "$NAME" "$PREVIOUS"; then
-        docker start "$NAME" >/dev/null
-        exit 1
-    fi
-    restore=true
+    docker rename "$NAME" "$PREVIOUS"
 fi
-switched=true
 docker run -d --name "$NAME" --restart unless-stopped \
     --label ch.wanderwusel.pinkrobin.managed=true \
     -p "$BIND:$PORT:80" "$TARGET" >/dev/null
