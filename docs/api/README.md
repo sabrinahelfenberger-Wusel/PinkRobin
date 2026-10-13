@@ -1,9 +1,31 @@
-# API und Schnittstellen
+# Backend-API, Vorbereitung v1
 
-Hier werden künftig REST-Endpunkte, DTOs, Validierungsregeln, Fehlerantworten und Versionierung des ASP.NET-Core-Backends dokumentiert.
+Implementiert im ASP.NET-Core-Projekt `backend/src/PinkRobin.Api`.
+Die erste API liefert Infrastrukturstatus, keine simulierte Core-Steuerung.
 
-Das bestehende [Robin Protocol](../Robin-Protocol.md) beschreibt die fachlichen Nachrichten und Abläufe. REST-Verträge ergänzen es und werden damit abgeglichen.
+- `GET /health/live`: 200, `{ "status": "alive" }`.
+- `GET /health/ready`: derzeit 503 Problem Details mit Titel `Core not connected`.
+- `GET /api/v1/status`: 200 mit folgendem Vertrag:
 
-Für Virtual Robin werden sitzungsbezogene Ereignisse, Aufträge, Status und simulierte Ergebnisse spezifiziert. Ein SignalR-Echtzeitkanal ist vorgesehen. Sitzungszuordnung, Versionierung, Duplikate, Fehler, Abbruch, Limits und Wiederverbindung müssen vor Implementierung konkretisiert werden. Browserrückmeldungen sind keine physischen Nachweise.
+```json
+{
+  "service": "PinkRobin.Api",
+  "apiVersion": "1.0",
+  "stage": "preparation",
+  "core": { "connected": false, "implementation": "not-connected" },
+  "sessionsAvailable": false,
+  "commandsAvailable": false,
+  "realtimeAvailable": false
+}
+```
 
-Stand: Noch keine REST-Endpunkte, Hubs oder Transportverträge implementiert oder endgültig festgelegt.
+Diese Antworten dürfen nicht gecacht werden (`Cache-Control: no-store`).
+Die Status-API ist ohne Anmeldung lesbar und enthält keine personenbezogenen Daten.
+Es gibt noch keine Auftrags-, Sitzungs- oder SignalR-Endpunkte. Die HTTP-API-Version
+ist unabhängig vom fachlichen Entwurfsstand des [Robin Protocol](../Robin-Protocol.md).
+Das Vorhandensein des Statusendpunkts behauptet keine Bereitschaft für Core-Aufträge.
+
+Die spätere Demo braucht Sitzungszuordnung, Limits, validierte Ereignisse,
+Duplikatbehandlung und Wiederverbindung. Zustände müssen pro Sitzung getrennt sein;
+Browserrückmeldungen sind keine physischen Nachweise. Diese Verträge werden vor
+Implementierung konkretisiert. Einrichtung: [Backend-Anleitung](../../backend/README.md).

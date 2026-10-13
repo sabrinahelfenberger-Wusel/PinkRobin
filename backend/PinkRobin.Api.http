@@ -1,0 +1,9 @@
+@baseUrl = http://localhost:5080
+
+GET {{baseUrl}}/health/live
+
+### Core readiness is intentionally 503 until integration
+GET {{baseUrl}}/health/ready
+
+### Preparation status
+GET {{baseUrl}}/api/v1/status
