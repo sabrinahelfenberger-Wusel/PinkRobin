@@ -66,10 +66,11 @@ Readiness bleibt bis zur echten Core-Anbindung 503.
 
 Die vorhandene NAS hat laut Protokoll Linux 3.10.108. .NET-10-Container teilen den
 Host-Kernel; ein erfolgreicher CI-Test auf Ubuntu bestätigt nicht die Kompatibilität
-mit dieser Synology. Vor NAS-Deployment sind Runtime-Start und Netzwerkrouting dort
-separat zu prüfen. Synology DSM ist keine von Microsoft aufgeführte .NET-Plattform.
-Der vorhandene Frontend-NGINX beantwortet `/api` und `/hubs` weiterhin mit 404.
-Eine Weiterleitung wird erst mit dem bestätigten Backend-Deployment eingerichtet.
+mit dieser Synology. Der erste Runtime-Test auf der NAS war erfolgreich; nach
+Image-/Runtimewechseln bleibt ein erneuter NAS-Test sinnvoll. Synology DSM ist keine von Microsoft aufgeführte .NET-Plattform.
+Das Frontend-NGINX leitet `/api/` über das gemeinsame Docker-Netz zum Backend
+weiter. Dafür muss die neue Version von `update-web.sh` auf die NAS kopiert werden.
+`/hubs` bleibt bis zur SignalR-Implementierung bei 404.
 
 ## Nächste Schritte
 
