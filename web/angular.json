@@ -22,7 +22,8 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "buildTarget": "pinkrobin-web:build"
+            "buildTarget": "pinkrobin-web:build",
+            "proxyConfig": "proxy.conf.json"
           }
         }
       }

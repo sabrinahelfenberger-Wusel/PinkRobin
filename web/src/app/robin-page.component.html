@@ -6,6 +6,27 @@
       <p class="description">Ein kleiner Begleiter mit einer grossen Portion Neugier. Mein Abenteuer beginnt hier. Mit dir.</p>
       <button id="restart" (click)="robin.greet()" type="button">Robin nochmal begrüssen <span aria-hidden="true">↗</span></button>
       <p class="note">Noch ganz am Anfang. Schon voller Persönlichkeit.</p>
+      <div class="backend-status" role="status" aria-live="polite"
+        [class.connected]="backend.connection() === 'connected'">
+        <span class="connection-dot" aria-hidden="true"></span>
+        <div>
+          @switch (backend.connection()) {
+            @case ('checking') { <span>Backend-Verbindung wird geprüft …</span> }
+            @case ('connected') {
+              <span>Backend verbunden</span>
+              <small>{{ backend.status()?.core?.connected ? 'Core verbunden' : 'Core noch nicht angebunden' }}</small>
+            }
+            @case ('unreachable') {
+              <span>Backend nicht erreichbar</span>
+              <small>Robin lässt sich weiterhin als Demo ausprobieren.</small>
+            }
+            @case ('incompatible') {
+              <span>Backend-Antwort nicht kompatibel</span>
+              <small>Robin lässt sich weiterhin als Demo ausprobieren.</small>
+            }
+          }
+        </div>
+      </div>
     </section>
     <pr-robin #robin />
 

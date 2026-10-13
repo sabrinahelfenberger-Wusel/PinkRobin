@@ -5,7 +5,7 @@
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "test": "node tests/robin-lifecycle.cjs"
+    "test": "node tests/robin-lifecycle.cjs && node tests/backend-status.cjs"
   },
   "dependencies": {
     "@angular/common": "^20.3.0",
