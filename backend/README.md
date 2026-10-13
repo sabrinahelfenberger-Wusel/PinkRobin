@@ -12,11 +12,11 @@ Voraussetzung: .NET 10 SDK. Im Repository:
 ```sh
 cd backend
 dotnet build PinkRobin.Backend.slnx
-dotnet run --project src/PinkRobin.Api
+dotnet run --project src/PinkRobin.Api --launch-profile PinkRobin.Api
 ```
 
 Die API läuft unter http://localhost:5080. In Visual Studio mit .NET-10-Unterstützung
-`PinkRobin.Backend.slnx` öffnen und `PinkRobin.Api` starten. Die Datei
+`PinkRobin.Backend.slnx` öffnen; die beiden Startprofile sind unten beschrieben. Die Datei
 `PinkRobin.Api.http` enthält Beispielanfragen.
 
 | URL | Bedeutung |
@@ -83,3 +83,40 @@ weiter. Dafür muss die neue Version von `update-web.sh` auf die NAS kopiert wer
 [API-Vertrag](../docs/api/README.md), [Technologiekonzept](../docs/Technologiekonzept.md),
 [.NET-Support](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core),
 [Unterstützte .NET-10-Systeme](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md).
+
+## In Visual Studio mit dem grünen Startknopf
+
+1. Aktuellen dev-Stand pullen und `backend/PinkRobin.Backend.slnx` öffnen.
+2. Falls nötig, `PinkRobin.Api` als Startprojekt festlegen.
+3. Neben dem grünen Startknopf das Profil **PinkRobin Demo** auswählen.
+4. Starten (F5). Backend startet auf Port 5080, Angular auf Port 4200.
+   Der Browser öffnet zunächst den lokalen Backend-Einstieg und wechselt nach
+   dem Angular-Start zu `http://localhost:4200/#/virtual-robin`.
+
+Voraussetzungen: Visual Studio mit .NET-10-Unterstützung und ASP.NET-/Web-Workload,
+.NET 10 SDK, Node.js 22.12+ (22er-Reihe) und npm im PATH. Nach Installation von Node
+Visual Studio neu starten. Fehlende Angular-Abhängigkeiten installiert der erste
+Debug-Build einmalig mit npm ci; weitere Starts installieren sie nicht erneut.
+Bei geänderten Frontend-Abhängigkeiten wie gewohnt npm install/ci im web-Ordner.
+
+HTML, CSS und TypeScript sind im Projekt unter **Frontend** verlinkt. Änderungen
+speichern: Angular aktualisiert die Browseransicht automatisch. C#-Breakpoints
+funktionieren im Backend über Visual Studio. JavaScript-Debugging ist separat
+konfigurierbar; die Startfunktion setzt keine .esproj-/JS-SDK-Erweiterung voraus.
+
+Das Profil **PinkRobin.Api** startet nur das Backend. Auf der Kommandozeile:
+
+```sh
+dotnet run --project src/PinkRobin.Api --launch-profile "PinkRobin Demo"
+```
+
+Dabei gegebenenfalls `http://localhost:5080/` manuell öffnen; automatisches Öffnen
+über launchBrowser übernimmt Visual Studio. Ein bereits auf Port 4200 laufender
+Angular-Server wird genutzt. Die Stopptaste beendet den von diesem Startprofil
+selbst gestarteten Angular-Prozess mit dem Backend; ein vorher manuell gestarteter
+Angular-Server bleibt bestehen. Port 5080 muss frei sein.
+
+Nur das Demo-Profil aktiviert den Entwicklungs-SPA-Proxy. Production, Docker und
+NAS-Auslieferung starten weiterhin kein Angular und benutzen kein Node/npm.
+Das separate Backend-Profil und die vorhandenen Container-Tests bleiben erhalten.
+Grundlage: [Microsoft: SPA-Entwicklungsstart](https://learn.microsoft.com/en-us/aspnet/core/client-side/spa/intro).

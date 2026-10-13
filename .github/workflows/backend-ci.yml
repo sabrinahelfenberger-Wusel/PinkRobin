@@ -77,3 +77,30 @@ jobs:
           docker tag pinkrobin-backend:test "$image:main"
           docker push "$image:sha-$GITHUB_SHA"
           docker push "$image:main"
+
+  demo-start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Test combined development profile
+        working-directory: backend
+        run: |
+          dotnet run --project src/PinkRobin.Api --launch-profile "PinkRobin Demo" >/tmp/pinkrobin-demo.log 2>&1 &
+          demo_pid=$!
+          trap 'kill "$demo_pid" || true; cat /tmp/pinkrobin-demo.log' EXIT
+          for attempt in $(seq 1 120); do
+            curl --silent http://localhost:5080/ >/dev/null || true
+            if curl --fail --silent http://localhost:4200/ >/tmp/pinkrobin-demo.html; then break; fi
+            sleep 1
+          done
+          grep -q '<pr-root>' /tmp/pinkrobin-demo.html
+          curl --fail --silent http://localhost:4200/api/v1/status | python3 -c 'import json,sys; assert json.load(sys.stdin)["service"] == "PinkRobin.Api"'
+          curl --silent --dump-header /tmp/pinkrobin-demo.headers --output /dev/null http://localhost:5080/
+          grep -qi 'location: http://localhost:4200/#/virtual-robin' /tmp/pinkrobin-demo.headers
+          python3 -c 'import json; from pathlib import Path; c=json.loads(Path("src/PinkRobin.Api/bin/Debug/net10.0/spa.proxy.json").read_text())["SpaProxyServer"]; assert c["KeepRunning"] == "false"'

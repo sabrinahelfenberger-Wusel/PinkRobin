@@ -81,3 +81,10 @@ Lokal das Backend auf Port 5080 starten und Angular mit `npm start` starten. Die
 Datei den Angular-Entwicklungsserver neu starten. In Production übernimmt NGINX
 unter derselben Domain die Weiterleitung; es werden keine NAS-Adressen ins Frontend
 fest eingebaut. Die Anzeige liest nur den Status und steuert den Core noch nicht.
+
+## Gemeinsamer Start in Visual Studio
+
+`backend/PinkRobin.Backend.slnx` öffnen, `PinkRobin.Api` als Startprojekt und
+**PinkRobin Demo** als Profil wählen. Der grüne Startknopf startet Backend und
+Angular und öffnet die Robin-Seite. Verlinkte Frontend-Dateien stehen im Projekt
+unter **Frontend**. Details und Voraussetzungen: [Backend-Anleitung](../backend/README.md).
