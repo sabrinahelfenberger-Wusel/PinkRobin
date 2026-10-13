@@ -46,6 +46,11 @@ jobs:
           test "$(curl --fail --silent http://127.0.0.1:8080/version.txt)" = "$GITHUB_SHA"
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing.js)" = 404
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/test)" = 404
+          docker exec web-test nginx -t
+          # A caller inside the container is not the trusted Synology proxy.
+          docker exec web-test wget -q -O /dev/null --header='X-Real-IP:203.0.113.42' http://127.0.0.1/?ip-check-untrusted
+          docker logs web-test 2>&1 | grep -E '^127\.0\.0\.1 .*GET /\?ip-check-untrusted '
+
       - name: Save verified main image
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: docker save pinkrobin-web:test -o /tmp/web-image.tar

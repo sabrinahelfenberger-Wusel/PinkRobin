@@ -135,3 +135,24 @@ sh /volume1/docker/pinkrobin-deploy/update-web.sh >> /volume1/docker/pinkrobin-d
 Die Protokolldatei muss regelmässig archiviert oder begrenzt werden; automatische
 Rotation ist aktuell nicht im Update-Skript implementiert. Fehlerbenachrichtigung
 in DSM nur für unnormal beendete Durchläufe aktivieren und E-Mail-Versand testen.
+
+## Besucher-IP im Zugriffsprotokoll
+
+`web/nginx.conf` übernimmt `X-Real-IP` nur vom Synology-Reverse-Proxy unter
+`172.17.0.1` (beobachtete Docker-Gateway-Adresse). DSM setzt diesen Header selbst
+auf die Adresse der eingehenden Verbindung. Die NGINX-Zugriffsprotokolle enthalten
+damit die Besucher-IP, Uhrzeit, Anfrage, Status, Referrer und User-Agent.
+Ein weiterer vorgeschalteter Proxy wie Cloudflare würde eine erneute Prüfung der
+Vertrauenskette erfordern. Bei Änderung des Docker-Netzes die Proxy-Adresse prüfen
+und die Konfiguration anpassen; keinen pauschalen Vertrauensbereich eintragen.
+
+Nach dem Deployment per SSH als root ansehen:
+
+```sh
+docker logs --since 10m pinkrobin-web
+```
+
+Zum Vergleich die Website über Mobilfunk öffnen. Lokale Gesundheitstests bleiben
+als `127.0.0.1` sichtbar. IP-Adressen identifizieren Netzwerkanschlüsse, keine
+Personen. Die Protokolle liegen aktuell beim jeweiligen Container und werden nicht
+als dauerhaftes Archiv über Containerwechsel hinweg aufbewahrt.
