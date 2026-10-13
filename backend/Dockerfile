@@ -8,6 +8,9 @@ RUN dotnet publish src/PinkRobin.Api/PinkRobin.Api.csproj -c Release --no-restor
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app
+ARG REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/sabrinahelfenberger-Wusel/PinkRobin" \
+      org.opencontainers.image.revision="$REVISION"
 COPY --from=build /app/publish/ ./
 ENV ASPNETCORE_HTTP_PORTS=8080
 USER $APP_UID

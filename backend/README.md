@@ -47,8 +47,11 @@ python3 tests/smoke.py --development
 ```
 
 Der eigene GitHub-Workflow **Backend CI** baut das Projekt, testet echte HTTP-Antworten
-und baut und prüft das Produktionsimage. Er veröffentlicht oder installiert noch
-kein Backend-Image. Der bestehende Frontend-Workflow bleibt unabhängig.
+und baut und prüft das Produktionsimage. Auf main veröffentlicht er genau dieses
+geprüfte Image als `ghcr.io/sabrinahelfenberger-wusel/pinkrobin-backend:main` sowie
+`sha-<Commit-ID>`. Auf dev wird nur geprüft. Der bestehende Frontend-Workflow bleibt
+unabhängig. Die Installation auf der NAS erfolgt zunächst manuell; Anleitung:
+[Backend auf Synology](../deploy/synology/backend.md).
 
 ## Docker und Synology
 
