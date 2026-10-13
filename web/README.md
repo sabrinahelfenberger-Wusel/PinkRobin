@@ -62,3 +62,8 @@ halten und bewegen. Robin zeigt zuerst fröhliche Augen, nach fünf Sekunden
 Herzaugen. Loslassen, Verlassen der Zone, Abbruch oder Fensterwechsel stellt den
 neugierigen Ausdruck wieder her. Per Tastatur Enter/Leertaste gedrückt halten;
 bei reduzierter Bewegung wechseln die statischen Ausdrücke ohne Animation.
+
+Das Container-Image schreibt HTTP-Zugriffe zusätzlich in tägliche UTC-Protokolle.
+Das NAS-Update-Skript bindet dafür `/volume1/docker/pinkrobin-logs/` ein und entfernt
+Zugriffsdateien ab 14 Tagen. Die neue Skriptversion muss einmal auf die NAS kopiert
+werden; siehe [Synology-Anleitung](../deploy/synology/README.md).

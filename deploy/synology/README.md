@@ -154,5 +154,46 @@ docker logs --since 10m pinkrobin-web
 
 Zum Vergleich die Website über Mobilfunk öffnen. Lokale Gesundheitstests bleiben
 als `127.0.0.1` sichtbar. IP-Adressen identifizieren Netzwerkanschlüsse, keine
-Personen. Die Protokolle liegen aktuell beim jeweiligen Container und werden nicht
-als dauerhaftes Archiv über Containerwechsel hinweg aufbewahrt.
+Personen. Die Zugriffsprotokolle liegen zusätzlich dauerhaft in täglichen Dateien auf der
+NAS. Sie bleiben auch nach Containerwechseln erhalten; Details folgen unten.
+
+## Dauerhafte Zugriffsprotokolle (14 Tage)
+
+Die neue Skriptversion bindet `/volume1/docker/pinkrobin-logs/` nach
+`/var/log/pinkrobin` in den Container ein. Das Image schreibt dort
+`access-JJJJ-MM-TT.log` nach UTC-Datum. Der Containerstart setzt die Verzeichnisrechte
+für den NGINX-Benutzer (750); die Dateien sind per SSH als root lesbar. Im DSM
+File Station kann ein Administrator je nach bestehenden Freigabe-/ACL-Rechten
+zusätzliche Leserechte benötigen. Nur für dieses eigene Protokollverzeichnis verwenden.
+
+Die Bereinigung läuft mit dem geplanten Update-Auftrag, auch wenn kein neues Image
+vorliegt: Zugriffsdateien mit einem Änderungsalter ab 14 Tagen werden gelöscht.
+Andere Dateien und Unterverzeichnisse bleiben erhalten. Fällt der Auftrag aus,
+läuft auch die Bereinigung nicht; bei Ausfall der NAS entstehen keine neuen Logs.
+Docker-Konsolenprotokolle sind auf drei Dateien zu je 10 MB pro Container begrenzt.
+NGINX-Fehler bleiben in der Konsole; das tägliche Archiv enthält HTTP-Zugriffe.
+
+Einmalige Übernahme:
+
+1. Image-Änderungen von dev nach main übernehmen und den erfolgreichen Build abwarten.
+2. Den geplanten NAS-Auftrag deaktivieren, laufenden Durchlauf abwarten und die neue
+   `update-web.sh` auf die NAS kopieren (siehe Skriptaktualisierung oben).
+3. Das Skript als root ausführen. Der Protokollordner wird automatisch erstellt.
+   Auch bei gleicher Image-ID wird ein Container ohne passenden Mount einmal ersetzt.
+4. Die Webseite öffnen und die heutige Datei prüfen. Auftrag wieder aktivieren.
+
+```sh
+ls -l /volume1/docker/pinkrobin-logs/
+tail -n 30 /volume1/docker/pinkrobin-logs/access-$(date -u +%F).log
+```
+
+`PINKROBIN_LOG_DIR` erlaubt einen anderen absoluten Ordner. Dann dieselbe Einstellung
+bei jedem manuellen und geplanten Aufruf verwenden. Die Rückkehr zu einer alten
+Image-Version erhält den bisherigen Container samt dessen Mounts. Vor dieser
+Einrichtung entstandene Docker-Logs werden nicht nachträglich ins Archiv kopiert.
+
+Die 14-Tage-Regel begrenzt das Alter, nicht die maximale Tagesgrösse. Sehr viele
+Zugriffe können eine Tagesdatei gross machen; NAS-Speicher überwachen. Zeitangaben
+sind UTC (in der Schweiz je nach Jahreszeit eine oder zwei Stunden später).
+
+Technische Grundlage: [NGINX-Zugriffsprotokolle](https://nginx.org/en/docs/http/ngx_http_log_module.html).

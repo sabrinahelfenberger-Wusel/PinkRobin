@@ -9,6 +9,7 @@ BIND=${PINKROBIN_BIND:-127.0.0.1}
 NAME=pinkrobin-web
 PREVIOUS=pinkrobin-web-previous
 CANDIDATE=pinkrobin-web-candidate
+LOG_DIR=${PINKROBIN_LOG_DIR:-/volume1/docker/pinkrobin-logs}
 LOCK=${PINKROBIN_LOCK:-/tmp/pinkrobin-web-deploy.lock}
 
 if ! mkdir "$LOCK" 2>/dev/null; then
@@ -74,19 +75,31 @@ if exists "$NAME"; then
     fi
 fi
 
+# Only prune our daily access logs, never other files in the directory.
+case "$LOG_DIR" in
+    /*) ;;
+    *) echo 'PINKROBIN_LOG_DIR must be an absolute path.' >&2; exit 1 ;;
+esac
+case "$LOG_DIR" in
+    *,*) echo 'PINKROBIN_LOG_DIR must not contain commas.' >&2; exit 1 ;;
+esac
+mkdir -p "$LOG_DIR"
+find "$LOG_DIR" -maxdepth 1 -type f -name 'access-????-??-??.log' -mtime +13 -delete
+
 docker pull "$IMAGE"
 # Resolve the moving tag once. All following operations use this exact image ID.
 TARGET=$(docker image inspect --format '{{.Id}}' "$IMAGE")
 if exists "$NAME"; then
     current=$(docker inspect --format '{{.Image}}' "$NAME")
-    if [ "$current" = "$TARGET" ]; then
+    mounted_logs=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/log/pinkrobin"}}{{.Source}}{{end}}{{end}}' "$NAME")
+    if [ "$current" = "$TARGET" ] && [ "$mounted_logs" = "$LOG_DIR" ]; then
         healthy "$NAME"
         echo 'Already running the current release.'
         exit 0
     fi
 fi
 
-docker run -d --name "$CANDIDATE" "$TARGET" >/dev/null
+docker run -d --name "$CANDIDATE"     --mount "type=bind,source=$LOG_DIR,target=/var/log/pinkrobin"     --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 "$TARGET" >/dev/null
 healthy "$CANDIDATE"
 docker exec "$CANDIDATE" wget -q -O /dev/null http://127.0.0.1/index.html
 
@@ -101,7 +114,7 @@ if exists "$NAME"; then
 fi
 docker run -d --name "$NAME" --restart unless-stopped \
     --label ch.wanderwusel.pinkrobin.managed=true \
-    -p "$BIND:$PORT:80" "$TARGET" >/dev/null
+    --mount "type=bind,source=$LOG_DIR,target=/var/log/pinkrobin"     --log-driver json-file --log-opt max-size=10m --log-opt max-file=3     -p "$BIND:$PORT:80" "$TARGET" >/dev/null
 healthy "$NAME"
 docker exec "$NAME" wget -q -O /dev/null http://127.0.0.1/index.html
 echo "Release deployed: $TARGET"

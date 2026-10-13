@@ -36,8 +36,9 @@ jobs:
         run: docker build --build-arg REVISION="$GITHUB_SHA" -t pinkrobin-web:test web
       - name: Check runtime image
         run: |
-          docker run -d --name web-test -p 127.0.0.1:8080:80 pinkrobin-web:test
-          trap 'docker logs web-test; docker rm -f web-test' EXIT
+          mkdir -p /tmp/pinkrobin-access-logs
+          docker run -d --name web-test --mount type=bind,source=/tmp/pinkrobin-access-logs,target=/var/log/pinkrobin -p 127.0.0.1:8080:80 pinkrobin-web:test
+          trap 'docker logs web-test || true; docker rm -f web-test || true' EXIT
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:8080/healthz; then break; fi
             sleep 2
@@ -47,9 +48,14 @@ jobs:
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing.js)" = 404
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/test)" = 404
           docker exec web-test nginx -t
+          docker exec web-test sh -c 'grep -q "GET /index.html" /var/log/pinkrobin/access-$(date -u +%F).log'
+
           # A caller inside the container is not the trusted Synology proxy.
           docker exec web-test wget -q -O /dev/null --header='X-Real-IP:203.0.113.42' http://127.0.0.1/?ip-check-untrusted
           docker logs web-test 2>&1 | grep -E '^127\.0\.0\.1 .*GET /\?ip-check-untrusted '
+          docker rm -f web-test
+          sudo grep -q 'ip-check-untrusted' /tmp/pinkrobin-access-logs/access-$(date -u +%F).log
+
 
       - name: Save verified main image
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
