@@ -33,6 +33,7 @@ if cmd == 'inspect':
     if 'Labels' in fmt: finish(output='true' if c['managed'] else '<no value>')
     if 'Health' in fmt: finish(output=c['health'])
     if '.State.Running' in fmt: finish(output='true' if c['running'] else 'false')
+    if '.Mounts' in fmt: finish(output=c.get('logs', os.environ['PINKROBIN_LOG_DIR']))
     if '.Image' in fmt: finish(output=c['image'])
 if cmd == 'pull': finish(1 if s.get('fail_pull') else 0)
 if cmd == 'image': finish(output=s['target'])
@@ -75,10 +76,24 @@ class DeploymentTests(unittest.TestCase):
             docker.write_text(f'#!{sys.executable}\n' + FAKE)
             docker.chmod(0o755)
             env = {**os.environ, 'PATH': f"{root}:{os.environ['PATH']}",
-                   'FAKE_DOCKER_STATE': str(file), 'PINKROBIN_LOCK': str(root / 'lock')}
+                   'FAKE_DOCKER_STATE': str(file), 'PINKROBIN_LOCK': str(root / 'lock'), 'PINKROBIN_LOG_DIR': str(root / 'logs')}
+            logs = root / 'logs'
+            logs.mkdir()
+            old = logs / 'access-2020-01-01.log'
+            old.write_text('old access')
+            os.utime(old, (1, 1))
+            keep = logs / 'access-2099-01-01.log'
+            keep.write_text('recent access')
+            other = logs / 'update.log'
+            other.write_text('unrelated')
+            os.utime(other, (1, 1))
             if preexisting_lock: (root / 'lock').mkdir()
             result = subprocess.run(['sh', str(SCRIPT)], env=env, capture_output=True, text=True)
             self.assertEqual((root / 'lock').exists(), preexisting_lock)
+            if not preexisting_lock and not changes.get('containers', {}).get('pinkrobin-web', {}).get('managed') == False:
+                self.assertFalse(old.exists())
+                self.assertTrue(keep.exists())
+                self.assertTrue(other.exists())
             state = json.loads(file.read_text())
             self.assertNotIn('pinkrobin-web-candidate', state['containers'])
             return result, state
@@ -137,6 +152,15 @@ class DeploymentTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('Rollback failed', result.stderr)
         self.assertEqual(state['containers']['pinkrobin-web']['image'], 'old-image')
+
+    def test_same_image_without_log_mount_is_recreated(self):
+        existing = {'pinkrobin-web': {'image': 'old-image', 'managed': True,
+                    'health': 'healthy', 'running': True, 'logs': ''}}
+        result, state = self.run_case(target='old-image', containers=existing)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(any(call[0] == 'stop' for call in state['calls']))
+        runs = [call for call in state['calls'] if call[0] == 'run']
+        self.assertTrue(all('--mount' in call for call in runs))
 
     def test_first_install(self):
         result, state = self.run_case(containers={})
