@@ -1,0 +1,43 @@
+name: Backend CI
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build backend
+        run: dotnet build PinkRobin.Backend.slnx -c Release
+      - name: Test local development API
+        run: |
+          ASPNETCORE_ENVIRONMENT=Development dotnet src/PinkRobin.Api/bin/Release/net10.0/PinkRobin.Api.dll --urls http://127.0.0.1:5080 --contentRoot "$PWD/src/PinkRobin.Api" >/tmp/pinkrobin-backend.log 2>&1 &
+          backend_pid=$!
+          trap 'kill "$backend_pid" || true; cat /tmp/pinkrobin-backend.log' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5080/health/live; then break; fi
+            sleep 1
+          done
+          python3 tests/smoke.py --development
+      - name: Build container
+        run: docker build -t pinkrobin-backend:test .
+      - name: Test production container
+        run: |
+          docker run -d --name backend-test -p 127.0.0.1:5080:8080 pinkrobin-backend:test
+          trap 'docker logs backend-test; docker rm -f backend-test' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5080/health/live; then break; fi
+            sleep 1
+          done
+          python3 tests/smoke.py

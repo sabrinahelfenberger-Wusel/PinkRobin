@@ -52,3 +52,9 @@ CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionie
 - [Architekturübersicht der Verzeichnisse](docs/architecture/README.md)
 - [API-Dokumentation](docs/api/README.md)
 - [Entscheidungsprotokolle](docs/decisions/README.md)
+
+## Backend-Vorbereitung
+
+Ein ausführbares ASP.NET-Core-Grundgerüst mit Status-API, Gesundheitsprüfungen,
+Core-Schnittstelle und eigenem CI-/Docker-Test ist unter [backend/](backend/)
+vorbereitet. Die native Core-Anbindung und NAS-Auslieferung folgen separat.
