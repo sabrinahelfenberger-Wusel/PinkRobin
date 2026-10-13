@@ -6,6 +6,8 @@ export PATH
 IMAGE=${PINKROBIN_IMAGE:-ghcr.io/sabrinahelfenberger-wusel/pinkrobin-web:main}
 PORT=${PINKROBIN_PORT:-8080}
 BIND=${PINKROBIN_BIND:-127.0.0.1}
+API_NETWORK=${PINKROBIN_API_NETWORK:-pinkrobin-internal}
+BACKEND=pinkrobin-backend
 NAME=pinkrobin-web
 PREVIOUS=pinkrobin-web-previous
 CANDIDATE=pinkrobin-web-candidate
@@ -53,6 +55,10 @@ trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
 
 exists() { docker inspect "$1" >/dev/null 2>&1; }
+connect_api_network() {
+    attached=$(docker inspect --format "{{with index .NetworkSettings.Networks \"$API_NETWORK\"}}yes{{end}}" "$1")
+    if [ "$attached" != yes ]; then docker network connect "$API_NETWORK" "$1"; fi
+}
 healthy() {
     running=$(docker inspect --format '{{.State.Running}}' "$1")
     [ "$running" = true ] || return 1
@@ -75,6 +81,13 @@ if exists "$NAME"; then
     fi
 fi
 
+# Keep the default bridge for the existing NAS proxy path and visitor-IP trust.
+# The extra user-defined network supplies DNS and private backend connectivity.
+if ! docker network inspect "$API_NETWORK" >/dev/null 2>&1; then
+    docker network create --driver bridge "$API_NETWORK" >/dev/null
+fi
+if exists "$BACKEND"; then connect_api_network "$BACKEND"; fi
+
 # Only prune our daily access logs, never other files in the directory.
 case "$LOG_DIR" in
     /*) ;;
@@ -93,13 +106,15 @@ if exists "$NAME"; then
     current=$(docker inspect --format '{{.Image}}' "$NAME")
     mounted_logs=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/log/pinkrobin"}}{{.Source}}{{end}}{{end}}' "$NAME")
     if [ "$current" = "$TARGET" ] && [ "$mounted_logs" = "$LOG_DIR" ]; then
+        connect_api_network "$NAME"
         healthy "$NAME"
         echo 'Already running the current release.'
         exit 0
     fi
 fi
 
-docker run -d --name "$CANDIDATE"     --mount "type=bind,source=$LOG_DIR,target=/var/log/pinkrobin"     --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 "$TARGET" >/dev/null
+docker run -d --network bridge --name "$CANDIDATE"     --mount "type=bind,source=$LOG_DIR,target=/var/log/pinkrobin"     --log-driver json-file --log-opt max-size=10m --log-opt max-file=3 "$TARGET" >/dev/null
+connect_api_network "$CANDIDATE"
 healthy "$CANDIDATE"
 docker exec "$CANDIDATE" wget -q -O /dev/null http://127.0.0.1/index.html
 
@@ -112,9 +127,10 @@ if exists "$NAME"; then
     docker stop "$NAME" >/dev/null
     docker rename "$NAME" "$PREVIOUS"
 fi
-docker run -d --name "$NAME" --restart unless-stopped \
+docker run -d --network bridge --name "$NAME" --restart unless-stopped \
     --label ch.wanderwusel.pinkrobin.managed=true \
     --mount "type=bind,source=$LOG_DIR,target=/var/log/pinkrobin"     --log-driver json-file --log-opt max-size=10m --log-opt max-file=3     -p "$BIND:$PORT:80" "$TARGET" >/dev/null
+connect_api_network "$NAME"
 healthy "$NAME"
 docker exec "$NAME" wget -q -O /dev/null http://127.0.0.1/index.html
 echo "Release deployed: $TARGET"

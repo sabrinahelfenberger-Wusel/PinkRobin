@@ -34,11 +34,15 @@ jobs:
         run: python3 deploy/synology/test_update.py
       - name: Build runtime image
         run: docker build --build-arg REVISION="$GITHUB_SHA" -t pinkrobin-web:test web
+      - name: Build backend for proxy integration test
+        run: docker build -t pinkrobin-backend:proxy-test backend
       - name: Check runtime image
         run: |
           mkdir -p /tmp/pinkrobin-access-logs
           docker run -d --name web-test --mount type=bind,source=/tmp/pinkrobin-access-logs,target=/var/log/pinkrobin -p 127.0.0.1:8080:80 pinkrobin-web:test
-          trap 'docker logs web-test || true; docker rm -f web-test || true' EXIT
+          docker network create pinkrobin-ci
+          docker network connect pinkrobin-ci web-test
+          trap 'docker logs web-test || true; docker rm -f web-test backend-proxy-test || true; docker network rm pinkrobin-ci || true' EXIT
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:8080/healthz; then break; fi
             sleep 2
@@ -46,7 +50,17 @@ jobs:
           curl --fail --silent http://127.0.0.1:8080/index.html | grep -q '<pr-root>'
           test "$(curl --fail --silent http://127.0.0.1:8080/version.txt)" = "$GITHUB_SHA"
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/missing.js)" = 404
+          # Without the backend, the frontend stays usable and API reports 502.
+          test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/v1/status)" = 502
+          docker run -d --name backend-proxy-test --network pinkrobin-ci --network-alias pinkrobin-backend pinkrobin-backend:proxy-test
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/api/v1/status; then break; fi
+            sleep 1
+          done
+          curl --fail --silent 'http://127.0.0.1:8080/api/v1/status?check=proxy' | python3 -c 'import json,sys; s=json.load(sys.stdin); assert s["service"] == "PinkRobin.Api" and s["core"]["connected"] is False'
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/test)" = 404
+          test "$(curl --silent -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8080/api/v1/status)" = 405
+          test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/hubs/robin)" = 404
           docker exec web-test nginx -t
           docker exec web-test sh -c 'grep -q "GET /index.html" /var/log/pinkrobin/access-$(date -u +%F).log'
 

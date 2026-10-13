@@ -33,8 +33,16 @@ if cmd == 'inspect':
     if 'Labels' in fmt: finish(output='true' if c['managed'] else '<no value>')
     if 'Health' in fmt: finish(output=c['health'])
     if '.State.Running' in fmt: finish(output='true' if c['running'] else 'false')
+    if '.NetworkSettings.Networks' in fmt: finish(output='yes' if os.environ['PINKROBIN_API_NETWORK'] in c.get('networks', []) else '')
     if '.Mounts' in fmt: finish(output=c.get('logs', os.environ['PINKROBIN_LOG_DIR']))
     if '.Image' in fmt: finish(output=c['image'])
+if cmd == 'network':
+    networks = s.setdefault('networks', [])
+    if a[1] == 'inspect': finish(0 if a[2] in networks else 1)
+    if a[1] == 'create': networks.append(a[-1]); finish()
+    if a[1] == 'connect':
+        if s.get('fail_connect') and a[-1] == 'pinkrobin-web-candidate': finish(1)
+        s['containers'][a[-1]].setdefault('networks', []).append(a[-2]); finish()
 if cmd == 'pull': finish(1 if s.get('fail_pull') else 0)
 if cmd == 'image': finish(output=s['target'])
 if cmd == 'run':
@@ -76,7 +84,7 @@ class DeploymentTests(unittest.TestCase):
             docker.write_text(f'#!{sys.executable}\n' + FAKE)
             docker.chmod(0o755)
             env = {**os.environ, 'PATH': f"{root}:{os.environ['PATH']}",
-                   'FAKE_DOCKER_STATE': str(file), 'PINKROBIN_LOCK': str(root / 'lock'), 'PINKROBIN_LOG_DIR': str(root / 'logs')}
+                   'FAKE_DOCKER_STATE': str(file), 'PINKROBIN_LOCK': str(root / 'lock'), 'PINKROBIN_LOG_DIR': str(root / 'logs'), 'PINKROBIN_API_NETWORK': 'pinkrobin-internal'}
             logs = root / 'logs'
             logs.mkdir()
             old = logs / 'access-2020-01-01.log'
@@ -161,6 +169,23 @@ class DeploymentTests(unittest.TestCase):
         self.assertTrue(any(call[0] == 'stop' for call in state['calls']))
         runs = [call for call in state['calls'] if call[0] == 'run']
         self.assertTrue(all('--mount' in call for call in runs))
+
+    def test_network_connect_failure_keeps_site_running(self):
+        result, state = self.run_case(fail_connect=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(state['containers']['pinkrobin-web']['running'])
+        self.assertEqual(state['containers']['pinkrobin-web']['image'], 'old-image')
+
+    def test_existing_backend_and_frontend_are_connected(self):
+        containers = {
+            'pinkrobin-web': {'image': 'old-image', 'managed': True, 'health': 'healthy', 'running': True},
+            'pinkrobin-backend': {'image': 'backend', 'managed': False, 'health': 'healthy', 'running': True},
+        }
+        result, state = self.run_case(target='old-image', containers=containers)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name in containers:
+            self.assertIn('pinkrobin-internal', state['containers'][name]['networks'])
+        self.assertFalse(any(call[0] == 'stop' for call in state['calls']))
 
     def test_first_install(self):
         result, state = self.run_case(containers={})

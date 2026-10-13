@@ -29,3 +29,7 @@ Die spätere Demo braucht Sitzungszuordnung, Limits, validierte Ereignisse,
 Duplikatbehandlung und Wiederverbindung. Zustände müssen pro Sitzung getrennt sein;
 Browserrückmeldungen sind keine physischen Nachweise. Diese Verträge werden vor
 Implementierung konkretisiert. Einrichtung: [Backend-Anleitung](../../backend/README.md).
+
+Nach NAS-Netzwerkeinrichtung ist die Status-API über
+`https://pinkrobin.wanderwusel.ch/api/v1/status` erreichbar. NGINX erhält den
+API-Pfad unverändert; Infrastruktur-Health-Endpunkte bleiben nur intern erreichbar.

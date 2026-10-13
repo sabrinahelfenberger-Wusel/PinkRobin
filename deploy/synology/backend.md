@@ -69,12 +69,47 @@ bestätigt werden. Ein Container liefert keinen eigenen Kernel mit.
 
 ## 4. Verbindung mit der Website
 
-Erst nach erfolgreichem NAS-Test wird ein internes Docker-Netz zwischen Frontend
-und Backend vorbereitet und das Frontend-NGINX für `/api/` weiterleiten. Die
-bestehende Synology-HTTPS-Regel kann dann unverändert zum Frontend auf 8080 führen.
-Aktuell liefert die öffentliche Website für `/api` weiterhin 404. Der Backend-Test
-ist nur auf `127.0.0.1:5080` verfügbar; Angular verwendet weiterhin seine lokale
-Demo-Logik. Sitzungen und SignalR werden separat implementiert.
+Der erste Runtime-Test auf der Synology ist erfolgreich. Das Frontend-NGINX leitet
+`/api/` an `pinkrobin-backend:8080` weiter, ohne den Pfad zu kürzen. Die vorhandene
+HTTPS-Regel der Synology bleibt auf Frontend-Port 8080 gerichtet.
+
+Einmalige Aktivierung:
+
+1. NAS-Auftrag kurz deaktivieren und laufenden Durchlauf abwarten.
+2. Neue `deploy/synology/update-web.sh` auf der NAS ersetzen.
+3. Die Änderungen von dev nach main übernehmen und erfolgreiche Builds abwarten.
+4. Als root `sh /volume1/docker/pinkrobin-deploy/update-web.sh` ausführen.
+5. API prüfen, dann geplanten Auftrag wieder aktivieren.
+
+Das Skript erstellt bei Bedarf das benutzerdefinierte Bridge-Netz `pinkrobin-internal`
+und verbindet das vorhandene Backend sowie das Frontend damit. Der Name des Backend-
+Containers muss `pinkrobin-backend` bleiben. Das Frontend behält zusätzlich die
+Standard-Bridge für den bisherigen NAS-Proxy und die konfigurierte Besucher-IP.
+Die Netzwerkzuordnung bleibt bei Neustarts erhalten; neue Frontend-Container werden
+automatisch wieder verbunden. Bei späterem Ersatz des Backends ebenfalls dieses
+Netz anschliessen. Kein pauschaler Vertrauensbereich für Besucher-IP-Header nötig.
+
+Prüfung auf der NAS und im Browser:
+
+```sh
+docker network inspect pinkrobin-internal
+curl --fail --show-error http://127.0.0.1:8080/api/v1/status
+curl --fail --show-error https://pinkrobin.wanderwusel.ch/api/v1/status
+```
+
+Die Status-API ist bewusst öffentlich und nur lesend. Sie liefert dieselbe Antwort
+wie der lokale Backend-Test. Es gibt weiterhin keine Steuerbefehle oder persönlichen
+Daten. `/api` ohne folgenden Pfad bleibt 404; `/api/` ohne bekannten Endpunkt liefert
+Backend-404. `/hubs` bleibt ebenfalls 404, bis ein geprüfter SignalR-Vertrag vorliegt.
+Nicht erreichbares Backend liefert 502; die statische Angular-Seite bleibt nutzbar.
+NGINX löst den Backendnamen über Docker-DNS neu auf, sodass ein Backendwechsel mit
+neuer Container-IP nach kurzer DNS-Cachezeit erkannt wird.
+
+Port 5080 bleibt ausschliesslich auf `127.0.0.1` für lokale Diagnose erreichbar.
+Die öffentliche Kommunikation läuft ausschliesslich über HTTPS-Port 443. Angular
+benutzt weiterhin seine lokale Demo-Logik; das Routing allein verbindet noch keine
+Robin-Steuerung mit dem Backend. Die spätere Angular-API verwendet relative
+`/api/`-URLs unter derselben Domain und benötigt deshalb kein zusätzliches CORS.
 
 ## Updates
 

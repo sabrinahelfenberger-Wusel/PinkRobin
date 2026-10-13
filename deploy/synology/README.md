@@ -197,3 +197,12 @@ Zugriffe können eine Tagesdatei gross machen; NAS-Speicher überwachen. Zeitang
 sind UTC (in der Schweiz je nach Jahreszeit eine oder zwei Stunden später).
 
 Technische Grundlage: [NGINX-Zugriffsprotokolle](https://nginx.org/en/docs/http/ngx_http_log_module.html).
+
+## Internes API-Netz
+
+Das Update-Skript verbindet Frontend und ein vorhandenes `pinkrobin-backend`
+mit `pinkrobin-internal`. Das Netz wird automatisch erstellt. Konfigurierbar über
+`PINKROBIN_API_NETWORK`; Frontend und Backend müssen dasselbe Netz verwenden.
+Das Standard-Bridge-Netz des Frontends bleibt bestehen, damit NAS-Portmapping und
+Besucher-IP-Vertrauen weiter passen. Einrichtung und API-Prüfung:
+[Backend auf Synology](backend.md).
