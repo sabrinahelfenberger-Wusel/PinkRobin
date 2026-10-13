@@ -67,3 +67,24 @@ Das Container-Image schreibt HTTP-Zugriffe zusätzlich in tägliche UTC-Protokol
 Das NAS-Update-Skript bindet dafür `/volume1/docker/pinkrobin-logs/` ein und entfernt
 Zugriffsdateien ab 14 Tagen. Die neue Skriptversion muss einmal auf die NAS kopiert
 werden; siehe [Synology-Anleitung](../deploy/synology/README.md).
+
+## Backend-Status auf der Robin-Seite
+
+Die Seite prüft beim Öffnen und danach alle 30 Sekunden `api/v1/status`. Verbundenes
+Backend und noch nicht verbundener Core werden getrennt angezeigt. Zeitüberschreitung
+(nach fünf Sekunden), Netzwerkausfall und unbekannte API-Antworten werden angezeigt,
+ohne Robins lokale Demo zu blockieren. Nach Wiederherstellung wird der Status beim
+nächsten Abruf aktualisiert. Beim Verlassen der Seite werden Timer und Anfragen beendet.
+
+Lokal das Backend auf Port 5080 starten und Angular mit `npm start` starten. Die
+`proxy.conf.json` leitet lokale `/api/`-Anfragen dorthin weiter. Nach Änderung dieser
+Datei den Angular-Entwicklungsserver neu starten. In Production übernimmt NGINX
+unter derselben Domain die Weiterleitung; es werden keine NAS-Adressen ins Frontend
+fest eingebaut. Die Anzeige liest nur den Status und steuert den Core noch nicht.
+
+## Gemeinsamer Start in Visual Studio
+
+`backend/PinkRobin.Backend.slnx` öffnen, `PinkRobin.Api` als Startprojekt und
+**PinkRobin Demo** als Profil wählen. Der grüne Startknopf startet Backend und
+Angular und öffnet die Robin-Seite. Verlinkte Frontend-Dateien stehen im Projekt
+unter **Frontend**. Details und Voraussetzungen: [Backend-Anleitung](../backend/README.md).
