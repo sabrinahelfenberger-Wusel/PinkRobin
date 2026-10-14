@@ -17,5 +17,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [01.2 – null, undefined und optionale Werte](01-2-null-und-optionale-werte.md)
 - [02 – Objekte, Interfaces, Klassen und Structs](02-objekte-interfaces-klassen-structs.md)
 - [03 – Funktionen, Methoden und Parameter](03-funktionen-methoden-parameter.md)
+- [04 – Collections](04-collections.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
