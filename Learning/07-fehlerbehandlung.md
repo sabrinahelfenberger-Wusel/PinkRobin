@@ -72,6 +72,8 @@ async function loadRobinState(): Promise<void> {
 
 **Achtung, C#-Gehirn:** `fetch()` wirft bei HTTP 404 oder 500 normalerweise keine Exception. `response.ok` muss geprüft werden. Auch erfolgreich geparstes JSON ist nicht automatisch strukturell validiert.
 
+Der Pfad `/api/robin/state` ist ein Lernentwurf, kein bereits implementierter Backend-Endpunkt. Den tatsächlich vorhandenen Statusendpunkt `/api/v1/status` behandelt Kapitel 17.
+
 ## D. C++ – Exceptions und RAII
 
 ```cpp
