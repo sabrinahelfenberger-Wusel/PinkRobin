@@ -1,10 +1,10 @@
-# 20 – Performance und Ressourcenbudgets
+# 23 – Performance und Ressourcenbudgets
 
 ## Lernziel
 
 Du kannst ein messbares Performanceziel formulieren, den tatsächlichen Engpass finden und CPU, Speicher sowie Nachrichtenfluss begrenzen. Du unterscheidest fachliche Korrektheit von Geschwindigkeit und Einzelmessungen von belastbaren Vergleichen.
 
-[Kapitel 19](19-logging-und-diagnose.md) hat Diagnoseinformationen eingeführt. Jetzt verwenden wir sie für gezielte Verbesserungen. **Die Zahlen und Budgets dieses Kapitels sind Rechen- und Lernbeispiele, keine gemessenen Leistungszusagen für Pink Robin. Es werden keine Produktivlimits oder Optimierungen eingebaut.**
+[Kapitel 22](22-logging-und-diagnose.md) hat Diagnoseinformationen eingeführt. Jetzt verwenden wir sie für gezielte Verbesserungen. **Die Zahlen und Budgets dieses Kapitels sind Rechen- und Lernbeispiele, keine gemessenen Leistungszusagen für Pink Robin. Es werden keine Produktivlimits oder Optimierungen eingebaut.**
 
 ## A. Spickzettel
 
@@ -17,7 +17,7 @@ Du kannst ein messbares Performanceziel formulieren, den tatsächlichen Engpass 
 | Ausgabe entlasten | Snapshots nach Vertrag zusammenfassen | aktuelle Anzeige aktualisieren | keine zusätzliche Netzwerkverantwortung |
 | Vergleich absichern | Release, gleiche Last, mehrere Läufe | gleiche Umgebung, warme / kalte Pfade trennen | gleicher Compiler, Flags und Hardware |
 
-Ein schnelleres falsches Ergebnis ist keine Verbesserung. Nach einer Optimierung bleiben die Verhaltenstests aus Kapitel 13 und 15 verbindlich.
+Ein schnelleres falsches Ergebnis ist keine Verbesserung. Nach einer Optimierung bleiben die Verhaltenstests aus Kapitel 17 und 18 verbindlich.
 
 ## B. Ein Ziel vor der Änderung formulieren
 
@@ -44,7 +44,7 @@ Die Summe ist eine Planungsrechnung, kein Messergebnis. Einzelne p95-Werte lasse
 
 ## C. Erst den Engpass bestimmen
 
-Aus Kapitel 19 kennen wir die Abschnitte Request, Queue, Core und Ausgabe. Ist der Core in einem Beispiel 1 ms beschäftigt, der Request aber 800 ms unterwegs, löst eine halbierte Core-Dauer das Gesamtproblem kaum.
+Aus Kapitel 22 kennen wir die Abschnitte Request, Queue, Core und Ausgabe. Ist der Core in einem Beispiel 1 ms beschäftigt, der Request aber 800 ms unterwegs, löst eine halbierte Core-Dauer das Gesamtproblem kaum.
 
 Für eine einfache Rechenhilfe: Benötigt ein Abschnitt 10 Prozent der Gesamtzeit, kann sein vollständiges hypothetisches Wegfallen höchstens diese 10 Prozent einsparen. Parallelität oder ein anderer Algorithmus muss an einem relevanten Abschnitt ansetzen.
 
@@ -248,4 +248,4 @@ Normale Verhaltenstests nicht mit einer extrem engen, maschinenabhängigen Zeitg
 - Messgerüste, Profiler und Verhaltenstests haben unterschiedliche Aufgaben.
 - Jede Optimierung erneut messen und gegen Robins fachliche Regeln testen.
 
-[Zurück zu Kapitel 19](19-logging-und-diagnose.md) · [Inhaltsverzeichnis](README.md)
+[← 22 – Logging und Diagnose](22-logging-und-diagnose.md) · [Inhaltsverzeichnis](README.md) · [24 – Konfiguration und Auslieferung →](24-konfiguration-und-auslieferung.md)

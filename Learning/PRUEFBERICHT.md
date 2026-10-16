@@ -1,5 +1,7 @@
 # Prüfbericht zum Lernbuch
 
+**Historischer Prüfstand:** Die nachfolgenden Kapitelnummern beziehen sich auf die frühere Reihenfolge vor der Umstrukturierung. Neue Dateipfade stehen in der [Zuordnungstabelle](NUMMERIERUNG.md). Eine gesonderte Ergänzung zur neuen Reihenfolge folgt am Ende; frühere Ausführungsnachweise werden nicht stillschweigend auf neue Inhalte übertragen.
+
 Prüfdatum: **16. Oktober 2026**. Umfang: Kapitel 1 bis 21 einschliesslich Kapitel 1.2, insgesamt 22 Kapiteldateien auf `dev`.
 
 ## Ergebnis
@@ -56,3 +58,17 @@ Die nativen Repository-Tests lassen sich mit den Befehlen im [Core-README](../co
 In einer Umgebung mit dem .NET-10-SDK die vollständigen C#-Programme jeweils getrennt bauen und ausführen, NUnit- und Logging-Beispiele in passenden Projekten prüfen und danach den Lernadapter aus Kapitel 16 gegen die echte native Bibliothek testen. Erst anschliessend kann die durchgängige Backendintegration als nachgewiesen gelten.
 
 [Zum Inhaltsverzeichnis](README.md)
+
+## Ergänzung: neue Lernreihenfolge und geschlossene Grundlagenlücken
+
+Die neue Ausgabe umfasst **24 Hauptkapitel plus 01.2**, insgesamt 25 Kapiteldateien. Neu sind Operatoren (02), Bedingungen und Schleifen (03) sowie Properties und Kapselung (06). Collections (10) enthält nun einen vollständigen Vergleich von LINQ to Objects, JavaScript-Arraymethoden und C++17-Algorithmen, einschliesslich Ausführungszeitpunkt, Mutation und Materialisierung.
+
+Der historische Bericht oben behält seine ursprünglichen Nummern und Prüfzahlen. Für die Umstrukturierung zusätzlich ausgeführt:
+
+- Vier vollständige C++17-Programme aus den neuen Kapiteln und dem Abfragevergleich mit `-Wall -Wextra -Werror -pedantic` kompiliert und ausgeführt.
+- Zehn TypeScript-Blöcke aus den drei neuen Kapiteln und dem erweiterten Collections-Kapitel mit TypeScript 5.9.3 unter `strict` übersetzt und als JavaScript ausgeführt. Zusätzliche Prüfungen decken Operatorenergebnisse, die Zahl gültiger Berührungen, abgelehnte Energiewerte sowie Abfragereihenfolge ohne Mutation der Quelle ab.
+- Überschriften, Dateinummern, Inhaltsverzeichnis, neue Vor-/Zurück-Navigation und relative Links in der geplanten Dateistruktur geprüft.
+- Bei den bisherigen Kapiteln die Codeblöcke auf Erhalt kontrolliert; geändert wurden dort Einordnung, Navigation und Kapitelverweise. Der Collections-Vergleich ist eine ausdrückliche inhaltliche Ergänzung.
+- Alle Markdown-Dateien ausserhalb von `Learning` im zugrunde gelegten Repositorystand auf umzuschreibende Learning-Verweise geprüft; keine solchen Verweise gefunden.
+
+Die C#-Beispiele bleiben mangels .NET-Laufzeit hier nicht ausgeführt. Auch diese neue Prüfung richtet keine Produktivintegration ein. Neue Nummern und Dateipfade stehen im [Inhaltsverzeichnis](README.md) und in der [Zuordnungstabelle](NUMMERIERUNG.md).

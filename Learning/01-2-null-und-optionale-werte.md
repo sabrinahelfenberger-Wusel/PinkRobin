@@ -193,6 +193,4 @@ Schreibe eine kleine Darstellung zuerst in **TypeScript** und danach in **C++**.
 
 **Optional ist eine Information über den Zustand eines Wertes – nicht einfach nur eine andere Schreibweise für einen normalen Wert.**
 
-## Als Nächstes
-
-Aus einzelnen Variablen wird ein zusammengehöriger Robin-Zustand: Objekte, Interfaces, Klassen, Structs und Records.
+[← 01 – Variablen und Typen](01-variablen-und-typen.md) · [Inhaltsverzeichnis](README.md) · [02 – Operatoren und Ausdrücke →](02-operatoren-und-ausdruecke.md)

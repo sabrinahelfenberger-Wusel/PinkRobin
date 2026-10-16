@@ -1,10 +1,10 @@
-# 14 – Module, Projektstruktur und Build-Systeme
+# 13 – Module, Projektstruktur und Build-Systeme
 
 ## Lernziel
 
 Du kannst nachvollziehen, wie mehrere Quelldateien zusammenarbeiten, wie Abhängigkeiten bekannt gemacht werden und wie daraus ein ausführbares Programm entsteht. C# ist der Anker; TypeScript-Module und C++17-Übersetzungseinheiten zeigen, warum ähnliche Schreibweisen unterschiedliche Aufgaben erfüllen.
 
-Nach [Kapitel 13](13-testen-und-debugging.md) wollen wir Tests und Anwendung auch reproduzierbar bauen. **Die kleinen Projekte dieses Kapitels sind Lernbeispiele; sie ändern nicht die bestehende Projektstruktur von Pink Robin.**
+Wir wollen die bisherigen Beispiele als Anwendung reproduzierbar bauen. Automatisierte Tests vertieft später [Kapitel 17](17-testen-und-debugging.md). **Die kleinen Projekte dieses Kapitels sind Lernbeispiele; sie ändern nicht die bestehende Projektstruktur von Pink Robin.**
 
 ## A. Spickzettel
 
@@ -203,7 +203,7 @@ Der erste Schritt konfiguriert und erzeugt das native Buildsystem. Der zweite f�
 | Laufzeit-Modulauflösung | Modul nicht gefunden | tatsächliche Ausgabe, Dateiendung, Auflösung der Laufzeit |
 | Native Bibliothek laden | Datei oder Symbol nicht ladbar | Suchpfad, Architektur, Exporte und abhängige Bibliotheken |
 
-Ein erfolgreicher Compilerlauf ist nicht dasselbe wie ein erfolgreicher Link- oder Programmstart. Und ein grüner Build prüft noch nicht die fachliche Reaktion; dafür bleiben die Tests aus Kapitel 13 nötig.
+Ein erfolgreicher Compilerlauf ist nicht dasselbe wie ein erfolgreicher Link- oder Programmstart. Und ein grüner Build prüft noch nicht die fachliche Reaktion; dafür benötigen wir die Tests aus dem späteren Kapitel 17.
 
 ## G. Pink Robin: mehrere Builds, klare Grenzen
 
@@ -262,4 +262,4 @@ Abhängigkeitszyklen vermeiden: Ein Transportadapter darf den Core verwenden, de
 - CMake-Targets beschreiben Quellen und weiterzugebende Anforderungen ausdrücklich.
 - Pink Robins Schichten arbeiten über Verträge zusammen, auch wenn sie getrennt gebaut werden.
 
-[Zurück zu Kapitel 13](13-testen-und-debugging.md) · [Inhaltsverzeichnis](README.md)
+[← 12 – Fehlerbehandlung: Exceptions und Result-Typen](12-fehlerbehandlung.md) · [Inhaltsverzeichnis](README.md) · [14 – Events, Callbacks und Nachrichten →](14-events-callbacks-und-nachrichten.md)

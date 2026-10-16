@@ -1,10 +1,10 @@
-# 17 – HTTP, WebSockets und Verbindungsmanagement
+# 20 – HTTP, WebSockets und Verbindungsmanagement
 
 ## Lernziel
 
 Du kannst HTTP-Anfragen von dauerhaften Nachrichtenverbindungen unterscheiden, Antworten und Abbrüche richtig einordnen und eine Wiederverbindung planen, ohne alte Zustände oder Befehle blind zu wiederholen. C# bleibt der Anker; TypeScript zeigt den Browserzugriff. Der C++-Core bleibt hinter dem Backend.
 
-Wir verbinden Asynchronität aus [Kapitel 10](10-asynchronitaet-und-nebenlaeufigkeit.md), Nachrichten aus [Kapitel 11](11-events-callbacks-und-nachrichten.md) und native Anbindung aus [Kapitel 16](16-native-anbindung-csharp-cpp.md).
+Wir verbinden Asynchronität aus [Kapitel 15](15-asynchronitaet-und-nebenlaeufigkeit.md), Nachrichten aus [Kapitel 14](14-events-callbacks-und-nachrichten.md) und native Anbindung aus [Kapitel 19](19-native-anbindung-csharp-cpp.md).
 
 **Aktueller Stand:** Das [Backend](../backend/README.md) bietet Infrastrukturstatus. Steuerung, Demo-Sitzungen und SignalR-Hubs sind noch nicht implementiert. Beispiele für spätere Echtzeitverbindungen in diesem Kapitel sind Entwürfe, keine neuen produktiven Endpunkte.
 
@@ -106,7 +106,7 @@ async function loadStatus(signal: AbortSignal): Promise<unknown> {
 }
 ```
 
-Der relative Pfad erwartet dasselbe Origin oder einen passend eingerichteten Entwicklungsproxy. Alternativ muss ein ausdrücklich anderes Origin korrekt für den Browserzugriff konfiguriert sein. Das JSON bleibt bis zur Prüfung nach Kapitel 12 `unknown`.
+Der relative Pfad erwartet dasselbe Origin oder einen passend eingerichteten Entwicklungsproxy. Alternativ muss ein ausdrücklich anderes Origin korrekt für den Browserzugriff konfiguriert sein. Das JSON bleibt bis zur Prüfung nach Kapitel 16 `unknown`.
 
 `fetch` lehnt bei einem HTTP-Status wie 503 nicht automatisch ab. `response.ok` prüfen. Ein Abbruchsignal kann die Browseroperation abbrechen; es garantiert keinen Rollback auf dem Server. [MDN: Fetch verwenden](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
 
@@ -280,4 +280,4 @@ Tests dürfen Bibliotheks-Reconnect nicht mit vollständig wiederhergestellter f
 - Retries, Sequenzen und Überlastverhalten ausdrücklich entwerfen.
 - Netzwerk bleibt im Adapter; der Core verarbeitet geordnete Ereignisse und Zeitwerte.
 
-[Zurück zu Kapitel 16](16-native-anbindung-csharp-cpp.md) · [Inhaltsverzeichnis](README.md)
+[← 19 – Native Anbindung: C# ↔ C++](19-native-anbindung-csharp-cpp.md) · [Inhaltsverzeichnis](README.md) · [21 – Architektur und Abhängigkeitsgrenzen →](21-architektur-und-abhaengigkeitsgrenzen.md)

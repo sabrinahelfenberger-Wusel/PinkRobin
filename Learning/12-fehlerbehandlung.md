@@ -1,4 +1,4 @@
-# 07 – Fehlerbehandlung: Exceptions und Result-Typen
+# 12 – Fehlerbehandlung: Exceptions und Result-Typen
 
 ## Lernziel
 
@@ -72,7 +72,7 @@ async function loadRobinState(): Promise<void> {
 
 **Achtung, C#-Gehirn:** `fetch()` wirft bei HTTP 404 oder 500 normalerweise keine Exception. `response.ok` muss geprüft werden. Auch erfolgreich geparstes JSON ist nicht automatisch strukturell validiert.
 
-Der Pfad `/api/robin/state` ist ein Lernentwurf, kein bereits implementierter Backend-Endpunkt. Den tatsächlich vorhandenen Statusendpunkt `/api/v1/status` behandelt Kapitel 17.
+Der Pfad `/api/robin/state` ist ein Lernentwurf, kein bereits implementierter Backend-Endpunkt. Den tatsächlich vorhandenen Statusendpunkt `/api/v1/status` behandelt Kapitel 20.
 
 ## D. C++ – Exceptions und RAII
 
@@ -198,6 +198,4 @@ Teste `250`, `-10`, `6000` und `NaN`.
 - `std::expected<T,E>` ist ein C++23-Werkzeug für Erfolg **oder** Fehler.
 - API-Grenzen brauchen Validierung und eine definierte Fehlerübersetzung.
 
-## Als Nächstes
-
-Speicher und Lebensdauer: C#-Referenzen und Garbage Collection, JavaScript-Objekte sowie C++-Werte, Referenzen, Pointer und Ownership.
+[← 11 – Speicher und Lebensdauer](11-speicher-und-lebensdauer.md) · [Inhaltsverzeichnis](README.md) · [13 – Module, Projektstruktur und Build-Systeme →](13-module-projektstruktur-und-build-systeme.md)

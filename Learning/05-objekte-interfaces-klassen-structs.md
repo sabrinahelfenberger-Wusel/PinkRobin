@@ -1,4 +1,4 @@
-# 02 – Objekte, Interfaces, Klassen und Structs
+# 05 – Objekte, Interfaces, Klassen und Structs
 
 Bisher haben wir einzelne Werte betrachtet. In Pink Robin gehören viele Werte aber logisch zusammen. Ein Zustand kann zum Beispiel Name, Energie und Wachzustand enthalten.
 
@@ -247,6 +247,4 @@ Modelliere diesen Zustand einmal als TypeScript-`interface` und einmal als C++-`
 - Ein C++-`struct` ist ein vollwertiger benutzerdefinierter Typ und kann auch Methoden besitzen.
 - Gleiche fachliche Daten müssen nicht in jeder Programmiersprache technisch gleich implementiert sein.
 
-## Als Nächstes
-
-Funktionen und Methoden: Parameter, Rückgabewerte, optionale Parameter und der Unterschied zwischen Wert- und Referenzübergabe.
+[← 04 – Funktionen, Methoden und Parameter](04-funktionen-methoden-parameter.md) · [Inhaltsverzeichnis](README.md) · [06 – Properties, Zugriff und Kapselung →](06-properties-zugriff-und-kapselung.md)

@@ -1,4 +1,4 @@
-# 06 – Generics und Templates
+# 09 – Generics und Templates
 
 ## Lernziel
 
@@ -214,6 +214,4 @@ Robin soll Ereignisse mit unterschiedlichen Nutzdaten verarbeiten:
 - C++-Templates werden beim Kompilieren instanziiert und unterstützen umfangreiche Compile-Time-Programmierung.
 - Typisierte Event-Modelle sind noch kein vollständiges Kommunikationsprotokoll.
 
-## Als Nächstes
-
-Fehlerbehandlung: Exceptions, `try/catch`, Result-Typen und C++-Alternativen.
+[← 08 – Vererbung und Polymorphismus](08-vererbung-und-polymorphismus.md) · [Inhaltsverzeichnis](README.md) · [10 – Collections und LINQ-Alternativen →](10-collections-und-linq-alternativen.md)

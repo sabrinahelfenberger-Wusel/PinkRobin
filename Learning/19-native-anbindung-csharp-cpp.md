@@ -1,10 +1,10 @@
-# 16 – Native Anbindung: C# ↔ C++
+# 19 – Native Anbindung: C# ↔ C++
 
 ## Lernziel
 
 Du kannst die vorhandene C-Schnittstelle des Pink-Robin-Core aus C# aufrufen, ihren Snapshot korrekt abbilden und den nativen Handle mit `SafeHandle` verwalten. Du unterscheidest Ressourcenbesitz, Threadsicherheit und fachliche Fehler.
 
-Wir verbinden Lebensdauer aus [Kapitel 8](08-speicher-und-lebensdauer.md), Nebenläufigkeit aus [Kapitel 10](10-asynchronitaet-und-nebenlaeufigkeit.md), API-Grenzen aus [Kapitel 12](12-serialisierung-json-und-api-grenzen.md) und Builds aus [Kapitel 14](14-module-projektstruktur-und-build-systeme.md).
+Wir verbinden Lebensdauer aus [Kapitel 11](11-speicher-und-lebensdauer.md), Nebenläufigkeit aus [Kapitel 15](15-asynchronitaet-und-nebenlaeufigkeit.md), API-Grenzen aus [Kapitel 16](16-serialisierung-json-und-api-grenzen.md) und Builds aus [Kapitel 13](13-module-projektstruktur-und-build-systeme.md).
 
 **Das Kapitel liefert einen Lernadapter. Es integriert die native Bibliothek nicht automatisch ins bestehende Backend und ändert keinen Produktivcode.** Grundlage ist die aktuelle [C-ABI, Version 1](../core/include/pinkrobin/c_api.h).
 
@@ -227,7 +227,7 @@ Das `lock` im Beispiel schützt Dispatch, Advance, Snapshot und Dispose mit ders
 
 Die Methoden führen nur kurze synchrone native Arbeit aus. Keine HTTP-Aufrufe, `await` oder fremde Callbacks innerhalb dieser Sperre. Einen zurückgegebenen Snapshot kann die Aufruferin anschliessend unabhängig verwenden.
 
-Das Lock garantiert gegenseitigen Ausschluss, aber keine richtige zeitliche Reihenfolge konkurrierender Requests. Zwei vor dem Eintritt ermittelte Zeitwerte können in umgekehrter Reihenfolge ankommen. Ein produktiver Sitzungsadapter benötigt daher zusätzlich die geordnete Verarbeitung und vertrauenswürdige monotone Zeit aus Kapitel 10 und 15.
+Das Lock garantiert gegenseitigen Ausschluss, aber keine richtige zeitliche Reihenfolge konkurrierender Requests. Zwei vor dem Eintritt ermittelte Zeitwerte können in umgekehrter Reihenfolge ankommen. Ein produktiver Sitzungsadapter benötigt daher zusätzlich die geordnete Verarbeitung und vertrauenswürdige monotone Zeit aus Kapitel 15 und 18.
 
 Beim Sitzungsende zunächst neue Arbeit verhindern, eingereihte und laufende Zugriffe nach Vertrag abschliessen und danach entsorgen. Unser kleiner Wrapper blockiert einen gleichzeitig eintretenden Aufruf mit derselben Sperre und lehnt spätere Nutzung nach Dispose ab. Er implementiert keine vollständige Server-Queue.
 
@@ -310,4 +310,4 @@ Der aktuelle [Core-Status](../core/README.md) beschreibt die C#-Anbindung noch a
 - Ein verwalteter Build ist noch kein erfolgreicher nativer Integrationstest.
 - Pro Sitzung eine Instanz, geordnete Zugriffe und Freigabe nach Ende aller Arbeit.
 
-[Zurück zu Kapitel 15](15-zustandsmaschinen-und-zeitgesteuertes-verhalten.md) · [Inhaltsverzeichnis](README.md)
+[← 18 – Zustandsmaschinen und zeitgesteuertes Verhalten](18-zustandsmaschinen-und-zeitgesteuertes-verhalten.md) · [Inhaltsverzeichnis](README.md) · [20 – HTTP, WebSockets und Verbindungsmanagement →](20-http-websockets-und-verbindungsmanagement.md)

@@ -88,6 +88,4 @@ Robin soll folgende Werte bekommen:
 
 Schreibe diese vier Variablen einmal in **TypeScript** und einmal in **C++**.
 
-## Als Nächstes
-
-`null`, `undefined`, Nullable Types und optionale Werte.
+[Inhaltsverzeichnis](README.md) · [01.2 – null, undefined und optionale Werte →](01-2-null-und-optionale-werte.md)

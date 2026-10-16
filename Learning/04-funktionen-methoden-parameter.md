@@ -1,4 +1,4 @@
-# 03 – Funktionen, Methoden und Parameter
+# 04 – Funktionen, Methoden und Parameter
 
 Funktionen kapseln Verhalten. Für Pink Robin können sie zum Beispiel Energie verändern, eine Reaktion berechnen oder aus einem Ereignis eine Aktion erzeugen.
 
@@ -306,6 +306,4 @@ Teste gedanklich:
 - TypeScript-Objekte können innerhalb einer Funktion verändert werden, weil der kopierte Referenzwert weiterhin auf dasselbe Objekt zeigt.
 - Funktionen mit klarer Eingabe und Rückgabe sind häufig besonders leicht zu testen.
 
-## Als Nächstes
-
-Collections: Arrays, Listen, Vektoren, Maps und die Frage, wie Robin mehrere Personen, Interessen oder Ereignisse speichert.
+[← 03 – Bedingungen und Schleifen](03-bedingungen-und-schleifen.md) · [Inhaltsverzeichnis](README.md) · [05 – Objekte, Interfaces, Klassen und Structs →](05-objekte-interfaces-klassen-structs.md)
