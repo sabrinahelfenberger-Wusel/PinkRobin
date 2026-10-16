@@ -25,5 +25,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [09 – Vererbung und Polymorphismus](09-vererbung-und-polymorphismus.md)
 - [10 – Asynchronität und Nebenläufigkeit](10-asynchronitaet-und-nebenlaeufigkeit.md)
 - [11 – Events, Callbacks und Nachrichten](11-events-callbacks-und-nachrichten.md)
+- [12 – Serialisierung, JSON und API-Grenzen](12-serialisierung-json-und-api-grenzen.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
