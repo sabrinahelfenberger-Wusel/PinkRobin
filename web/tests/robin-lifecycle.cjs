@@ -12,6 +12,10 @@ const compiled = ts.transpileModule(source, {
 function fixture(reduce = false) {
   let clock = 0, nextId = 0, destroy, render, listener;
   const timers = new Map();
+  const effects = [], sent = [];
+  let coreState = null, connection = 'local';
+  const session = { connection: () => connection, state: () => coreState,
+    connect: async () => {}, send: event => sent.push(event) };
   const media = {
     matches: reduce,
     addEventListener: (_event, fn) => { listener = fn; },
@@ -20,7 +24,8 @@ function fixture(reduce = false) {
   const angular = {
     Component: () => target => target,
     DestroyRef: {},
-    inject: () => ({ onDestroy: fn => { destroy = fn; } }),
+    effect: fn => effects.push(fn),
+    inject: token => token === angular.DestroyRef ? ({ onDestroy: fn => { destroy = fn; } }) : session,
     afterNextRender: fn => { render = fn; },
     computed: read => read,
     signal: value => {
@@ -30,7 +35,7 @@ function fixture(reduce = false) {
     },
   };
   const context = {
-    exports: {}, require: name => { assert.equal(name, '@angular/core'); return angular; },
+    exports: {}, require: name => name === '@angular/core' ? angular : { RobinSessionService: {} },
     window: { matchMedia: () => media }, document: { hidden: false },
     setTimeout: (fn, delay) => { const id = ++nextId; timers.set(id, { fn, due: clock + delay }); return id; },
     clearTimeout: id => timers.delete(id),
@@ -39,7 +44,8 @@ function fixture(reduce = false) {
   const robin = new context.exports.RobinComponent();
   render();
   return {
-    robin, timers,
+    robin, timers, sent,
+    core(state) { coreState = state; connection = state ? 'connected' : 'local'; effects.forEach(fn => fn()); },
     tick(ms) {
       const end = clock + ms;
       while (true) {
@@ -179,3 +185,28 @@ pet.robin.startPetting();
 pet.destroy();
 assert.equal(pet.timers.size, 0);
 console.log('Petting, exact five-second heart eyes, early release, interruption and cleanup passed.');
+
+const online = fixture(true);
+online.core({ mode: 'awake', mood: 'curious', headContact: false, revision: 1 });
+online.robin.startPetting();
+assert.equal(online.robin.mood(), 'curious'); // No optimistic local state decision.
+online.robin.stopPetting(); // Release before the server acknowledges the press.
+assert.deepEqual(online.sent, ['headStarted', 'headEnded']);
+online.core({ mode: 'awake', mood: 'happy', headContact: true, revision: 2 });
+assert.equal(online.robin.mood(), 'happy');
+online.tick(5000);
+assert.equal(online.robin.mood(), 'happy'); // Only the Core may decide the threshold.
+online.core({ mode: 'awake', mood: 'affectionate', headContact: true, revision: 3 });
+assert.equal(online.robin.mood(), 'affectionate');
+online.core({ mode: 'awake', mood: 'curious', headContact: false, revision: 4 });
+online.robin.touchHeart();
+assert.equal(online.sent.at(-1), 'heartTouched');
+online.core({ mode: 'awake', mood: 'happy', headContact: false, revision: 5 });
+online.tick(6000);
+assert.equal(online.robin.mood(), 'happy');
+online.robin.greet();
+assert.equal(online.sent.at(-1), 'restart');
+online.core(null);
+assert.equal(online.robin.mood(), 'curious');
+online.destroy();
+console.log('Server-owned expressions, early release and local fallback passed.');

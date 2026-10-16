@@ -1,8 +1,20 @@
 using PinkRobin.Api.Contracts;
 using PinkRobin.Api.Core;
+using PinkRobin.Api.Sessions;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<RobinSessions>();
+builder.Services.AddHostedService<SessionCleanup>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.AddPolicy("session-create", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+});
 builder.Services.AddSingleton<IRobinCoreGateway, NativeRobinCoreGateway>();
 
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -16,13 +28,14 @@ if (origins.Any(origin => origin.Contains('*') ||
 if (origins.Length > 0)
 {
     builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(origins).WithMethods("GET").WithHeaders("Content-Type")));
+        policy.WithOrigins(origins).WithMethods("GET", "POST", "DELETE").WithHeaders("Content-Type", "X-Robin-Session")));
 }
 
 var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 if (origins.Length > 0) app.UseCors();
+app.UseRateLimiter();
 app.Use(async (context, next) =>
 {
     context.Response.Headers.CacheControl = "no-store";
@@ -39,6 +52,26 @@ app.MapGet("/health/ready", IResult (IRobinCoreGateway core) =>
 
 app.MapGet("/api/v1/status", (IRobinCoreGateway core) =>
     new BackendStatus("PinkRobin.Api", "1.0", "preparation", core.GetConnectionStatus(),
-        SessionsAvailable: false, CommandsAvailable: false, RealtimeAvailable: false));
+        SessionsAvailable: core.GetConnectionStatus().Connected, CommandsAvailable: core.GetConnectionStatus().Connected, RealtimeAvailable: false));
 
+// Session tokens never appear in URLs or access logs. JSON/custom headers prevent
+// cross-origin form submissions; CORS only permits configured development origins.
+static IResult WithSession(HttpContext context, Func<string, IResult> action)
+{
+    var token = context.Request.Headers["X-Robin-Session"].ToString();
+    if (token.Length != 64 || !token.All(Uri.IsHexDigit)) return Results.Problem(statusCode: 401, title: "Session token required");
+    try { return action(token); }
+    catch (SessionFailure error) { return Results.Problem(statusCode: error.Status, title: error.Message); }
+}
+app.MapPost("/api/v1/sessions", IResult (CreateSessionRequest request, RobinSessions sessions) =>
+{
+    try { return Results.Json(sessions.Create(request.ReducedMotion), statusCode: 201); }
+    catch (SessionFailure error) { return Results.Problem(statusCode: error.Status, title: error.Message); }
+}).RequireRateLimiting("session-create");
+app.MapGet("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
+    WithSession(context, token => Results.Ok(sessions.Read(token))));
+app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command, RobinSessions sessions) =>
+    WithSession(context, token => Results.Ok(sessions.Send(token, command))));
+app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
+    WithSession(context, token => { sessions.Remove(token); return Results.NoContent(); }));
 app.Run();

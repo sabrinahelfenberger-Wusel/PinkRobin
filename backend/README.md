@@ -4,7 +4,7 @@ ASP.NET-Core-Grundgerüst auf .NET 10 LTS für die spätere Verbindung zwischen
 Angular und dem nativen C++-Core. Es enthält bereits eine ausführbare API,
 getrennte Gesundheitsprüfungen, typisierte Statusdaten und eine austauschbare
 Core-Schnittstelle. Das Backend lädt den C++-Core jetzt direkt als native Bibliothek
-über dessen C ABI. Die sichtbare Demo verwendet vorerst weiterhin das Angular-Verhalten.
+über dessen C ABI. Angular sendet Berührungen über eigene Demo-Sitzungen an den Core und stellt dessen Zustände dar.
 
 ## Lokal starten
 
@@ -30,8 +30,8 @@ die zentrale `PinkRobin.slnx` im Repository-Hauptverzeichnis öffnen; die beiden
 | `/health/ready` | Core geladen und geprüft (200), bei Ladefehler 503 |
 | `/api/v1/status` | API-Version, Core-Verbindung und verfügbare Funktionen |
 
-Es gibt noch keine Steuerung, Demo-Sitzungen, Datenbank oder SignalR-Hubs. Der
-Status meldet diese Funktionen ausdrücklich als nicht verfügbar. `IRobinCoreGateway`
+Die Demo unterstützt getrennte Sitzungen und Berührungsbefehle. Datenbank und
+SignalR-Hubs sind noch nicht vorhanden. `IRobinCoreGateway`
 erzeugt getrennte native Instanzen über C ABI/PInvoke. Keine zweite
 C#-Nachimplementierung von Robins Verhalten. Zeichnung und Augenformen bleiben
 bei Angular bzw. dem physischen Display.
@@ -80,10 +80,10 @@ weiter. Dafür muss die neue Version von `update-web.sh` auf die NAS kopiert wer
 ## Nächste Schritte
 
 1. Native Core-Anbindung auf Windows und NAS prüfen; Details siehe unten.
-2. Begrenzte, getrennte Demo-Sitzungen sowie versionierte Ereignis-/Zustandsverträge implementieren.
+2. Sitzungssteuerung und Berührungen auf der NAS prüfen.
 3. SignalR mit geprüfter Sitzungszuordnung und Wiederverbindung ergänzen.
 4. Synology-Kompatibilität prüfen, internes Netzwerk und `/api`-/`/hubs`-Routing einrichten.
-5. Angular kontrolliert an die API anbinden; Verhalten und fachliche Timer in den Core verlagern.
+5. Weitere Ereignisse und Bewegungen über den Core ergänzen.
 
 [API-Vertrag](../docs/api/README.md), [Technologiekonzept](../docs/Technologiekonzept.md),
 [.NET-Support](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core),
@@ -152,8 +152,8 @@ verarbeitet werden. Der Core startet keine eigenen Threads oder Timer.
 
 Das Dockerfile baut den Core unter Alpine und liefert ihn gemeinsam mit der API
 und `libstdc++` aus. Das Backend benötigt dafür keinen zusätzlichen Port und keinen
-separaten Core-Container. Die Bibliothek läuft im Backend-Prozess. Sitzungen,
-HTTP-Befehle und SignalR bleiben bis zum nächsten Integrationsschritt deaktiviert.
+separaten Core-Container. Die Bibliothek läuft im Backend-Prozess. Sitzungen und HTTP-Befehle sind aktiviert; SignalR bleibt noch deaktiviert.
+Verträge und Grenzen stehen in der [API-Dokumentation](../docs/api/README.md).
 
 ### CMake wird beim Backend-Build nicht gefunden (Fehler 9009)
 
@@ -163,3 +163,16 @@ Erst danach verwendet er `cmake` aus dem PATH. Im Visual Studio Installer unter
 **Ändern → Einzelne Komponenten** die **C++-CMake-Tools für Windows** installieren,
 falls sie fehlen. Visual Studio danach neu starten. Ein eigener Pfad lässt sich
 mit der MSBuild-Eigenschaft `RobinCMake` angeben.
+
+## Berührungen durchgehend testen
+
+Nach F5 im Profil **PinkRobin Demo** zeigt die Robin-Seite
+**„Dein Robin wird vom Core gesteuert.“** Herz berühren: glückliche Augen für sechs
+Sekunden. Kopf gedrückt halten: zunächst glückliche Augen, nach fünf Sekunden
+Herzaugen. Loslassen: wieder neugierige Augen. Zwei Tabs besitzen getrennte Robins.
+Bei angehaltener API erscheint die Kennzeichnung der lokalen Demo; die Schaltfläche
+**Verbindung erneut versuchen** legt nach dem Backend-Neustart eine neue Sitzung an.
+Die Anzeige folgt dem Server mit einer Abfrage alle 250 ms zuzüglich Netzwerklaufzeit.
+
+Zusätzlicher HTTP-Test bei laufender API: `python3 tests/sessions.py` aus `backend/`.
+Der native Integrationstest prüft Zeitgrenzen und Sitzungsablauf mit einer Testuhr.

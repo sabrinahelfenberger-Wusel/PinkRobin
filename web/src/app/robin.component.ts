@@ -1,4 +1,6 @@
-import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+
+import { CoreState, RobinSessionService } from './robin-session.service';
 
 type RobinMood = 'sleeping' | 'waking' | 'curious' | 'happy' | 'affectionate';
 
@@ -13,13 +15,19 @@ const MOOD_LABELS: Record<RobinMood, string> = {
 @Component({
   selector: 'pr-robin',
   standalone: true,
+  providers: [RobinSessionService],
   templateUrl: './robin.component.html',
   styleUrl: './robin.component.css',
 })
 export class RobinComponent {
+  readonly session = inject(RobinSessionService);
+  private coreRevision: number | null = null;
+  private coreActive = false;
+  private coreGreeting = true;
   readonly mood = signal<RobinMood>('sleeping');
   readonly petting = signal(false);
   readonly smiling = computed(() => this.mood() === 'happy' || this.mood() === 'affectionate');
+  private headHeld = false;
   private activePointer: number | null = null;
   readonly awake = computed(() => this.mood() !== 'sleeping');
   readonly blinking = signal(false);
@@ -38,6 +46,23 @@ export class RobinComponent {
       this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       this.reducedMotion.addEventListener('change', this.onMotionChange);
       this.greet();
+      void this.session.connect(this.reducedMotion.matches);
+    });
+    effect(() => {
+      const state = this.session.state();
+      if (state) {
+        this.coreActive = true;
+        if (state.revision !== this.coreRevision) {
+          this.coreRevision = state.revision;
+          this.applyCoreState(state);
+        }
+      } else if (this.coreActive) {
+        this.coreGreeting = true;
+        this.headHeld = false;
+        this.coreActive = false;
+        this.coreRevision = null;
+        this.greet();
+      }
     });
     destroyRef.onDestroy(() => {
       this.destroyed = true;
@@ -46,10 +71,50 @@ export class RobinComponent {
     });
   }
 
-  private readonly onMotionChange = () => this.greet();
+  private readonly onMotionChange = () => {
+    if (this.session.connection() === 'connected') {
+      this.clearTimers();
+      this.blinking.set(false);
+      this.look.set(null);
+      this.heartGlowing.set(false);
+      if (!this.reducedMotion?.matches) this.idle();
+    } else this.greet();
+  };
+
+  reconnect(): void { void this.session.connect(this.reducedMotion?.matches ?? false); }
+
+  private applyCoreState(state: CoreState): void {
+    this.clearTimers();
+    this.blinking.set(false);
+    this.look.set(null);
+    this.heartGlowing.set(false);
+    this.petting.set(state.headContact);
+    if (!state.headContact && !this.headHeld) this.activePointer = null;
+    const mood: RobinMood = state.mode === 'sleeping' ? 'sleeping' :
+      state.mode === 'waking' ? 'waking' : state.mood;
+    this.mood.set(mood);
+    if (state.mode !== 'awake') this.coreGreeting = true;
+    this.speech.set(mood === 'sleeping' ? 'Pssst … Robin schläft noch.' :
+      mood === 'waking' ? 'Oh! Da ist ja jemand. …' :
+      mood === 'affectionate' ? 'Bei dir fühle ich mich wohl. ♡' :
+      mood === 'happy' ? (state.headContact ? 'Oh, das fühlt sich schön an. ♡' : 'Das tut gut. Schön, dass du da bist. ♡') :
+      (this.coreGreeting ? 'Hallo, ich bin Robin! Schön, dass du da bist. ♡' : 'Was entdecken wir als Nächstes?'));
+    if (state.mode === 'awake') this.coreGreeting = false;
+    if (mood !== 'sleeping') this.blink();
+    if (mood === 'waking' && !this.reducedMotion?.matches) {
+      this.later(() => this.look.set('left'), 1300);
+      this.later(() => this.look.set('right'), 2100);
+    }
+    if (mood === 'happy' && !state.headContact && !this.reducedMotion?.matches) {
+      this.heartGlowing.set(true);
+      this.later(() => this.heartGlowing.set(false), 850);
+    }
+    this.idle();
+  }
 
   greet(): void {
     if (this.destroyed) return;
+    if (this.session.connection() === 'connected') { this.coreGreeting = true; this.headHeld = false; this.session.send('restart'); return; }
     this.clearTimers();
     this.petting.set(false);
     this.activePointer = null;
@@ -80,6 +145,7 @@ export class RobinComponent {
 
   touchHeart(): void {
     if (this.destroyed) return;
+    if (this.session.connection() === 'connected') { this.headHeld = false; this.session.send('heartTouched'); return; }
     // Touch takes over the greeting and keeps just one idle loop.
     this.clearTimers();
     this.petting.set(false);
@@ -133,6 +199,10 @@ export class RobinComponent {
 
   startPetting(): void {
     if (this.destroyed || this.petting()) return;
+    if (this.session.connection() === 'connected') {
+      if (!this.headHeld) { this.headHeld = true; this.session.send('headStarted'); }
+      return;
+    }
     this.clearTimers();
     this.petting.set(true);
     this.mood.set('happy');
@@ -148,7 +218,12 @@ export class RobinComponent {
   }
 
   stopPetting(): void {
-    if (this.destroyed || !this.petting()) return;
+    if (this.destroyed) return;
+    if (this.session.connection() === 'connected') {
+      if (this.headHeld) { this.headHeld = false; this.activePointer = null; this.session.send('headEnded'); }
+      return;
+    }
+    if (!this.petting()) return;
     this.clearTimers();
     this.petting.set(false);
     this.activePointer = null;

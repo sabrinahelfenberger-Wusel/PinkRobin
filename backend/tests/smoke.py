@@ -36,7 +36,9 @@ assert code == 200 and status['service'] == 'PinkRobin.Api'
 assert status['apiVersion'] == '1.0' and status['stage'] == 'preparation'
 assert status['core'] == ({'connected': False, 'implementation': 'not-connected'} if args.without_core
     else {'connected': True, 'implementation': 'native-cabi-v1'})
-assert not any(status[key] for key in ('sessionsAvailable', 'commandsAvailable', 'realtimeAvailable'))
+assert status['sessionsAvailable'] == (not args.without_core)
+assert status['commandsAvailable'] == (not args.without_core)
+assert status['realtimeAvailable'] is False
 assert request('/api/v1/status', method='POST')[0] == 405
 assert request('/api/v1/commands')[0] == 404
 assert request('/hubs/robin/negotiate', method='POST')[0] == 404
