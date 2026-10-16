@@ -132,6 +132,8 @@ Ein wesentlicher Unterschied zu C# ist, dass ein solches Objekt in C++ sehr nat√
 C++ kennt ebenfalls Klassen:
 
 ```cpp
+#include <string>
+
 class Robin
 {
 private:
@@ -141,7 +143,7 @@ public:
     std::string name;
 
     Robin(std::string name, double energy)
-        : name(name), energy(energy)
+        : energy(energy), name(name)
     {
     }
 
