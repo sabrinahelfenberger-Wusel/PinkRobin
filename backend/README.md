@@ -3,11 +3,16 @@
 ASP.NET-Core-Grundgerüst auf .NET 10 LTS für die spätere Verbindung zwischen
 Angular und dem nativen C++-Core. Es enthält bereits eine ausführbare API,
 getrennte Gesundheitsprüfungen, typisierte Statusdaten und eine austauschbare
-Core-Schnittstelle. Robins Verhalten läuft aktuell weiterhin in Angular.
+Core-Schnittstelle. Das Backend lädt den C++-Core jetzt direkt als native Bibliothek
+über dessen C ABI. Die sichtbare Demo verwendet vorerst weiterhin das Angular-Verhalten.
 
 ## Lokal starten
 
-Voraussetzung: .NET 10 SDK. Im Repository:
+Voraussetzungen: .NET 10 SDK, CMake ab 3.20 und ein C++17-Compiler.
+Unter Windows die Visual-Studio-Workload **Desktopentwicklung mit C++** inklusive
+MSVC und CMake installieren. Unter macOS werden die Xcode Command Line Tools benötigt,
+unter Linux beispielsweise `cmake` und `build-essential`. SDK und Compiler müssen
+dieselbe Architektur verwenden (Windows normalerweise x64). Im Repository:
 
 ```sh
 cd backend
@@ -22,12 +27,12 @@ Die API läuft unter http://localhost:5080. In Visual Studio mit .NET-10-Unterst
 | URL | Bedeutung |
 | --- | --- |
 | `/health/live` | API läuft (200) |
-| `/health/ready` | Core bereit; derzeit absichtlich 503 |
+| `/health/ready` | Core geladen und geprüft (200), bei Ladefehler 503 |
 | `/api/v1/status` | API-Version, Core-Verbindung und verfügbare Funktionen |
 
 Es gibt noch keine Steuerung, Demo-Sitzungen, Datenbank oder SignalR-Hubs. Der
 Status meldet diese Funktionen ausdrücklich als nicht verfügbar. `IRobinCoreGateway`
-ist die Grenze zur späteren C-ABI/PInvoke- oder Prozess-Anbindung. Keine zweite
+erzeugt getrennte native Instanzen über C ABI/PInvoke. Keine zweite
 C#-Nachimplementierung von Robins Verhalten. Zeichnung und Augenformen bleiben
 bei Angular bzw. dem physischen Display.
 
@@ -56,13 +61,13 @@ unabhängig. Die Installation auf der NAS erfolgt zunächst manuell; Anleitung:
 ## Docker und Synology
 
 ```sh
-docker build -t pinkrobin-backend:local backend
+docker build -t pinkrobin-backend:local -f backend/Dockerfile .
 docker run --rm -p 127.0.0.1:5080:8080 pinkrobin-backend:local
 ```
 
 Diese Befehle gelten vom Repository-Hauptverzeichnis aus. Das Runtime-Image läuft
 als unprivilegierter Benutzer. Seine Gesundheitsprüfung prüft nur Liveness;
-Readiness bleibt bis zur echten Core-Anbindung 503.
+Readiness prüft, ob die native Bibliothek mit passender ABI geladen werden konnte.
 
 Die vorhandene NAS hat laut Protokoll Linux 3.10.108. .NET-10-Container teilen den
 Host-Kernel; ein erfolgreicher CI-Test auf Ubuntu bestätigt nicht die Kompatibilität
@@ -74,7 +79,7 @@ weiter. Dafür muss die neue Version von `update-web.sh` auf die NAS kopiert wer
 
 ## Nächste Schritte
 
-1. Native Core-Anbindung festlegen und `/health/ready` an ihre echte Bereitschaft koppeln.
+1. Native Core-Anbindung auf Windows und NAS prüfen; Details siehe unten.
 2. Begrenzte, getrennte Demo-Sitzungen sowie versionierte Ereignis-/Zustandsverträge implementieren.
 3. SignalR mit geprüfter Sitzungszuordnung und Wiederverbindung ergänzen.
 4. Synology-Kompatibilität prüfen, internes Netzwerk und `/api`-/`/hubs`-Routing einrichten.
@@ -120,3 +125,32 @@ Nur das Demo-Profil aktiviert den Entwicklungs-SPA-Proxy. Production, Docker und
 NAS-Auslieferung starten weiterhin kein Angular und benutzen kein Node/npm.
 Das separate Backend-Profil und die vorhandenen Container-Tests bleiben erhalten.
 Grundlage: [Microsoft: SPA-Entwicklungsstart](https://learn.microsoft.com/en-us/aspnet/core/client-side/spa/intro).
+
+## Verbindung zwischen Backend und Core
+
+- `Core/NativeRobinCore.cs`: C#-Typen, Cdecl/PInvoke-Aufrufe und ein `SafeHandle`
+  für die native Instanz. `Dispose()` gibt sie frei; Aufrufe und Freigabe sind synchronisiert.
+- `Core/NativeRobinCoreGateway.cs`: prüft beim ersten Zugriff ABI-Version 1 sowie
+  Erstellen/Lesen/Freigeben einer Instanz. Der Status meldet dann
+  `connected: true` und `implementation: "native-cabi-v1"`. Bei Ladefehlern steht
+  die Ursache im Backend-Protokoll; nach einer Reparatur Backend neu starten.
+- `NativeCore.targets`: baut den Core bei Build/F5 mit CMake und kopiert DLL,
+  `.so` oder `.dylib` neben die API; `dotnet publish` übernimmt diese Datei ebenfalls.
+  Ein separater manueller Core-Build ist für den Backend-Start nicht erforderlich.
+- `tests/Interop`: prüft echte C#-zu-C++-Aufrufe, Aufwachen, Berührung, Herzaugen,
+  getrennte Instanzen, ungültige Eingaben und Freigabe auf Windows, Linux und macOS.
+
+```sh
+dotnet run --project backend/tests/Interop -c Release
+```
+
+Dieser Testbefehl gilt im Repository-Hauptverzeichnis. Pro künftiger Sitzung muss
+`CreateInstance()` eine eigene Instanz liefern. Der Aufrufer besitzt sie und muss
+sie freigeben. Zeitwerte sind monotone Millisekunden relativ zur Sitzung, keine
+Kalenderzeit; Events und Fortschalten einer Sitzung müssen in zeitlicher Reihenfolge
+verarbeitet werden. Der Core startet keine eigenen Threads oder Timer.
+
+Das Dockerfile baut den Core unter Alpine und liefert ihn gemeinsam mit der API
+und `libstdc++` aus. Das Backend benötigt dafür keinen zusätzlichen Port und keinen
+separaten Core-Container. Die Bibliothek läuft im Backend-Prozess. Sitzungen,
+HTTP-Befehle und SignalR bleiben bis zum nächsten Integrationsschritt deaktiviert.

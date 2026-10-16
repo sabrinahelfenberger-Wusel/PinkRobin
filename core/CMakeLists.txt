@@ -37,3 +37,6 @@ if(ROBIN_BUILD_EXAMPLES)
     add_executable(robin_demo examples/demo.cpp)
     target_link_libraries(robin_demo PRIVATE pinkrobin_behavior)
 endif()
+
+# Stage the native runtime next to the managed API during build/publish.
+install(TARGETS pinkrobin_core RUNTIME DESTINATION . LIBRARY DESTINATION .)

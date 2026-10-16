@@ -26,4 +26,5 @@
     <Message Importance="high" Text="Angular-Abhängigkeiten werden einmalig installiert ..." />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" />
   </Target>
+  <Import Project="../../NativeCore.targets" />
 </Project>

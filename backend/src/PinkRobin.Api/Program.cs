@@ -3,7 +3,7 @@ using PinkRobin.Api.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
-builder.Services.AddSingleton<IRobinCoreGateway, UnconnectedRobinCoreGateway>();
+builder.Services.AddSingleton<IRobinCoreGateway, NativeRobinCoreGateway>();
 
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 if (origins.Any(origin => origin.Contains('*') ||
@@ -35,7 +35,7 @@ app.MapGet("/health/ready", IResult (IRobinCoreGateway core) =>
     core.GetConnectionStatus().Connected
         ? Results.Ok(new { status = "ready" })
         : Results.Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
-            title: "Core not connected", detail: "The native Robin Core has not been integrated yet."));
+            title: "Core not connected", detail: "The native Robin Core could not be loaded. Check the backend logs."));
 
 app.MapGet("/api/v1/status", (IRobinCoreGateway core) =>
     new BackendStatus("PinkRobin.Api", "1.0", "preparation", core.GetConnectionStatus(),

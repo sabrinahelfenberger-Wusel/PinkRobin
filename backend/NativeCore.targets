@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <RobinCoreSource>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../core'))</RobinCoreSource>
+    <RobinCoreBuild>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/obj/native/$(Configuration)'))</RobinCoreBuild>
+    <RobinCoreStage>$(RobinCoreBuild)/installed</RobinCoreStage>
+    <RobinCoreFile Condition="$([MSBuild]::IsOSPlatform('Windows'))">pinkrobin_core.dll</RobinCoreFile>
+    <RobinCoreFile Condition="$([MSBuild]::IsOSPlatform('OSX'))">libpinkrobin_core.dylib</RobinCoreFile>
+    <RobinCoreFile Condition="'$(RobinCoreFile)' == ''">libpinkrobin_core.so</RobinCoreFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RobinCoreStage)/$(RobinCoreFile)" Link="$(RobinCoreFile)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="BuildRobinCore" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="cmake -S &quot;$(RobinCoreSource)&quot; -B &quot;$(RobinCoreBuild)&quot; -DBUILD_TESTING=OFF -DROBIN_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=$(Configuration)" />
+    <Exec Command="cmake --build &quot;$(RobinCoreBuild)&quot; --config $(Configuration) --target pinkrobin_core" />
+    <Exec Command="cmake --install &quot;$(RobinCoreBuild)&quot; --config $(Configuration) --prefix &quot;$(RobinCoreStage)&quot;" />
+  </Target>
+</Project>

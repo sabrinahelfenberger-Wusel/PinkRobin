@@ -7,4 +7,5 @@ namespace PinkRobin.Api.Core;
 public interface IRobinCoreGateway
 {
     CoreConnectionStatus GetConnectionStatus();
+    NativeRobinCore CreateInstance(ulong nowMs = 0);
 }

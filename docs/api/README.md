@@ -4,7 +4,9 @@ Implementiert im ASP.NET-Core-Projekt `backend/src/PinkRobin.Api`.
 Die erste API liefert Infrastrukturstatus, keine simulierte Core-Steuerung.
 
 - `GET /health/live`: 200, `{ "status": "alive" }`.
-- `GET /health/ready`: derzeit 503 Problem Details mit Titel `Core not connected`.
+- `GET /health/ready`: 200 mit `{ "status": "ready" }`, wenn die native Core-Bibliothek
+  ABI 1 unterstützt und eine Instanz erfolgreich angelegt/gelesen wurde. Bei
+  Ladefehlern 503 Problem Details mit Titel `Core not connected`.
 - `GET /api/v1/status`: 200 mit folgendem Vertrag:
 
 ```json
@@ -12,7 +14,7 @@ Die erste API liefert Infrastrukturstatus, keine simulierte Core-Steuerung.
   "service": "PinkRobin.Api",
   "apiVersion": "1.0",
   "stage": "preparation",
-  "core": { "connected": false, "implementation": "not-connected" },
+  "core": { "connected": true, "implementation": "native-cabi-v1" },
   "sessionsAvailable": false,
   "commandsAvailable": false,
   "realtimeAvailable": false

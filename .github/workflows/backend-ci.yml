@@ -33,8 +33,19 @@ jobs:
             sleep 1
           done
           python3 tests/smoke.py --development
+      - name: Test API with missing native library
+        run: |
+          mv src/PinkRobin.Api/bin/Release/net10.0/libpinkrobin_core.so /tmp/pinkrobin-core-disabled.so
+          dotnet src/PinkRobin.Api/bin/Release/net10.0/PinkRobin.Api.dll --urls http://127.0.0.1:5080 >/tmp/pinkrobin-missing-core.log 2>&1 &
+          backend_pid=$!
+          trap 'kill "$backend_pid" || true; mv /tmp/pinkrobin-core-disabled.so src/PinkRobin.Api/bin/Release/net10.0/libpinkrobin_core.so; cat /tmp/pinkrobin-missing-core.log' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:5080/health/live; then break; fi
+            sleep 1
+          done
+          python3 tests/smoke.py --without-core
       - name: Build container
-        run: docker build --build-arg REVISION="$GITHUB_SHA" -t pinkrobin-backend:test .
+        run: docker build --build-arg REVISION="$GITHUB_SHA" -t pinkrobin-backend:test -f Dockerfile ..
       - name: Test production container
         run: |
           docker run -d --name backend-test -p 127.0.0.1:5080:8080 pinkrobin-backend:test
@@ -54,8 +65,21 @@ jobs:
           path: /tmp/backend-image.tar
           retention-days: 1
 
+  interop:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test native C# bridge
+        run: dotnet run --project backend/tests/Interop -c Release
+
   publish:
-    needs: verify
+    needs: [verify, interop, demo-start]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
