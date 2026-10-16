@@ -37,3 +37,13 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [21 – Konfiguration und Auslieferung](21-konfiguration-und-auslieferung.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
+
+## Beispiele ausführen
+
+- Codeblöcke sind je nach Kontext vollständige Programme, zusammengehörige Dateiteile, einzelne Ausschnitte oder noch auszufüllende Übungen. Nicht sämtliche Blöcke eines Kapitels in dieselbe Datei kopieren. Angegebene Typen, Imports und Projektabhängigkeiten übernehmen.
+- Für C# eignet sich ein aktuelles .NET-Lernprojekt; das vorhandene Backend verwendet .NET 10. Vollständige Programme getrennt ausführen. Bei Top-Level-Programmen stehen ausführbare Anweisungen vor Typdeklarationen; Methoden mit `public` gehören in einen Typ. Testframeworks und Logging benötigen die jeweils beschriebenen Projektverweise.
+- TypeScript mit `strict` prüfen. Beispiele in getrennten Modulen halten, etwa durch `export {};`, damit Namen nicht versehentlich mit anderen Beispielen oder Browserglobals zusammenfallen. Die passende Laufzeit und Modulauflösung beachten; Browser-APIs sind nicht automatisch in Node verfügbar.
+- C++ verwendet grundsätzlich C++17. Concepts in Kapitel 6 benötigen ausdrücklich C++20, `std::expected` in Kapitel 7 C++23 und passende Standardbibliotheksunterstützung. Header und zusammengehörige Quelldateien einbeziehen; das Projekt aus Kapitel 14 als Mehrdateienprojekt bauen.
+- Netzwerk-, SignalR- und native C#-Beispiele benötigen die beschriebene Umgebung. Ein Lernbeispiel schafft noch keine neue Backendroute oder produktive Core-Verbindung.
+
+Den ausgeführten Prüfumfang und verbleibende Grenzen dokumentiert der [Prüfbericht](PRUEFBERICHT.md).
