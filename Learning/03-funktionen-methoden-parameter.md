@@ -227,6 +227,8 @@ happiness = pet(happiness);
 ### C++
 
 ```cpp
+#include <algorithm>
+
 double pet(double happiness)
 {
     return std::min(happiness + 0.1, 1.0);
