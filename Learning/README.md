@@ -27,5 +27,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [11 – Events, Callbacks und Nachrichten](11-events-callbacks-und-nachrichten.md)
 - [12 – Serialisierung, JSON und API-Grenzen](12-serialisierung-json-und-api-grenzen.md)
 - [13 – Testen und Debugging](13-testen-und-debugging.md)
+- [14 – Module, Projektstruktur und Build-Systeme](14-module-projektstruktur-und-build-systeme.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
