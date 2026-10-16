@@ -21,5 +21,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [05 – Interfaces und Abstraktion](05-interfaces-und-abstraktion.md)
 - [06 – Generics und Templates](06-generics-und-templates.md)
 - [07 – Fehlerbehandlung](07-fehlerbehandlung.md)
+- [08 – Speicher und Lebensdauer](08-speicher-und-lebensdauer.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
