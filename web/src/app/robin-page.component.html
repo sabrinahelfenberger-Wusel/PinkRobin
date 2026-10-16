@@ -1,52 +1,92 @@
-  <header><a class="brand" routerLink="/">pink<span>robin.</span></a><a routerLink="/">Zur Projektseite <span aria-hidden="true">↗</span></a></header>
-  <main>
-    <section class="introduction">
-      <p class="eyebrow">Die erste Begegnung</p>
-      <h1>Hallo, Welt.<br>Ich bin <span>Robin.</span></h1>
-      <p class="description">Ein kleiner Begleiter mit einer grossen Portion Neugier. Mein Abenteuer beginnt hier. Mit dir.</p>
-      <button id="restart" (click)="robin.greet()" type="button">Robin nochmal begrüssen <span aria-hidden="true">↗</span></button>
-      <p class="note">Noch ganz am Anfang. Schon voller Persönlichkeit.</p>
-      <p class="note" role="status">
-        @switch (robin.session.connection()) {
-          @case ('checking') { Verbindung zu deinem Robin wird hergestellt … }
-          @case ('connected') { Dein Robin wird vom Core gesteuert. }
-          @case ('local') { Lokale Demo – die Verbindung zum Core ist unterbrochen oder nicht verfügbar. }
+<header>
+  <a class="brand" routerLink="/">pink<span>robin.</span></a
+  ><a routerLink="/">Zur Projektseite <span aria-hidden="true">↗</span></a>
+</header>
+<main>
+  <section class="introduction">
+    <p class="eyebrow">Die erste Begegnung</p>
+    <h1>Hallo, Welt.<br />Ich bin <span>Robin.</span></h1>
+    <p class="description">
+      Ein kleiner Begleiter mit einer grossen Portion Neugier. Mein Abenteuer
+      beginnt hier. Mit dir.
+    </p>
+    <button id="restart" (click)="robin.greet()" type="button">
+      Robin nochmal begrüssen <span aria-hidden="true">↗</span>
+    </button>
+    <p class="note">Noch ganz am Anfang. Schon voller Persönlichkeit.</p>
+    <p class="note" role="status">
+      @switch (robin.session.connection()) {
+        @case ("checking") {
+          Verbindung zu deinem Robin wird hergestellt …
         }
-      </p>
-      @if (robin.session.connection() === 'local') {
-        <button type="button" (click)="robin.reconnect()">Verbindung erneut versuchen</button>
+        @case ("connected") {
+          Dein Robin wird vom Core gesteuert.
+        }
+        @case ("local") {
+          Lokale Demo – die Verbindung zum Core ist unterbrochen oder nicht
+          verfügbar.
+        }
       }
-      <div role="status" aria-live="polite">
-        <div class="backend-status"
-          [class.connected]="robin.session.connection() === 'connected' || backend.connection() === 'connected'">
-          <span class="connection-dot" aria-hidden="true"></span>
-          <div>
-            @if (robin.session.connection() === 'connected') {
-              <span>Backend verbunden</span>
-            } @else {
-              @switch (backend.connection()) {
-                @case ('checking') { <span>Backend-Verbindung wird geprüft …</span> }
-                @case ('connected') { <span>Backend verbunden</span> }
-                @case ('unreachable') { <span>Backend nicht erreichbar</span> }
-                @case ('incompatible') { <span>Backend-Antwort nicht kompatibel</span> }
+    </p>
+    @if (robin.session.connection() === "local") {
+      <button type="button" (click)="robin.reconnect()">
+        Verbindung erneut versuchen
+      </button>
+    }
+    <div role="status" aria-live="polite">
+      <div
+        class="backend-status"
+        [class.connected]="
+          robin.session.connection() === 'connected' ||
+          backend.connection() === 'connected'
+        "
+      >
+        <span class="connection-dot" aria-hidden="true"></span>
+        <div>
+          @if (robin.session.connection() === "connected") {
+            <span>Backend verbunden</span>
+          } @else {
+            @switch (backend.connection()) {
+              @case ("checking") {
+                <span>Backend-Verbindung wird geprüft …</span>
+              }
+              @case ("connected") {
+                <span>Backend verbunden</span>
+              }
+              @case ("unreachable") {
+                <span>Backend nicht erreichbar</span>
+              }
+              @case ("incompatible") {
+                <span>Backend-Antwort nicht kompatibel</span>
               }
             }
-          </div>
-        </div>
-        <div class="backend-status core-status"
-          [class.connected]="robin.session.connection() === 'connected'">
-          <span class="connection-dot" aria-hidden="true"></span>
-          <div>
-            @switch (robin.session.connection()) {
-              @case ('checking') { <span>Core-Verbindung wird geprüft …</span> }
-              @case ('connected') { <span>Core verbunden</span> }
-              @case ('local') { <span>Core-Sitzung nicht verbunden</span> }
-            }
-          </div>
+          }
         </div>
       </div>
-    </section>
-    <pr-robin #robin />
-
-  </main>
-  <footer><span>Pink Robin · Ein Projekt von Sabrina Helfenberger</span><span>Ein kleiner Anfang. Eine grosse Idee.</span></footer>
+      <div
+        class="backend-status core-status"
+        [class.connected]="robin.session.connection() === 'connected'"
+      >
+        <span class="connection-dot" aria-hidden="true"></span>
+        <div>
+          @switch (robin.session.connection()) {
+            @case ("checking") {
+              <span>Core-Verbindung wird geprüft …</span>
+            }
+            @case ("connected") {
+              <span>Core verbunden</span>
+            }
+            @case ("local") {
+              <span>Core-Sitzung nicht verbunden</span>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+  <pr-robin #robin />
+</main>
+<footer>
+  <span>Pink Robin · Ein Projekt von Sabrina Helfenberger</span
+  ><span>Ein kleiner Anfang. Eine grosse Idee.</span>
+</footer>
