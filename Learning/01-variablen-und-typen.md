@@ -60,7 +60,7 @@ bool awake = true;
 ### TypeScript
 
 ```typescript
-let name: string = "Robin";
+let robinName: string = "Robin";
 let happiness: number = 0.8;
 let awake: boolean = true;
 ```
@@ -68,6 +68,8 @@ let awake: boolean = true;
 ### C++
 
 ```cpp
+#include <string>
+
 std::string name = "Robin";
 double happiness = 0.8;
 bool awake = true;
