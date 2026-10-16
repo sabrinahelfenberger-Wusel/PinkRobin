@@ -210,3 +210,13 @@ online.core(null);
 assert.equal(online.robin.mood(), 'curious');
 online.destroy();
 console.log('Server-owned expressions, early release and local fallback passed.');
+
+const rapid = fixture(true);
+rapid.core({ mode: 'awake', mood: 'happy', headContact: true, revision: 1 });
+// A new press must be accepted even while an older release is awaiting acknowledgement.
+rapid.robin.startPetting();
+rapid.robin.stopPetting();
+rapid.robin.startPetting();
+assert.deepEqual(rapid.sent, ['headStarted', 'headEnded', 'headStarted']);
+rapid.destroy();
+console.log('Rapid release and renewed press before acknowledgement passed.');

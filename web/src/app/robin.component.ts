@@ -198,11 +198,12 @@ export class RobinComponent {
   }
 
   startPetting(): void {
-    if (this.destroyed || this.petting()) return;
+    if (this.destroyed) return;
     if (this.session.connection() === 'connected') {
       if (!this.headHeld) { this.headHeld = true; this.session.send('headStarted'); }
       return;
     }
+    if (this.petting()) return;
     this.clearTimers();
     this.petting.set(true);
     this.mood.set('happy');
