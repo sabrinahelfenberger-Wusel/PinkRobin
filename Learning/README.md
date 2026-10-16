@@ -24,5 +24,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [08 – Speicher und Lebensdauer](08-speicher-und-lebensdauer.md)
 - [09 – Vererbung und Polymorphismus](09-vererbung-und-polymorphismus.md)
 - [10 – Asynchronität und Nebenläufigkeit](10-asynchronitaet-und-nebenlaeufigkeit.md)
+- [11 – Events, Callbacks und Nachrichten](11-events-callbacks-und-nachrichten.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
