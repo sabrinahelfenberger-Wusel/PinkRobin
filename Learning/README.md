@@ -34,5 +34,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [18 – Architektur und Abhängigkeitsgrenzen](18-architektur-und-abhaengigkeitsgrenzen.md)
 - [19 – Logging und Diagnose](19-logging-und-diagnose.md)
 - [20 – Performance und Ressourcenbudgets](20-performance-und-ressourcenbudgets.md)
+- [21 – Konfiguration und Auslieferung](21-konfiguration-und-auslieferung.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
