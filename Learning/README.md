@@ -29,5 +29,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [13 – Testen und Debugging](13-testen-und-debugging.md)
 - [14 – Module, Projektstruktur und Build-Systeme](14-module-projektstruktur-und-build-systeme.md)
 - [15 – Zustandsmaschinen und zeitgesteuertes Verhalten](15-zustandsmaschinen-und-zeitgesteuertes-verhalten.md)
+- [16 – Native Anbindung: C# ↔ C++](16-native-anbindung-csharp-cpp.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
