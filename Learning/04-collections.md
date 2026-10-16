@@ -121,6 +121,8 @@ interests[0]
 
 Aber die Sicherheitsmodelle unterscheiden sich.
 
+Bei einer C#-Liste führt ein ungültiger Index zu einer Exception. Ein JavaScript-Array liefert für eine nicht vorhandene gewöhnliche Indexeigenschaft normalerweise `undefined`; die TypeScript-Option `noUncheckedIndexedAccess` macht dieses Risiko auch bei vielen Indexzugriffen im Typ sichtbar.
+
 In C++ prüft `vector[index]` den Bereich nicht zwingend. `vector.at(index)` führt eine Bereichsprüfung durch:
 
 ```cpp
@@ -187,13 +189,15 @@ const interests: Interest[] = [
 ### C#
 
 ```csharp
-public record Interest(string Name, double Score);
+using System.Collections.Generic;
 
 var interests = new List<Interest>
 {
     new("Musik", 0.9),
     new("Tanzen", 0.8)
 };
+
+public record Interest(string Name, double Score);
 ```
 
 ### C++
