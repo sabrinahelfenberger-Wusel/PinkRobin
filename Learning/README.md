@@ -26,5 +26,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [10 – Asynchronität und Nebenläufigkeit](10-asynchronitaet-und-nebenlaeufigkeit.md)
 - [11 – Events, Callbacks und Nachrichten](11-events-callbacks-und-nachrichten.md)
 - [12 – Serialisierung, JSON und API-Grenzen](12-serialisierung-json-und-api-grenzen.md)
+- [13 – Testen und Debugging](13-testen-und-debugging.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
