@@ -34,3 +34,4 @@ __pycache__/
 
 # Native Core build output
 /core/build/
+/core/out/
