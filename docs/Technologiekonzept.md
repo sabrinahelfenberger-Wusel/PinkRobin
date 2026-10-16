@@ -117,7 +117,7 @@ Die erste Demo verwendet simulierte Sensorereignisse und benötigt weder Kamera 
 
 PinkRobin ist die zentrale Entwicklungsbasis für Core, Firmware, Backend, Angular, Companion-App, Dokumentation und Pipeline. Ziel ist ein privates Repository. Die tatsächliche Sichtbarkeit muss in GitHub separat eingerichtet werden; dieses Dokument ändert keine Repository-Einstellungen.
 
-Ein zusätzliches öffentliches Repository erhält ausschliesslich bewusst freigegebene Inhalte. Name und Freigabeprozess bleiben festzulegen. Es gibt keine automatische Spiegelung von main. Core-Quellcode bleibt privat; Companion-App und Backend werden ebenfalls nicht automatisch veröffentlicht. Die frühere Planung separater öffentlicher robin-core- und virtual-robin-Repositories ist ersetzt.
+Ein zusätzliches öffentliches Repository erhält ausschliesslich bewusst freigegebene Inhalte. Name und Freigabeprozess bleiben festzulegen. Es gibt keine automatische Spiegelung von main. Der erste Core im Anfangsstadium ist seit 16. Oktober 2026 ausdrücklich zur Veröffentlichung im aktuellen öffentlichen PinkRobin-Repository freigegeben. Die frühere Vorgabe eines privaten Cores ist für diesen frühen Stand aufgehoben; spätere vertrauliche Bestandteile sind dadurch nicht pauschal freigegeben. Die frühere Planung separater öffentlicher robin-core- und virtual-robin-Repositories ist ersetzt.
 
 Webdeployment und Quellcode-Veröffentlichung sind getrennte Vorgänge. Die Pipeline veröffentlicht nur erforderliche Laufzeitdateien. C++-Quellen, native Core-Binärdateien, private Dokumentation, Schlüssel und interne Debug-Artefakte gelangen nicht ins Frontend. Auch Build-Logs, Container-Registry und Release-Artefakte benötigen passende Zugriffsrechte.
 

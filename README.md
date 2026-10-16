@@ -38,7 +38,7 @@ Als nächste Architekturphase sind ein kleiner C++-Core, getrennte Backend-Sitzu
 
 ## Repository und CI/CD
 
-PinkRobin ist die zentrale Entwicklungsbasis; Ziel ist ein privates Repository. Der tatsächliche Sichtbarkeitsstatus muss separat in GitHub eingestellt werden. Der Core bleibt privat. Ein weiteres öffentliches Repository erhält nur ausdrücklich freigegebene Inhalte; es wird nicht automatisch aus main gespiegelt.
+PinkRobin ist aktuell ein öffentliches Repository. Der erste C++-Core im Anfangsstadium ist ausdrücklich zur Veröffentlichung freigegeben (16. Oktober 2026). Die frühere Vorgabe eines privaten Cores ist für diesen frühen Stand aufgehoben; dies ist keine pauschale Freigabe späterer vertraulicher Bestandteile. Ein weiteres öffentliches Repository wird nicht automatisch aus main gespiegelt.
 
 CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionierte Frontend-/Backend-Releases bereitstellen. Die Synology soll freigegebene Releases mit begrenzten Leserechten abholen. Webseitenbereitstellung und öffentliche Quellcode-Freigabe sind getrennte Abläufe.
 
