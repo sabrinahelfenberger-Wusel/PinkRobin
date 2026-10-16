@@ -32,7 +32,7 @@ Bei Werttypen gibt es ebenfalls Nullable Types:
 int? age = null;
 ```
 
-Ohne `?` erwartet der Compiler normalerweise einen vorhandenen Wert.
+Bei `int` ist `null` ohne `?` nicht zulässig. Bei Referenztypen wie `string` erzeugt eine mögliche Nullzuweisung mit aktivierten Nullable Reference Types in der Regel eine Warnung; die Annotation ist keine allgemeine Laufzeitsperre.
 
 ## C. TypeScript: null und undefined
 
