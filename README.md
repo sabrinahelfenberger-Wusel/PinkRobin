@@ -6,7 +6,19 @@
 
 Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
 
-**Stand:** Angular-Demo und ASP.NET-Core-Status-API laufen. Der erste portable C++-Core ist implementiert; seine Anbindung an Backend und Demo folgt.
+**Stand:** Angular-Demo und ASP.NET-Core-Status-API laufen. Der portable C++-Core ist an das Backend angebunden; die Steuerung der Angular-Demo über den Core folgt.
+
+## In Visual Studio starten
+
+1. [PinkRobin.slnx](PinkRobin.slnx) im Repository-Hauptverzeichnis öffnen.
+2. Falls nötig, **PinkRobin.Api** als Startprojekt festlegen.
+3. Neben dem grünen Startknopf **PinkRobin Demo** wählen und **F5** drücken.
+
+Damit starten Backend und Angular gemeinsam. Der native C++-Core wird automatisch
+mitgebaut und vom Backend geladen. Voraussetzungen und Details:
+[Entwicklungsstart](backend/README.md#in-visual-studio-mit-dem-grünen-startknopf).
+Die Datei `PinkRobin.code-workspace` ist für Visual Studio Code bestimmt; das
+Öffnen des Repository-Ordners als CMake-Projekt startet nur die separate Core-Demo.
 
 ## Projektstruktur
 
@@ -57,12 +69,11 @@ CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionie
 
 Ein ausführbares ASP.NET-Core-Grundgerüst mit Status-API, Gesundheitsprüfungen,
 Core-Schnittstelle und eigenem CI-/Docker-Test ist unter [backend/](backend/)
-vorbereitet. Die native Core-Anbindung und NAS-Auslieferung folgen separat.
+vorbereitet. Die native Core-Anbindung ist implementiert; die neue Version muss separat auf der NAS ausgeliefert werden.
 
 ## Erster nativer Core
 
 Unter [core/](core/) ist der erste portable C++17-Verhaltenskern implementiert:
 Aufwachen, Herzreaktion und Kopfstreicheln mit Herzaugen. CMake, Tests und eine
-versionierte C-Schnittstelle bereiten die spätere C#-Anbindung vor. Das Backend
-und Angular verwenden ihn noch nicht; die Live-Demo läuft bis zur Anbindung weiter
-mit ihrer bisherigen Logik.
+versionierte C-Schnittstelle bilden die Grundlage der C#-Anbindung. Das Backend
+lädt den Core nativ; Angular verwendet vorerst weiterhin seine bisherige Logik.

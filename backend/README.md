@@ -21,7 +21,7 @@ dotnet run --project src/PinkRobin.Api --launch-profile PinkRobin.Api
 ```
 
 Die API läuft unter http://localhost:5080. In Visual Studio mit .NET-10-Unterstützung
-`PinkRobin.Backend.slnx` öffnen; die beiden Startprofile sind unten beschrieben. Die Datei
+die zentrale `PinkRobin.slnx` im Repository-Hauptverzeichnis öffnen; die beiden Startprofile sind unten beschrieben. Die Datei
 `PinkRobin.Api.http` enthält Beispielanfragen.
 
 | URL | Bedeutung |
@@ -91,7 +91,7 @@ weiter. Dafür muss die neue Version von `update-web.sh` auf die NAS kopiert wer
 
 ## In Visual Studio mit dem grünen Startknopf
 
-1. Aktuellen dev-Stand pullen und `backend/PinkRobin.Backend.slnx` öffnen.
+1. Aktuellen dev-Stand pullen und `PinkRobin.slnx` im Repository-Hauptverzeichnis öffnen.
 2. Falls nötig, `PinkRobin.Api` als Startprojekt festlegen.
 3. Neben dem grünen Startknopf das Profil **PinkRobin Demo** auswählen.
 4. Starten (F5). Backend startet auf Port 5080, Angular auf Port 4200.
