@@ -32,5 +32,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [16 – Native Anbindung: C# ↔ C++](16-native-anbindung-csharp-cpp.md)
 - [17 – HTTP, WebSockets und Verbindungsmanagement](17-http-websockets-und-verbindungsmanagement.md)
 - [18 – Architektur und Abhängigkeitsgrenzen](18-architektur-und-abhaengigkeitsgrenzen.md)
+- [19 – Logging und Diagnose](19-logging-und-diagnose.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
