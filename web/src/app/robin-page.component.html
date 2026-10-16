@@ -16,29 +16,33 @@
       @if (robin.session.connection() === 'local') {
         <button type="button" (click)="robin.reconnect()">Verbindung erneut versuchen</button>
       }
-      <div class="backend-status" role="status" aria-live="polite"
-        [class.connected]="robin.session.connection() === 'connected'">
-        <span class="connection-dot" aria-hidden="true"></span>
-        <div>
-          @if (robin.session.connection() === 'connected') {
-            <span>Backend und Core verbunden</span>
-          } @else {
-          @switch (backend.connection()) {
-            @case ('checking') { <span>Backend-Verbindung wird geprüft …</span> }
-            @case ('connected') {
-              <span>{{ robin.session.connection() === 'local' ? 'Core-Sitzung nicht verbunden' : 'Backend verbunden' }}</span>
-              <small>{{ backend.status()?.core?.connected ? 'Letzte Statusprüfung: Core verbunden' : 'Core noch nicht angebunden' }}</small>
+      <div role="status" aria-live="polite">
+        <div class="backend-status"
+          [class.connected]="robin.session.connection() === 'connected' || backend.connection() === 'connected'">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <div>
+            @if (robin.session.connection() === 'connected') {
+              <span>Backend verbunden</span>
+            } @else {
+              @switch (backend.connection()) {
+                @case ('checking') { <span>Backend-Verbindung wird geprüft …</span> }
+                @case ('connected') { <span>Backend verbunden</span> }
+                @case ('unreachable') { <span>Backend nicht erreichbar</span> }
+                @case ('incompatible') { <span>Backend-Antwort nicht kompatibel</span> }
+              }
             }
-            @case ('unreachable') {
-              <span>Backend nicht erreichbar</span>
-              <small>Robin lässt sich weiterhin als Demo ausprobieren.</small>
+          </div>
+        </div>
+        <div class="backend-status core-status"
+          [class.connected]="robin.session.connection() === 'connected'">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <div>
+            @switch (robin.session.connection()) {
+              @case ('checking') { <span>Core-Verbindung wird geprüft …</span> }
+              @case ('connected') { <span>Core verbunden</span> }
+              @case ('local') { <span>Core-Sitzung nicht verbunden</span> }
             }
-            @case ('incompatible') {
-              <span>Backend-Antwort nicht kompatibel</span>
-              <small>Robin lässt sich weiterhin als Demo ausprobieren.</small>
-            }
-          }
-          }
+          </div>
         </div>
       </div>
     </section>

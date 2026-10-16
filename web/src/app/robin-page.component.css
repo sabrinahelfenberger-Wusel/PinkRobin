@@ -8,3 +8,5 @@ pr-robin{display:block;min-width:0}
 .connection-dot{flex-shrink:0;width:7px;height:7px;margin-top:7px;border-radius:50%;background:#b6bac6}
 .backend-status.connected .connection-dot{background:#89cda5}
 @media(max-width:760px){.backend-status{justify-content:center}}
+
+.core-status{margin-top:8px}
