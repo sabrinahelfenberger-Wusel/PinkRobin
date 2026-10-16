@@ -6,7 +6,7 @@
 
 Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
 
-**Stand:** Konzept und Verzeichnisgerüst. VirtualRobin zeigt erste Stimmungen und Berührungsreaktionen; Core und Backend folgen
+**Stand:** Angular-Demo und ASP.NET-Core-Status-API laufen. Der erste portable C++-Core ist implementiert; seine Anbindung an Backend und Demo folgt.
 
 ## Projektstruktur
 
@@ -58,3 +58,11 @@ CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionie
 Ein ausführbares ASP.NET-Core-Grundgerüst mit Status-API, Gesundheitsprüfungen,
 Core-Schnittstelle und eigenem CI-/Docker-Test ist unter [backend/](backend/)
 vorbereitet. Die native Core-Anbindung und NAS-Auslieferung folgen separat.
+
+## Erster nativer Core
+
+Unter [core/](core/) ist der erste portable C++17-Verhaltenskern implementiert:
+Aufwachen, Herzreaktion und Kopfstreicheln mit Herzaugen. CMake, Tests und eine
+versionierte C-Schnittstelle bereiten die spätere C#-Anbindung vor. Das Backend
+und Angular verwenden ihn noch nicht; die Live-Demo läuft bis zur Anbindung weiter
+mit ihrer bisherigen Logik.

@@ -1,6 +1,6 @@
 # Technologiekonzept: serverseitiger Robin-Kern und Websimulator
 
-Status: abgestimmte Zielarchitektur mit implementierter Angular-Frontend-Demo und Frontend-CI/CD. Startseite, Gesichtsausdrücke und Berührungsreaktionen sind über NGINX, Synology-Reverse-Proxy und HTTPS unter https://pinkrobin.wanderwusel.ch erreichbar. C++-Kern und ASP.NET-Core-Backend sind noch nicht implementiert.
+Status: abgestimmte Zielarchitektur mit implementierter Angular-Frontend-Demo und Frontend-CI/CD. Startseite, Gesichtsausdrücke und Berührungsreaktionen sind über NGINX, Synology-Reverse-Proxy und HTTPS unter https://pinkrobin.wanderwusel.ch erreichbar. Eine ASP.NET-Core-Status-API und der erste portable C++-Verhaltenskern sind implementiert. Die native Backend-Anbindung und sitzungsbezogene Core-Steuerung folgen.
 
 ## 1. Ziel und Einordnung
 
@@ -181,3 +181,12 @@ Die Plattformwahl für Virtual Robin ist beschlossen: Angular im Browser, ASP.NE
 - [Microsoft: ASP.NET Core SignalR](https://learn.microsoft.com/en-us/aspnet/core/signalr/introduction)
 - [Angular: Deployment](https://angular.dev/tools/cli/deployment)
 - [Docker: Multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
+
+## Implementierungsstand Core v0.1
+
+Der erste native C++17-Core liegt unter `core/` und verarbeitet Aufwachen, Herz- und
+Kopfberührung mit extern übergebener monotoner Zeit. Eine getestete C-ABI v1 dient
+als Grundlage für die spätere P/Invoke-Anbindung. Diese Bibliotheksgrenze ist für
+den ersten Integrationsschritt vorbereitet; ein Prozessadapter bleibt später möglich.
+Noch keine Integration in Backend-Container, Sitzungsverwaltung oder Angular.
+Der bisherige Infrastrukturstatus `core.connected=false` bleibt deshalb korrekt.

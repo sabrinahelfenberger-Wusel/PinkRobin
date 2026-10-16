@@ -1,0 +1,40 @@
+#pragma once
+#include <cstdint>
+
+namespace pinkrobin {
+enum class Mode : std::uint32_t { sleeping = 0, waking = 1, awake = 2 };
+enum class Mood : std::uint32_t { curious = 0, happy = 1, affectionate = 2 };
+enum class Expression : std::uint32_t { sleeping = 0, curious = 1, happy = 2, heart_eyes = 3 };
+enum class Event : std::uint32_t { restart = 0, heart_touched = 1, head_started = 2, head_ended = 3, interaction_cancelled = 4 };
+enum class Result : std::uint32_t { ok = 0, invalid_argument = 1, time_reversed = 2 };
+
+struct Snapshot {
+    Mode mode;
+    Mood mood;
+    Expression expression;
+    bool head_contact;
+    std::uint64_t time_ms;
+    std::uint64_t revision;
+};
+
+// One instance per robot or demo session. No hardware, clock, network or threads.
+// Adapters serialize access and supply monotonic milliseconds from one clock.
+class Core final {
+public:
+    explicit Core(std::uint64_t now_ms = 0) noexcept;
+    Result advance_to(std::uint64_t now_ms) noexcept;
+    Result dispatch(Event event, std::uint64_t now_ms) noexcept;
+    Snapshot snapshot() const noexcept;
+private:
+    void curious() noexcept;
+    Mode mode_{Mode::sleeping};
+    Mood mood_{Mood::curious};
+    Expression expression_{Expression::sleeping};
+    bool head_contact_{false};
+    bool heart_pending_{false};
+    std::uint64_t now_;
+    std::uint64_t greeting_started_;
+    std::uint64_t interaction_started_;
+    std::uint64_t revision_{0};
+};
+}
