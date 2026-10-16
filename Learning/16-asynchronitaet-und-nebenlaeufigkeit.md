@@ -1,10 +1,10 @@
-# 15 – Asynchronität und Nebenläufigkeit
+# 16 – Asynchronität und Nebenläufigkeit
 
 ## Lernziel
 
 Du unterscheidest asynchrones Warten, Nebenläufigkeit und Parallelität. Du kannst in C# und TypeScript auf Ergebnisse warten, Abbruch anfordern und Fehler behandeln. In C++17 verstehst du Threads, Mutex und die Lebensdauer gemeinsam genutzter Daten.
 
-[Kapitel 11](11-speicher-und-lebensdauer.md) hat Ownership und Lebensdauer erklärt. Jetzt kommt eine neue Frage hinzu: **Was passiert, wenn eine Operation erst später fertig wird oder mehrere Abläufe dieselben Daten verwenden?**
+[Kapitel 12](12-speicher-und-lebensdauer.md) hat Ownership und Lebensdauer erklärt. Jetzt kommt eine neue Frage hinzu: **Was passiert, wenn eine Operation erst später fertig wird oder mehrere Abläufe dieselben Daten verwenden?**
 
 ## A. Spickzettel
 
@@ -281,4 +281,4 @@ In C# kann `await` bei einem bereits abgeschlossenen Task synchron weiterlaufen;
 - In C++ brauchen gemeinsame veränderliche Daten Synchronisierung und Threads einen abgesicherten Lebenszyklus.
 - Pro Pink-Robin-Sitzung Zugriffe ordnen, Snapshots als Werte weitergeben und Ressourcen erst nach Ende aller Zugriffe zerstören.
 
-[← 14 – Events, Callbacks und Nachrichten](14-events-callbacks-und-nachrichten.md) · [Inhaltsverzeichnis](README.md) · [16 – Serialisierung, JSON und API-Grenzen →](16-serialisierung-json-und-api-grenzen.md)
+[← 15 – Events, Callbacks und Nachrichten](15-events-callbacks-und-nachrichten.md) · [Inhaltsverzeichnis](README.md) · [17 – Serialisierung, JSON und API-Grenzen →](17-serialisierung-json-und-api-grenzen.md)

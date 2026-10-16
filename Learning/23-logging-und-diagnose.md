@@ -1,10 +1,10 @@
-# 22 – Logging und Diagnose
+# 23 – Logging und Diagnose
 
 ## Lernziel
 
 Du kannst einen Fehler über mehrere Schichten eingrenzen, strukturierte Logs schreiben und Logs, Metriken sowie Traces unterscheiden. Du erkennst, welche Kennungen zusammengehören und welche Informationen für eine Diagnose fehlen.
 
-Nach [Kapitel 21](21-architektur-und-abhaengigkeitsgrenzen.md) kennen wir die Verantwortlichkeiten. Jetzt machen wir ihre Zusammenarbeit beobachtbar. **Alle Instrumentierungsbeispiele sind Lernentwürfe; dieses Kapitel richtet keinen Telemetriedienst ein und ändert keinen Produktivcode.**
+Nach [Kapitel 22](22-architektur-und-abhaengigkeitsgrenzen.md) kennen wir die Verantwortlichkeiten. Jetzt machen wir ihre Zusammenarbeit beobachtbar. **Alle Instrumentierungsbeispiele sind Lernentwürfe; dieses Kapitel richtet keinen Telemetriedienst ein und ändert keinen Produktivcode.**
 
 ## A. Spickzettel
 
@@ -95,7 +95,7 @@ Eine vom Browser gelieferte Kennung ist ungeprüfte Eingabe. Länge und Format b
 
 ## E. TypeScript: gezielte Diagnose statt rohe Nachrichten
 
-Ein kleiner Lernhelfer erstellt ein bewusst eingeschränktes Diagnoseobjekt. Die Revision bleibt als Dezimalstring erhalten, passend zu Kapitel 16:
+Ein kleiner Lernhelfer erstellt ein bewusst eingeschränktes Diagnoseobjekt. Die Revision bleibt als Dezimalstring erhalten, passend zu Kapitel 17:
 
 ```typescript
 type CoreOutcome = {
@@ -287,4 +287,4 @@ Fachliche Verarbeitung darf bei einer üblichen Diagnoseausgabe-Störung nicht u
 - Logging gehört nicht als blockierende Infrastruktur in den fachlichen Core.
 - Datenmenge, Kardinalität und sensible Inhalte bewusst begrenzen.
 
-[← 21 – Architektur und Abhängigkeitsgrenzen](21-architektur-und-abhaengigkeitsgrenzen.md) · [Inhaltsverzeichnis](README.md) · [23 – Performance und Ressourcenbudgets →](23-performance-und-ressourcenbudgets.md)
+[← 22 – Architektur und Abhängigkeitsgrenzen](22-architektur-und-abhaengigkeitsgrenzen.md) · [Inhaltsverzeichnis](README.md) · [24 – Performance und Ressourcenbudgets →](24-performance-und-ressourcenbudgets.md)

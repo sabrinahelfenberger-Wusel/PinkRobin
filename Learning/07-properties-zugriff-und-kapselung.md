@@ -1,4 +1,4 @@
-# 06 – Properties, Zugriff und Kapselung
+# 07 – Properties, Zugriff und Kapselung
 
 ## Lernziel
 
@@ -128,7 +128,7 @@ int main()
 
 Standard-C++17 hat keine direkt entsprechende C#-Propertysyntax. Der Getter ist eine normale Methode. Das hintere `const` verhindert Zustandsänderungen über diesen nicht-`mutable` Zugriff auf das Objekt. `noexcept` verspricht, dass die Funktion keine Exception nach aussen entweichen lässt; es ist keine Bereichsprüfung.
 
-Der Getter liefert hier einen kleinen Wert zurück. Eine Rückgabe als veränderbare Referenz könnte den geschützten Zustand wieder direkt schreibbar machen. Eine const-Referenz vermeidet zwar bestimmte Änderungen über diesen Zugriff, braucht aber weiterhin eine gültige Lebensdauer. Speicher und Ownership vertieft Kapitel 11.
+Der Getter liefert hier einen kleinen Wert zurück. Eine Rückgabe als veränderbare Referenz könnte den geschützten Zustand wieder direkt schreibbar machen. Eine const-Referenz vermeidet zwar bestimmte Änderungen über diesen Zugriff, braucht aber weiterhin eine gültige Lebensdauer. Speicher und Ownership vertieft Kapitel 12.
 
 Nicht jedes reine Datenobjekt benötigt triviale Getter und Setter. Ein öffentliches C++-Struct kann für einen bewusst einfachen Snapshot genau richtig sein. Entscheidend ist, ob eine Invariante geschützt werden muss oder ob die Struktur ausdrücklich nur Daten transportiert. [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-struct)
 
@@ -175,4 +175,4 @@ Für Pink Robin soll der Core seinen laufenden Zustand über kontrollierte Ereig
 - Nicht jede Datenstruktur braucht Accessors, aber geschützte Invarianten brauchen kontrollierte Schreibpfade.
 - API-Zugriff im Code ersetzt keine Berechtigungsprüfung an der Netzwerkgrenze.
 
-[← 05 – Objekte, Interfaces, Klassen und Structs](05-objekte-interfaces-klassen-structs.md) · [Inhaltsverzeichnis](README.md) · [07 – Interfaces und Abstraktion →](07-interfaces-und-abstraktion.md)
+[← 06 – Objekte, Interfaces, Klassen und Structs](06-objekte-interfaces-klassen-structs.md) · [Inhaltsverzeichnis](README.md) · [08 – Interfaces und Abstraktion →](08-interfaces-und-abstraktion.md)

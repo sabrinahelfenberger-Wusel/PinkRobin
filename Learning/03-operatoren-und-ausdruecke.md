@@ -1,4 +1,4 @@
-# 02 – Operatoren und Ausdrücke
+# 03 – Operatoren und Ausdrücke
 
 ## Lernziel
 
@@ -145,4 +145,4 @@ Für Pink Robin muss eine Bereichsprüfung ausserdem vorher klären, ob der Wert
 - Zahlenbereiche, Gleitkomma und ungültige Eingaben ausdrücklich berücksichtigen.
 - Fachliche Ausdrücke lesbar halten und Grenzen gezielt prüfen.
 
-[← 01.2 – null, undefined und optionale Werte](01-2-null-und-optionale-werte.md) · [Inhaltsverzeichnis](README.md) · [03 – Bedingungen und Schleifen →](03-bedingungen-und-schleifen.md)
+[← 02 – null, undefined und optionale Werte](02-null-und-optionale-werte.md) · [Inhaltsverzeichnis](README.md) · [04 – Bedingungen und Schleifen →](04-bedingungen-und-schleifen.md)

@@ -1,10 +1,10 @@
-# 18 – Zustandsmaschinen und zeitgesteuertes Verhalten
+# 19 – Zustandsmaschinen und zeitgesteuertes Verhalten
 
 ## Lernziel
 
 Du kannst Robins Verhalten als Zustände und Übergänge beschreiben, Ereignisse von Zuständen unterscheiden und Zeitbedingungen ohne blockierendes Warten auswerten. C# ist der Anker. TypeScript zeigt eine explizite Übergangsfunktion; C++17 verwendet anschliessend den tatsächlichen Pink-Robin-Core.
 
-Wir verbinden Events aus [Kapitel 14](14-events-callbacks-und-nachrichten.md), geordnete Verarbeitung aus [Kapitel 15](15-asynchronitaet-und-nebenlaeufigkeit.md) und Grenztests aus [Kapitel 17](17-testen-und-debugging.md).
+Wir verbinden Events aus [Kapitel 15](15-events-callbacks-und-nachrichten.md), geordnete Verarbeitung aus [Kapitel 16](16-asynchronitaet-und-nebenlaeufigkeit.md) und Grenztests aus [Kapitel 18](18-testen-und-debugging.md).
 
 ## A. Spickzettel
 
@@ -106,7 +106,7 @@ console.log(next("sleeping", { type: "wake" }));          // curious
 console.log(next("curious", { type: "heart_touched" })); // happy
 ```
 
-Der `never`-Zweig hilft bei der Typprüfung: Erweitern wir die Ereignis-Union und vergessen einen Fall, passt das übrig gebliebene Ereignis nicht zu `never`. Das ist keine Laufzeitvalidierung beliebiger JSON-Daten. Externe Nachrichten werden zuerst nach Kapitel 16 geprüft und dann in ein internes Ereignis übersetzt.
+Der `never`-Zweig hilft bei der Typprüfung: Erweitern wir die Ereignis-Union und vergessen einen Fall, passt das übrig gebliebene Ereignis nicht zu `never`. Das ist keine Laufzeitvalidierung beliebiger JSON-Daten. Externe Nachrichten werden zuerst nach Kapitel 17 geprüft und dann in ein internes Ereignis übersetzt.
 
 Für diesen kleinen Fall genügt eine Funktion. Eine reine Funktion kann auch Kontext und anstehende Ausgaben zurückgeben, beispielsweise `{ state, effects }`. Die Effekte führt anschliessend ein Adapter aus. So bleibt die Entscheidungslogik von tatsächlichen Geräte- und Netzwerkzugriffen getrennt.
 
@@ -292,4 +292,4 @@ Ein stattdessen eingefügter Neustart bei `7000` verwirft die laufende Herzreakt
 - Fachliche Entscheidung und animierte Darstellung bleiben getrennt.
 - Robins Verhalten mit expliziten Zeitwerten und gezielten Ereignisfolgen reproduzierbar testen.
 
-[← 17 – Testen und Debugging](17-testen-und-debugging.md) · [Inhaltsverzeichnis](README.md) · [19 – Native Anbindung: C# ↔ C++ →](19-native-anbindung-csharp-cpp.md)
+[← 18 – Testen und Debugging](18-testen-und-debugging.md) · [Inhaltsverzeichnis](README.md) · [20 – Native Anbindung: C# ↔ C++ →](20-native-anbindung-csharp-cpp.md)

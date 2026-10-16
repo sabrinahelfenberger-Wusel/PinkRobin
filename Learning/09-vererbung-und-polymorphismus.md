@@ -1,10 +1,10 @@
-# 08 – Vererbung und Polymorphismus
+# 09 – Vererbung und Polymorphismus
 
 ## Lernziel
 
 Du kannst eine Basisklasse und eine abgeleitete Klasse in C#, TypeScript und C++ lesen und schreiben. Du erkennst, wann ein Methodenaufruf zur Laufzeit die passende Implementierung auswählt, warum C++-Kopien dabei überraschen können und wann Komposition besser passt.
 
-[Kapitel 7](07-interfaces-und-abstraktion.md) hat Verträge und abstrakte Basisklassen eingeführt. Werte, Referenzen und Ownership werden in [Kapitel 11](11-speicher-und-lebensdauer.md) vertieft. Die späteren Abschnitte hier greifen auf diese Themen vor; die Grundidee der virtuellen Methoden lässt sich zunächst unabhängig davon lesen. Die C++-Beispiele verwenden **C++17**.
+[Kapitel 8](08-interfaces-und-abstraktion.md) hat Verträge und abstrakte Basisklassen eingeführt. Werte, Referenzen und Ownership werden in [Kapitel 12](12-speicher-und-lebensdauer.md) vertieft. Die späteren Abschnitte hier greifen auf diese Themen vor; die Grundidee der virtuellen Methoden lässt sich zunächst unabhängig davon lesen. Die C++-Beispiele verwenden **C++17**.
 
 ## A. Spickzettel
 
@@ -198,7 +198,7 @@ int main()
 
 Der öffentliche virtuelle Destruktor ist hier nötig, weil `unique_ptr<TouchSensor>` mit seinem Standard-Deleter ein abgeleitetes Objekt über einen Basispointer löscht. Ohne virtuellen Basisdestruktor wäre das undefiniertes Verhalten. Ein Smart Pointer repariert diese Basisklasse nicht automatisch. [Core Guidelines, C.35](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-dtor-virtual)
 
-Eine rein virtuelle Methode lautet beispielsweise `virtual bool isTouched() const = 0;`. Damit ist die Klasse abstrakt, wie der Vertrag in Kapitel 7. C++ erlaubt mehrere Klassenbasen; mehrdeutige Basen und virtuelle Vererbung brauchen aber zusätzliche Regeln. Für unsere Beispiele genügt eine flache Hierarchie.
+Eine rein virtuelle Methode lautet beispielsweise `virtual bool isTouched() const = 0;`. Damit ist die Klasse abstrakt, wie der Vertrag in Kapitel 8. C++ erlaubt mehrere Klassenbasen; mehrdeutige Basen und virtuelle Vererbung brauchen aber zusätzliche Regeln. Für unsere Beispiele genügt eine flache Hierarchie.
 
 ## F. Konstruktoren und Destruktoren
 
@@ -338,4 +338,4 @@ Komposition erleichtert das Kombinieren unabhängiger Fähigkeiten. Vererbung is
 - Konstruktoren sind kein guter Ort für überschreibbare Erweiterungsaufrufe.
 - Pink Robins Adapter **hat einen Core**. Dafür verwenden wir Komposition.
 
-[← 07 – Interfaces und Abstraktion](07-interfaces-und-abstraktion.md) · [Inhaltsverzeichnis](README.md) · [09 – Generics und Templates →](09-generics-und-templates.md)
+[← 08 – Interfaces und Abstraktion](08-interfaces-und-abstraktion.md) · [Inhaltsverzeichnis](README.md) · [10 – Generics und Templates →](10-generics-und-templates.md)

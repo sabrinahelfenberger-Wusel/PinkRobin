@@ -1,10 +1,10 @@
-# 11 – Speicher und Lebensdauer
+# 12 – Speicher und Lebensdauer
 
 ## Lernziel
 
 Du kannst erklären, ob eine Zuweisung einen Wert kopiert oder dasselbe Objekt zugänglich macht, wer eine Ressource besitzt und wie lange eine Referenz gültig bleibt. C# ist unser Anker; TypeScript läuft mit dem Speichermodell von JavaScript, und die C++-Beispiele verwenden **C++17**, passend zum Pink-Robin-Core.
 
-Mit Blick auf die Fehlerbehandlung im folgenden [Kapitel 12](12-fehlerbehandlung.md) interessiert uns besonders: Wer räumt auf, wenn eine Funktion endet oder eine Exception auftritt?
+Mit Blick auf die Fehlerbehandlung im folgenden [Kapitel 13](13-fehlerbehandlung.md) interessiert uns besonders: Wer räumt auf, wenn eine Funktion endet oder eine Exception auftritt?
 
 ## A. Spickzettel
 
@@ -376,4 +376,4 @@ Die Ausgabe ist `80 25`. `snapshot` ist ein eigener Wert. `live` bezeichnet weit
 - `std::move` ermöglicht eine Übergabe; eine geliehene Referenz hält kein Objekt am Leben.
 - Pink Robin braucht klare Besitzer pro Sitzung und unabhängige Snapshots für spätere Verarbeitung.
 
-[← 10 – Collections und LINQ-Alternativen](10-collections-und-linq-alternativen.md) · [Inhaltsverzeichnis](README.md) · [12 – Fehlerbehandlung: Exceptions und Result-Typen →](12-fehlerbehandlung.md)
+[← 11 – Collections und LINQ-Alternativen](11-collections-und-linq-alternativen.md) · [Inhaltsverzeichnis](README.md) · [13 – Fehlerbehandlung: Exceptions und Result-Typen →](13-fehlerbehandlung.md)

@@ -1,4 +1,4 @@
-# 10 – Collections und LINQ-Alternativen
+# 11 – Collections und LINQ-Alternativen
 
 Pink Robin muss oft mehrere Werte speichern: Interessen, bekannte Personen, Ereignisse oder verfügbare Aktionen. Dafür verwenden die drei Sprachen Collections.
 
@@ -94,7 +94,7 @@ for (const std::string& interest : interests)
 }
 ```
 
-Hier taucht unser Muster aus Kapitel 4 wieder auf:
+Hier taucht unser Muster aus Kapitel 5 wieder auf:
 
 ```cpp
 const std::string&
@@ -367,4 +367,4 @@ Füge anschließend `Robotik` mit Score `0.7` hinzu.
 - C++-`vector[index]` bietet nicht dieselbe Bereichssicherheit, die ein C#-Entwickler möglicherweise erwartet.
 - Für Robins Interessen brauchen wir langfristig eher strukturierte Objekte als bloße Strings.
 
-[← 09 – Generics und Templates](09-generics-und-templates.md) · [Inhaltsverzeichnis](README.md) · [11 – Speicher und Lebensdauer →](11-speicher-und-lebensdauer.md)
+[← 10 – Generics und Templates](10-generics-und-templates.md) · [Inhaltsverzeichnis](README.md) · [12 – Speicher und Lebensdauer →](12-speicher-und-lebensdauer.md)

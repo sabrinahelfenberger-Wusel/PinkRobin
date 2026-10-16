@@ -1,4 +1,4 @@
-# 01.2 – null, undefined und optionale Werte
+# 02 – null, undefined und optionale Werte
 
 Ein Wert ist nicht immer vorhanden. Pink Robin kennt zum Beispiel den Namen einer Person vielleicht noch nicht. C#, TypeScript und C++ modellieren diesen Zustand unterschiedlich.
 
@@ -193,4 +193,4 @@ Schreibe eine kleine Darstellung zuerst in **TypeScript** und danach in **C++**.
 
 **Optional ist eine Information über den Zustand eines Wertes – nicht einfach nur eine andere Schreibweise für einen normalen Wert.**
 
-[← 01 – Variablen und Typen](01-variablen-und-typen.md) · [Inhaltsverzeichnis](README.md) · [02 – Operatoren und Ausdrücke →](02-operatoren-und-ausdruecke.md)
+[← 01 – Variablen und Typen](01-variablen-und-typen.md) · [Inhaltsverzeichnis](README.md) · [03 – Operatoren und Ausdrücke →](03-operatoren-und-ausdruecke.md)

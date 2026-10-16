@@ -1,4 +1,4 @@
-# 07 – Interfaces und Abstraktion
+# 08 – Interfaces und Abstraktion
 
 ## Lernziel
 
@@ -141,4 +141,4 @@ Das Interface beschreibt Fähigkeiten innerhalb einer Schicht; das **Event-Proto
 - C++ verwendet für Laufzeit-Polymorphismus häufig abstrakte Basisklassen mit virtuellen Methoden.
 - Pink Robins **Event-Grenze** kann Simulator und Hardware entkoppeln, ohne dass der Core jeden Sensortyp kennen muss.
 
-[← 06 – Properties, Zugriff und Kapselung](06-properties-zugriff-und-kapselung.md) · [Inhaltsverzeichnis](README.md) · [08 – Vererbung und Polymorphismus →](08-vererbung-und-polymorphismus.md)
+[← 07 – Properties, Zugriff und Kapselung](07-properties-zugriff-und-kapselung.md) · [Inhaltsverzeichnis](README.md) · [09 – Vererbung und Polymorphismus →](09-vererbung-und-polymorphismus.md)

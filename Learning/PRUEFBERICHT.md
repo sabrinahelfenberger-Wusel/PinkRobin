@@ -59,7 +59,7 @@ In einer Umgebung mit dem .NET-10-SDK die vollständigen C#-Programme jeweils ge
 
 [Zum Inhaltsverzeichnis](README.md)
 
-## Ergänzung: neue Lernreihenfolge und geschlossene Grundlagenlücken
+## Historischer Zwischenstand: Lernreihenfolge mit 01.2 und geschlossene Grundlagenlücken
 
 Die neue Ausgabe umfasst **24 Hauptkapitel plus 01.2**, insgesamt 25 Kapiteldateien. Neu sind Operatoren (02), Bedingungen und Schleifen (03) sowie Properties und Kapselung (06). Collections (10) enthält nun einen vollständigen Vergleich von LINQ to Objects, JavaScript-Arraymethoden und C++17-Algorithmen, einschliesslich Ausführungszeitpunkt, Mutation und Materialisierung.
 
@@ -72,3 +72,9 @@ Der historische Bericht oben behält seine ursprünglichen Nummern und Prüfzahl
 - Alle Markdown-Dateien ausserhalb von `Learning` im zugrunde gelegten Repositorystand auf umzuschreibende Learning-Verweise geprüft; keine solchen Verweise gefunden.
 
 Die C#-Beispiele bleiben mangels .NET-Laufzeit hier nicht ausgeführt. Auch diese neue Prüfung richtet keine Produktivintegration ein. Neue Nummern und Dateipfade stehen im [Inhaltsverzeichnis](README.md) und in der [Zuordnungstabelle](NUMMERIERUNG.md).
+
+## Fortlaufende Nummerierung 01 bis 25
+
+Der aktuelle Lernpfad ist vollständig von **01 bis 25** nummeriert. Das bisherige Kapitel 01.2 ist jetzt Kapitel 02; alle danach folgenden Kapitel sind um eins verschoben. Die oben dokumentierten Prüfstände bleiben historische Angaben mit ihren damaligen Nummern. Inhalte und Codebeispiele wurden bei dieser reinen Nummerierungsänderung nicht verändert.
+
+Dateinamen, Kapitelüberschriften, Inhaltsverzeichnis, Abdeckungstabelle, Navigation und aktuelle Querverweise wurden auf Konsistenz geprüft. Die [Zuordnungstabelle](NUMMERIERUNG.md) zeigt sowohl die unmittelbar vorherige als auch die ursprüngliche Nummerierung. Die offenen C#- und Integrationsprüfungen bleiben unverändert offen.

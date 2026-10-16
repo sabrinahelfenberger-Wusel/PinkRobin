@@ -1,4 +1,4 @@
-# 03 – Bedingungen und Schleifen
+# 04 – Bedingungen und Schleifen
 
 ## Lernziel
 
@@ -17,7 +17,7 @@ Du kannst Entscheidungen und Wiederholungen ausdrücken, Schleifen kontrolliert 
 | Schleife verlassen | `break` | `break` | `break` |
 | Nächster Durchlauf | `continue` | `continue` | `continue` |
 
-Die verwendeten kleinen Arrays sind zunächst nur Reihen von Beispielwerten. Collections vertieft Kapitel 10. `Main` beziehungsweise `main` dient in den vollständigen Programmen als Einstieg; Funktionen behandeln wir im nächsten Kapitel.
+Die verwendeten kleinen Arrays sind zunächst nur Reihen von Beispielwerten. Collections vertieft Kapitel 11. `Main` beziehungsweise `main` dient in den vollständigen Programmen als Einstieg; Funktionen behandeln wir im nächsten Kapitel.
 
 ## B. C# als Anker: entscheiden und durchlaufen
 
@@ -109,7 +109,7 @@ Dieser Ausschnitt startet keine Netzwerkoperation und ist keine fertige Retry-St
 
 `while` prüft vor jedem Durchlauf. `do/while` prüft danach und führt seinen Rumpf daher mindestens einmal aus. Jede Schleife braucht einen verständlichen Fortschritts- oder Abbruchvertrag. Ein `continue` vor einer manuell am Ende stehenden Zählererhöhung kann bei `while` versehentlich eine Endlosschleife erzeugen.
 
-Eine Schleife wie `while (!finished) { }` blockiert beziehungsweise beschäftigt CPU. Im Browser kann sie die Oberfläche einfrieren; in C++-Nebenläufigkeit ist eine ungeschützt geteilte Variable zusätzlich problematisch. Wartemechanismen, Abbruch und asynchrone Abläufe behandeln wir später in Kapitel 15.
+Eine Schleife wie `while (!finished) { }` blockiert beziehungsweise beschäftigt CPU. Im Browser kann sie die Oberfläche einfrieren; in C++-Nebenläufigkeit ist eine ungeschützt geteilte Variable zusätzlich problematisch. Wartemechanismen, Abbruch und asynchrone Abläufe behandeln wir später in Kapitel 16.
 
 ## F. switch: bekannte Varianten vollständig behandeln
 
@@ -171,4 +171,4 @@ Zeitabläufe ebenfalls nicht durch Schleifenzählen modellieren. „1000 Durchl�
 - `for...of` liefert in JavaScript Arraywerte; `for...in` ist etwas anderes.
 - Ein Messwertdurchlauf ist weder automatisch ein Ereignis noch eine Zeitbasis.
 
-[← 02 – Operatoren und Ausdrücke](02-operatoren-und-ausdruecke.md) · [Inhaltsverzeichnis](README.md) · [04 – Funktionen, Methoden und Parameter →](04-funktionen-methoden-parameter.md)
+[← 03 – Operatoren und Ausdrücke](03-operatoren-und-ausdruecke.md) · [Inhaltsverzeichnis](README.md) · [05 – Funktionen, Methoden und Parameter →](05-funktionen-methoden-parameter.md)

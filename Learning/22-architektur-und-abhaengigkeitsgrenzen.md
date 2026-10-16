@@ -1,4 +1,4 @@
-# 21 – Architektur und Abhängigkeitsgrenzen
+# 22 – Architektur und Abhängigkeitsgrenzen
 
 ## Lernziel
 
@@ -184,7 +184,7 @@ int main()
 
 Der Adapter enthält keine JSON- oder Socket-Typen. Für eine reale Verwendung muss seine aufrufende Umgebung vertrauenswürdige Zeit, Lebensdauer und serialisierte Zugriffe sicherstellen. Dieses Beispiel ist synchron, besitzt keine Queue und ist nicht für ungeschützte parallele Aufrufe gedacht.
 
-Eine C#-Implementierung verwendet statt direkter C++-Komposition die C-ABI und `SafeHandle` aus Kapitel 19. Der fachliche Kern kann derselbe bleiben; nur die technische Grenzüberquerung unterscheidet sich.
+Eine C#-Implementierung verwendet statt direkter C++-Komposition die C-ABI und `SafeHandle` aus Kapitel 20. Der fachliche Kern kann derselbe bleiben; nur die technische Grenzüberquerung unterscheidet sich.
 
 ## G. Verträge übersetzen statt interne Typen überall verteilen
 
@@ -283,4 +283,4 @@ Ein HTTP-Request-Scope endet normalerweise mit dem Request. Die fachliche Sitzun
 - Keine zweite Verhaltensimplementierung unbemerkt neben dem angeschlossenen Core betreiben.
 - Architektur an nachvollziehbaren Verantwortlichkeiten und überprüfbaren Grenzen messen.
 
-[← 20 – HTTP, WebSockets und Verbindungsmanagement](20-http-websockets-und-verbindungsmanagement.md) · [Inhaltsverzeichnis](README.md) · [22 – Logging und Diagnose →](22-logging-und-diagnose.md)
+[← 21 – HTTP, WebSockets und Verbindungsmanagement](21-http-websockets-und-verbindungsmanagement.md) · [Inhaltsverzeichnis](README.md) · [23 – Logging und Diagnose →](23-logging-und-diagnose.md)

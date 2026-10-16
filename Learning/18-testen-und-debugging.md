@@ -1,10 +1,10 @@
-# 17 – Testen und Debugging
+# 18 – Testen und Debugging
 
 ## Lernziel
 
 Du kannst aus einer Verhaltensregel einen automatisierten Test ableiten, Grenzfälle prüfen und einen Fehler mit Debugger und Diagnosewerkzeugen eingrenzen. C# ist der Anker; TypeScript/JavaScript und C++17 zeigen die Unterschiede. Für Pink Robin testen wir Zeit als Eingabewert statt mit echten Wartezeiten.
 
-Nach [Kapitel 16](16-serialisierung-json-und-api-grenzen.md) prüfen wir nicht nur erfolgreiche Nachrichten, sondern auch falsche Typen, fehlende Angaben und abgelehnte Operationen. **Tests liefern Evidenz für die geprüften Fälle; eine grüne Testsuite beweist nicht die allgemeine Fehlerfreiheit.**
+Nach [Kapitel 17](17-serialisierung-json-und-api-grenzen.md) prüfen wir nicht nur erfolgreiche Nachrichten, sondern auch falsche Typen, fehlende Angaben und abgelehnte Operationen. **Tests liefern Evidenz für die geprüften Fälle; eine grüne Testsuite beweist nicht die allgemeine Fehlerfreiheit.**
 
 ## A. Spickzettel
 
@@ -88,7 +88,7 @@ Nicht jede interne Methode mocken. Sonst scheitern Tests bei sinnvollen Umstrukt
 
 Die folgende Datei verwendet nur JavaScript-Syntax, die auch in TypeScript nutzbar ist. Als `touch.test.mjs` läuft sie mit einem aktuellen Node.js über `node --test touch.test.mjs`, ohne zusätzliche Pakete. In einem streng typgeprüften TypeScript-Projekt ergänzen wir passende Typen und verwenden dessen eingerichteten Build- und Testweg.
 
-Die kleine Prüfung ist ein **Lernbeispiel für einen bereits geparsten Wert**, kein Ersatz für die vollständige JSON-Grenze aus Kapitel 16:
+Die kleine Prüfung ist ein **Lernbeispiel für einen bereits geparsten Wert**, kein Ersatz für die vollständige JSON-Grenze aus Kapitel 17:
 
 ```javascript
 import test from 'node:test';
@@ -274,4 +274,4 @@ Erweitere das C++-Lernbeispiel gedanklich oder als eigenes Testprogramm:
 - Unit-Tests, Integration, Debugger und Sanitizer beantworten unterschiedliche Fragen.
 - Ein gefundener Fehler bekommt einen reproduzierbaren Regressionstest, damit er nicht unbemerkt zurückkommt.
 
-[← 16 – Serialisierung, JSON und API-Grenzen](16-serialisierung-json-und-api-grenzen.md) · [Inhaltsverzeichnis](README.md) · [18 – Zustandsmaschinen und zeitgesteuertes Verhalten →](18-zustandsmaschinen-und-zeitgesteuertes-verhalten.md)
+[← 17 – Serialisierung, JSON und API-Grenzen](17-serialisierung-json-und-api-grenzen.md) · [Inhaltsverzeichnis](README.md) · [19 – Zustandsmaschinen und zeitgesteuertes Verhalten →](19-zustandsmaschinen-und-zeitgesteuertes-verhalten.md)

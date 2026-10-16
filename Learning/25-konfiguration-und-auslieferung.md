@@ -1,10 +1,10 @@
-# 24 – Konfiguration und Auslieferung
+# 25 – Konfiguration und Auslieferung
 
 ## Lernziel
 
 Du kannst Quellcode, Konfiguration, Buildartefakt und laufende Installation unterscheiden. Du verstehst, welche Einstellungen erst beim Start wirken, warum native Bibliotheken zur Zielplattform passen müssen und wie eine neue Version überprüfbar ausgeliefert und zurückgenommen wird.
 
-Wir verbinden Builds aus [Kapitel 13](13-module-projektstruktur-und-build-systeme.md), native Anbindung aus [Kapitel 19](19-native-anbindung-csharp-cpp.md) und Diagnose aus [Kapitel 22](22-logging-und-diagnose.md).
+Wir verbinden Builds aus [Kapitel 14](14-module-projektstruktur-und-build-systeme.md), native Anbindung aus [Kapitel 20](20-native-anbindung-csharp-cpp.md) und Diagnose aus [Kapitel 23](23-logging-und-diagnose.md).
 
 **Dieses Kapitel dokumentiert und erklärt. Es veröffentlicht kein Image, ändert keine NAS-Konfiguration und führt kein Deployment aus. Die Betriebsanleitung bleibt [Backend auf Synology](../deploy/synology/backend.md).**
 
@@ -114,7 +114,7 @@ Ein besonders wichtiger Bezug zum aktuellen [Backend-Dockerfile](../backend/Dock
 
 Ein Runtime Identifier wie `linux-x64` oder eine musl-spezifische Variante beschreibt eine Zielplattform für .NET-Publish und Paketauflösung. Er kompiliert eine beliebige eigene C++-Bibliothek nicht von selbst für diese Plattform. Auch `--self-contained true` nimmt nicht automatisch alle Betriebssystem- und nativen Voraussetzungen weg. [Microsoft: .NET veröffentlichen](https://learn.microsoft.com/en-us/dotnet/core/deploying/)
 
-Keine fremden nativen Bibliotheken einfach umbenennen, um eine Lademeldung zu umgehen. Der reale P/Invoke-Test aus Kapitel 19 muss im Zielartefakt laufen, nicht nur gegen eine zufällig lokal vorhandene Datei.
+Keine fremden nativen Bibliotheken einfach umbenennen, um eine Lademeldung zu umgehen. Der reale P/Invoke-Test aus Kapitel 20 muss im Zielartefakt laufen, nicht nur gegen eine zufällig lokal vorhandene Datei.
 
 ## F. Container: gleiches Image, passende Umgebung
 
@@ -218,4 +218,4 @@ Konfiguration in Diagnosen nur in einer dafür freigegebenen Form anzeigen. Hilf
 - Bereitschaft über den tatsächlichen Nutzerpfad prüfen, nicht nur über Prozessstart.
 - Geordneter Shutdown und ein kompatibler Rollback gehören zur Auslieferung.
 
-[← 23 – Performance und Ressourcenbudgets](23-performance-und-ressourcenbudgets.md) · [Inhaltsverzeichnis](README.md)
+[← 24 – Performance und Ressourcenbudgets](24-performance-und-ressourcenbudgets.md) · [Inhaltsverzeichnis](README.md)

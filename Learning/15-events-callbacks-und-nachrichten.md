@@ -1,10 +1,10 @@
-# 14 – Events, Callbacks und Nachrichten
+# 15 – Events, Callbacks und Nachrichten
 
 ## Lernziel
 
 Du kannst eine Funktion als Callback weitergeben, Ereignisse abonnieren und wieder abmelden. Du unterscheidest lokale Benachrichtigungen von Nachrichten zwischen Browser, Backend und Core. Besonders wichtig: Wer hält wen am Leben, wann wird aufgerufen und wer behandelt Fehler?
 
-Wir betrachten zunächst lokale Kommunikation. [Kapitel 15](15-asynchronitaet-und-nebenlaeufigkeit.md) vertieft anschliessend die nebenläufigen Abläufe. C# bleibt der Ausgangspunkt; die C++-Beispiele verwenden **C++17**.
+Wir betrachten zunächst lokale Kommunikation. [Kapitel 16](16-asynchronitaet-und-nebenlaeufigkeit.md) vertieft anschliessend die nebenläufigen Abläufe. C# bleibt der Ausgangspunkt; die C++-Beispiele verwenden **C++17**.
 
 ## A. Spickzettel
 
@@ -297,7 +297,7 @@ int main()
 
 Hier lebt der Zähler länger als der Adapter und sämtliche synchronen Aufrufe. Der Callback bekommt einen unabhängigen Snapshot. Sein Fehler würde nach bereits erfolgter Core-Änderung zur Aufruferin weiterlaufen; das Beispiel führt keinen Rollback durch. Wer den Handler ersetzt, speichert, asynchron ausführt oder mehrere Empfänger ergänzt, muss diesen Vertrag erweitern.
 
-Für produktive Adapter aus Kapitel 15 gilt: Core-Zugriffe pro Sitzung serialisieren, den Snapshot kopieren und fremde Callbacks beziehungsweise Netzwerkversand **ausserhalb einer Core-Sperre** ausführen. Ein Callback kann langsam sein oder erneut Adaptercode aufrufen; das ist Reentrancy. Ein Mutex allein löst solche Rückrufe nicht. Eine geordnete Ausgabe-Queue kann die Verarbeitung entkoppeln.
+Für produktive Adapter aus Kapitel 16 gilt: Core-Zugriffe pro Sitzung serialisieren, den Snapshot kopieren und fremde Callbacks beziehungsweise Netzwerkversand **ausserhalb einer Core-Sperre** ausführen. Ein Callback kann langsam sein oder erneut Adaptercode aufrufen; das ist Reentrancy. Ein Mutex allein löst solche Rückrufe nicht. Eine geordnete Ausgabe-Queue kann die Verarbeitung entkoppeln.
 
 Bei einem Abonnementsystem zusätzlich festlegen, was An- oder Abmelden während einer Benachrichtigung bedeutet. Das Entfernen eines Handlers kann einen bereits laufenden Callback nicht einfach zurückholen. Beim Schliessen der Sitzung deshalb neue Registrierungen und Arbeit stoppen, aktive Arbeit abschliessen und erst dann die Ressourcen freigeben.
 
@@ -330,4 +330,4 @@ Bei einem Abonnementsystem zusätzlich festlegen, was An- oder Abmelden während
 - Ein Core-Ereignis, ein lokaler Funktionsaufruf und eine Netzwerk-Nachricht sind verschiedene Ebenen.
 - Für Pink Robin: Eingaben prüfen, Core geordnet aufrufen, Snapshots kopieren und Ausgabe separat behandeln.
 
-[← 13 – Module, Projektstruktur und Build-Systeme](13-module-projektstruktur-und-build-systeme.md) · [Inhaltsverzeichnis](README.md) · [15 – Asynchronität und Nebenläufigkeit →](15-asynchronitaet-und-nebenlaeufigkeit.md)
+[← 14 – Module, Projektstruktur und Build-Systeme](14-module-projektstruktur-und-build-systeme.md) · [Inhaltsverzeichnis](README.md) · [16 – Asynchronität und Nebenläufigkeit →](16-asynchronitaet-und-nebenlaeufigkeit.md)

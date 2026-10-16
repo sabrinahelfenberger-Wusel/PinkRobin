@@ -1,10 +1,10 @@
-# 16 – Serialisierung, JSON und API-Grenzen
+# 17 – Serialisierung, JSON und API-Grenzen
 
 ## Lernziel
 
 Du kannst Daten in JSON umwandeln und wieder einlesen, ohne Deserialisierung mit fachlicher Validierung zu verwechseln. Du kennst die Unterschiede zwischen C#-DTOs, TypeScript-Typen und der C-Schnittstelle des C++-Core.
 
-[Kapitel 14](14-events-callbacks-und-nachrichten.md) hat lokale Events von Nachrichten getrennt. Jetzt verfolgen wir eine Nachricht über eine Sprachgrenze. **Die Nachrichtenformate dieses Kapitels sind Lernentwürfe, keine neu festgelegten oder implementierten Pink-Robin-Endpunkte.**
+[Kapitel 15](15-events-callbacks-und-nachrichten.md) hat lokale Events von Nachrichten getrennt. Jetzt verfolgen wir eine Nachricht über eine Sprachgrenze. **Die Nachrichtenformate dieses Kapitels sind Lernentwürfe, keine neu festgelegten oder implementierten Pink-Robin-Endpunkte.**
 
 ## A. Spickzettel
 
@@ -270,4 +270,4 @@ Nur die erste Eingabe ist gültig. Die übrigen verletzen Inhalt, Vollständigke
 - C++-Core, C-ABI und externes JSON sind verschiedene Darstellungen desselben fachlichen Vorgangs.
 - Eingaben prüfen, Ereignisse bewusst abbilden und interne Zustände gezielt als Antwort veröffentlichen.
 
-[← 15 – Asynchronität und Nebenläufigkeit](15-asynchronitaet-und-nebenlaeufigkeit.md) · [Inhaltsverzeichnis](README.md) · [17 – Testen und Debugging →](17-testen-und-debugging.md)
+[← 16 – Asynchronität und Nebenläufigkeit](16-asynchronitaet-und-nebenlaeufigkeit.md) · [Inhaltsverzeichnis](README.md) · [18 – Testen und Debugging →](18-testen-und-debugging.md)
