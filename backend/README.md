@@ -154,3 +154,12 @@ Das Dockerfile baut den Core unter Alpine und liefert ihn gemeinsam mit der API
 und `libstdc++` aus. Das Backend benötigt dafür keinen zusätzlichen Port und keinen
 separaten Core-Container. Die Bibliothek läuft im Backend-Prozess. Sitzungen,
 HTTP-Befehle und SignalR bleiben bis zum nächsten Integrationsschritt deaktiviert.
+
+### CMake wird beim Backend-Build nicht gefunden (Fehler 9009)
+
+Der Build sucht zuerst das mit Visual Studio installierte CMake, auch wenn es
+nicht im PATH liegt. Falls nötig nutzt er `vswhere` zur Suche nach der Installation.
+Erst danach verwendet er `cmake` aus dem PATH. Im Visual Studio Installer unter
+**Ändern → Einzelne Komponenten** die **C++-CMake-Tools für Windows** installieren,
+falls sie fehlen. Visual Studio danach neu starten. Ein eigener Pfad lässt sich
+mit der MSBuild-Eigenschaft `RobinCMake` angeben.
