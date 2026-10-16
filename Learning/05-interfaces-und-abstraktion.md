@@ -128,7 +128,7 @@ Das Interface beschreibt Fähigkeiten innerhalb einer Schicht; das **Event-Proto
 
 ## F. Miniübung
 
-1. Definiere in TypeScript ein `interface EventSource` mit `getNextEvent(): string | null`.
+1. Definiere in TypeScript ein `interface RobinEventSource` mit `getNextEvent(): string | null`. Der Name vermeidet eine Verwechslung mit der eingebauten Browser-API `EventSource` für Server-Sent Events.
 2. Implementiere eine Klasse `SimulatedEventSource`, die `"touch"` zurückgibt.
 3. Übertrage den Vertrag nach C++ als abstrakte Klasse. Verwende dort `std::optional<std::string>` für den optionalen Rückgabewert.
 4. Überlege: Warum ist es sinnvoll, dass der Core nur das Event kennt und nicht den konkreten Sensor?
