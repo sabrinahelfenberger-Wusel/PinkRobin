@@ -16,13 +16,22 @@ Wiederverwendbare, typsichere Funktionen und Datenstrukturen verstehen. C# dient
 ## B. C# – unser Ausgangspunkt
 
 ```csharp
-public static T Echo<T>(T value)
-{
-    return value;
-}
+using System;
 
-string name = Echo("Robin");
-int age = Echo(1);
+public static class Program
+{
+    public static T Echo<T>(T value)
+    {
+        return value;
+    }
+
+    public static void Main()
+    {
+        string name = Echo("Robin");
+        int age = Echo(1);
+        Console.WriteLine($"{name}: {age}");
+    }
+}
 ```
 
 C#-Generics sind Teil des .NET-Typsystems; generische Typinformationen stehen auch zur Laufzeit zur Verfügung.
@@ -40,7 +49,7 @@ function echo<T>(value: T): T {
     return value;
 }
 
-const name = echo("Robin");
+const robinName = echo("Robin");
 const age = echo(1);
 ```
 
@@ -100,6 +109,8 @@ std::optional<T> lastOrEmpty(const std::vector<T>& items)
 Generische Typen sollen manchmal bestimmte Fähigkeiten mitbringen.
 
 ### C#
+
+Dieser Ausschnitt gehört in eine Klasse und setzt ein Interface `IAwakeable` mit der Methode `void Wake()` voraus:
 
 ```csharp
 public static void Wake<T>(T robin) where T : IAwakeable
