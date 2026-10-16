@@ -31,5 +31,6 @@ Die Beispiele orientieren sich möglichst an Pink Robin, damit Lernen und Projek
 - [15 – Zustandsmaschinen und zeitgesteuertes Verhalten](15-zustandsmaschinen-und-zeitgesteuertes-verhalten.md)
 - [16 – Native Anbindung: C# ↔ C++](16-native-anbindung-csharp-cpp.md)
 - [17 – HTTP, WebSockets und Verbindungsmanagement](17-http-websockets-und-verbindungsmanagement.md)
+- [18 – Architektur und Abhängigkeitsgrenzen](18-architektur-und-abhaengigkeitsgrenzen.md)
 
 Weitere Kapitel entstehen schrittweise während der Entwicklung von Pink Robin.
