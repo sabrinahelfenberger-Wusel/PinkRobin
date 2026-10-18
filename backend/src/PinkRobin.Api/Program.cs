@@ -3,6 +3,8 @@ using PinkRobin.Api.Core;
 using PinkRobin.Api.Sessions;
 using System.Threading.RateLimiting;
 
+using PinkRobin.Api.Weather;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -16,6 +18,12 @@ builder.Services.AddRateLimiter(options =>
         { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 builder.Services.AddSingleton<IRobinCoreGateway, NativeRobinCoreGateway>();
+
+builder.Services.AddOptions<WeatherOptions>().BindConfiguration("Weather")
+    .Validate(o => o.PostalCode.Length == 4 && o.PostalCode.All(char.IsAsciiDigit), "Weather:PostalCode must be a four-digit Swiss postal code.")
+    .ValidateOnStart();
+builder.Services.AddHttpClient("MeteoSwiss", client => client.Timeout = TimeSpan.FromSeconds(90));
+builder.Services.AddSingleton<WeatherService>();
 
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 if (origins.Any(origin => origin.Contains('*') ||
@@ -74,4 +82,15 @@ app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command
     WithSession(context, token => Results.Ok(sessions.Send(token, command))));
 app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
     WithSession(context, token => { sessions.Remove(token); return Results.NoContent(); }));
+
+app.MapGet("/api/weather", async Task<IResult> (WeatherService weather, CancellationToken ct) =>
+{
+    try { return Results.Ok(await weather.GetAsync(ct)); }
+    catch (WeatherUnavailableException)
+    {
+        return Results.Problem(statusCode: 503, title: "Weather unavailable",
+            detail: "No current MeteoSwiss forecast is available. Robin should skip weather reactions.");
+    }
+});
+
 app.Run();
