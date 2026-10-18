@@ -282,3 +282,11 @@ pr-robin {
 .core-status {
   margin-top: 8px;
 }
+
+.weather-panel { margin-top: 1.5rem; font-size: .85rem; max-width: 32rem; }
+.weather-panel label { display: block; margin-bottom: .5rem; font-weight: 600; }
+.weather-location { display: flex; gap: .5rem; flex-wrap: wrap; }
+.weather-location input { min-width: 0; width: 10rem; padding: .7rem; border: 1px solid #b3a6b0; border-radius: .5rem; font: inherit; }
+.weather-location button { margin: 0; padding: .7rem 1rem; font-size: inherit; }
+.weather-panel p { margin: .6rem 0; }
+.weather-panel small { opacity: .8; }

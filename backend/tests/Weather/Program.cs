@@ -17,6 +17,11 @@ var requests = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => service.Get
 Check(handler.Count == 6, "Concurrent cache misses must trigger only one refresh");
 Check(requests.All(x => x.PointId == "42" && x.TemperatureC == 8.5 && x.PrecipitationMm == 1.2), "Point type, decimal parsing and parameter mapping");
 Check(requests[0].ValidFrom == clock.Now.AddMinutes(-30), "Timestamp is the interval end");
+var other = await service.GetAsync("3011", default);
+Check(other.PointId == "43" && other.PostalCode == "3011" && handler.Count == 6, "A second location must share the national cache");
+try { await service.GetAsync("9999", default); throw new Exception("Expected unknown location"); }
+catch (WeatherUnavailableException) { }
+Check(handler.Count == 6, "Unknown locations must not redownload forecasts");
 clock.Now = clock.Now.AddMinutes(40);
 var next = await service.GetAsync(default);
 Check(next.TemperatureC == 9.5 && handler.Count == 6, "Select next interval from cached series");
@@ -71,7 +76,7 @@ sealed class ForecastHandler : HttpMessageHandler
         var path = request.RequestUri!.AbsolutePath;
         string content;
         if (path.EndsWith("meta_point.csv"))
-            content = "point_id;point_type_id;postal_code\n42;1;8001\n42;2;8001\n";
+            content = "point_id;point_type_id;postal_code\n42;1;8001\n42;2;8001\n43;2;3011\n";
         else if (path.EndsWith("/items"))
         {
             var assets = new[] { "tre200h0", "rre150h0", "fu3010h0", "fu3010h1" }
@@ -82,7 +87,7 @@ sealed class ForecastHandler : HttpMessageHandler
         {
             var parameter = Path.GetFileNameWithoutExtension(path);
             var value = parameter switch { "tre200h0" => "8.5", "rre150h0" => "1.2", _ => "15.0" };
-            content = $"point_id;point_type_id;Date;{parameter}\n42;1;202610181300;999\n42;2;202610181300;{value}\n42;2;202610181400;9.5\n42;2;202610181500;10.5\n";
+            content = $"point_id;point_type_id;Date;{parameter}\n42;1;202610181300;999\n42;2;202610181300;{value}\n42;2;202610181400;9.5\n42;2;202610181500;10.5\n43;2;202610181300;4.2\n43;2;202610181400;5.2\n43;2;202610181500;6.2\n";
         }
         return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         { Content = new StringContent(content, Encoding.Latin1) });

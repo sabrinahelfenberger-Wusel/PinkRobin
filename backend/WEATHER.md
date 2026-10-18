@@ -14,12 +14,11 @@ Weather__PostalCode=8001 dotnet run --project backend/src/PinkRobin.Api --no-lau
 curl -i http://127.0.0.1:5080/api/weather
 ```
 
-Die Konfiguration gilt pro Backend-Instanz; es gibt bewusst keinen frei wählbaren
-PLZ-Queryparameter. Eine vierstellige PLZ wird beim Start validiert. Die Zuordnung
-zum Prognosepunkt erfolgt über `meta_point.csv` mit `point_type_id=2`.
-Bei mehreren Punkten derselben PLZ zusätzlich `Weather__PointId` setzen; niemals
-annehmen, dass PLZ und `point_id` identisch sind. Unbekannte oder mehrdeutige Orte
-führen zu 503 und einem erklärenden Logeintrag.
+Ohne Queryparameter gilt die konfigurierte Standard-PLZ. Angular kann mit
+`GET /api/weather?postalCode=3011` eine andere Schweizer PLZ anfordern.
+Ungültige Formate liefern 400, unbekannte oder mehrdeutige PLZ 503.
+`Weather:PointId` präzisiert bei Bedarf nur die konfigurierte Standard-PLZ.
+Die Zuordnung erfolgt über die Punktmetadaten mit `point_type_id=2`.
 
 ## Antwortvertrag
 
@@ -62,7 +61,7 @@ export interface RobinWeather {
   windSpeedKmh: number;
   windGustKmh: number;
 }
-// this.http.get<RobinWeather>('/api/weather')
+// this.http.get<RobinWeather>('/api/weather', { params: { postalCode: '3011' } })
 ```
 
 Die ReactionEngine entscheidet selbst über Schwellen, Seltenheit und Cooldowns.
@@ -74,18 +73,20 @@ nicht als trockenes Wetter interpretieren. Bei Wiedergabe/Weitergabe sichtbar
 ## Datenabruf und Cache
 
 Der Singleton nutzt `IHttpClientFactory`, einen Refresh-Lock und einen einstündigen
-In-Memory-Cache der Stundenreihe für genau einen Ort. Jeder Request wählt daraus
-sein aktuell gültiges Intervall. Gleichzeitige Anfragen verursachen einen Refresh.
-Nach einem Fehler gilt eine Minute Retry-Pause. Ein Neustart leert den Cache;
-mehrere Instanzen besitzen getrennte Caches.
+In-Memory-Cache für alle PLZ. Gespeichert werden nur vollständige Werte der nächsten
+zwei Intervallenden; damit ist die aktuelle Stunde bis zum nächsten Refresh abgedeckt.
+Jeder Request wählt daraus seine PLZ und das gültige Intervall. Ein Ortswechsel lädt
+keine landesweiten Dateien erneut. Nach einem Downloadfehler gilt eine Minute
+Retry-Pause; eine unbekannte PLZ beeinflusst andere Orte nicht. Ein Neustart leert
+den Cache; mehrere Instanzen besitzen getrennte Caches.
 
 STAC-Items werden einschließlich `next`-Links gelesen. Aus den Asset-Namen wird
 der neueste gemeinsame Prognoselauf für `tre200h0`, `rre150h0`, `fu3010h0` und
 `fu3010h1` gewählt. Damit werden keine unterschiedlichen Prognoseläufe vermischt.
 Der Lauf darf höchstens sechs Stunden alt sein (bewusste Freshness-Grenze für Robin).
 Die CSV-Dateien werden mit Latin-1, Semikolon und UTC-Zeitformat `yyyyMMddHHmm`
-verarbeitet. Ganze Parameterdateien werden gestreamt, nur die ausgewählten
-Punktwerte bleiben im Speicher. Ein Refresh lädt dennoch vier landesweite Dateien
+verarbeitet. Ganze Parameterdateien werden gestreamt, nur die benötigten
+Stundenwerte der PLZ-Punkte bleiben im Speicher. Ein Refresh lädt dennoch vier landesweite Dateien
 mit jeweils bis zu ca. 33 MB; daher bei wenigen Backend-Instanzen bleiben.
 
 Timeout des gesamten Refresh: 90 Sekunden. HTTP-/Formatfehler, veraltete Läufe
@@ -125,3 +126,18 @@ Am 18.10.2026 geprüft: Release-Build ohne Warnungen/Fehler, Fixture-Tests und
 bestehende Backend-HTTP-Smoke-Tests. Live-Aufruf für PLZ 8001: HTTP 200,
 Punkt 800100, Prognoselauf 18:00 UTC, gültiges Intervall 18:00–19:00 UTC.
 Ein zweiter Abruf lieferte dieselbe Antwort einschließlich `retrievedAt`.
+
+## Angular-Anbindung
+
+Die Robin-Seite zeigt die Stundenprognose und eine manuelle PLZ-Eingabe.
+`WeatherService` stellt `weather`, `state` und `error` als Signals bereit. Er fragt
+beim Öffnen zunächst den Standardort und danach jede Minute den Backend-Cache ab;
+beim Verlassen der Seite werden Abfragen beendet. Bei Ortswechsel wird ein laufender
+Abruf abgebrochen. Fehler oder ungültige Antworten entfernen die Wetterdaten.
+Die PLZ wird nur im Seitenspeicher gehalten. Es erfolgt keine IP-Ortung.
+
+Die künftige ReactionEngine kann `weather()` lesen und muss vor jeder Reaktion
+`validFrom <= jetzt < validTo` prüfen, da Hintergrund-Tabs Timer verzögern können.
+Aktuell werden keine Wetteranimationen ausgelöst. Frontend-Prüfung: `cd web`,
+`npm test` und `npm run build`. Der zusätzliche Parser-Test prüft fehlende Werte,
+falsche Datentypen sowie zukünftige und abgelaufene Intervalle.

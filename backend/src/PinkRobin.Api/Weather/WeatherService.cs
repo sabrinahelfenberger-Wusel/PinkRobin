@@ -19,7 +19,7 @@ public sealed record WeatherSnapshot(string Source, string PostalCode, string Po
 
 public sealed class WeatherUnavailableException(string message) : Exception(message);
 
-// One configured location per backend; the singleton owns the cache and refresh lock.
+// Shared national cache: each request selects its own postal-code forecast.
 public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherOptions> options,
     TimeProvider clock, ILogger<WeatherService> logger)
 {
@@ -31,7 +31,9 @@ public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherO
     private DateTimeOffset expires;
     private DateTimeOffset retryAfter;
 
-    public async Task<WeatherSnapshot> GetAsync(CancellationToken cancellationToken)
+    public Task<WeatherSnapshot> GetAsync(CancellationToken cancellationToken) => GetAsync(null, cancellationToken);
+
+    public async Task<WeatherSnapshot> GetAsync(string? postalCode, CancellationToken cancellationToken)
     {
         await gate.WaitAsync(cancellationToken);
         try
@@ -46,6 +48,8 @@ public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherO
                 {
                     cache = await RefreshAsync(timeout.Token);
                     expires = clock.GetUtcNow().AddHours(1);
+                    var coverageEnd = cache.Select(x => x.ValidTo).DefaultIfEmpty(clock.GetUtcNow()).Max();
+                    if (coverageEnd < expires) expires = coverageEnd;
                 }
                 catch (Exception error) when (error is HttpRequestException or IOException or JsonException or
                     FormatException or InvalidOperationException or KeyNotFoundException or WeatherUnavailableException or OperationCanceledException or
@@ -58,7 +62,12 @@ public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherO
                 }
             }
             now = clock.GetUtcNow();
-            return cache.FirstOrDefault(x => x.ValidFrom <= now && now < x.ValidTo)
+            postalCode ??= options.Value.PostalCode;
+            var points = cache.Where(x => x.PostalCode == postalCode).Select(x => x.PointId).Distinct().ToArray();
+            var configuredPoint = postalCode == options.Value.PostalCode ? options.Value.PointId : null;
+            if (configuredPoint is not null) points = points.Where(id => id == configuredPoint).ToArray();
+            if (points.Length != 1) throw new WeatherUnavailableException("Postal code unavailable or ambiguous.");
+            return cache.FirstOrDefault(x => x.PointId == points[0] && x.ValidFrom <= now && now < x.ValidTo)
                 ?? throw new WeatherUnavailableException("No forecast covers the current hour.");
         }
         finally { gate.Release(); }
@@ -67,7 +76,7 @@ public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherO
     private async Task<WeatherSnapshot[]> RefreshAsync(CancellationToken ct)
     {
         using var client = clients.CreateClient("MeteoSwiss");
-        string pointId;
+        var locations = new Dictionary<string, string>();
         using (var reader = await OpenCsvAsync(client, Points, ct))
         {
             using var csv = new Microsoft.VisualBasic.FileIO.TextFieldParser(reader);
@@ -75,19 +84,14 @@ public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherO
             var header = csv.ReadFields() ?? throw new FormatException("Missing point header");
             foreach (var name in new[] { "point_id", "point_type_id", "postal_code" })
                 if (!header.Contains(name)) throw new FormatException("Unexpected point CSV header");
-            var matches = new List<string>();
             while (!csv.EndOfData)
             {
                 ct.ThrowIfCancellationRequested();
                 var row = csv.ReadFields()!;
                 if (row.Length != header.Length) throw new FormatException("Unexpected point CSV row");
                 string Field(string name) => row[Array.IndexOf(header, name)];
-                if (Field("point_type_id") == "2" && Field("postal_code") == options.Value.PostalCode)
-                    matches.Add(Field("point_id"));
+                if (Field("point_type_id") == "2") locations[Field("point_id")] = Field("postal_code");
             }
-            var selected = matches.Where(id => options.Value.PointId is null || id == options.Value.PointId).Distinct().ToArray();
-            if (selected.Length != 1) throw new WeatherUnavailableException("Postal code missing or ambiguous; configure Weather:PointId if necessary.");
-            pointId = selected[0];
         }
 
         var runs = new Dictionary<string, Dictionary<string, string>>();
@@ -115,39 +119,56 @@ public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherO
         }
         var run = runs.Where(x => Parameters.All(x.Value.ContainsKey)).OrderByDescending(x => x.Key).FirstOrDefault();
         if (run.Value is null) throw new WeatherUnavailableException("No complete forecast run in STAC.");
-        var data = new Dictionary<string, Dictionary<DateTimeOffset, double>>();
+        // Retain only the two intervals needed until the next hourly refresh.
+        var windowStart = clock.GetUtcNow();
+        var windowEnd = windowStart.AddHours(2);
+        var data = new Dictionary<string, Dictionary<(string PointId, DateTimeOffset Time), double>>();
         foreach (var parameter in Parameters)
         {
             using var reader = await OpenCsvAsync(client, run.Value[parameter], ct);
-            data[parameter] = await ReadParameterAsync(reader, pointId, parameter, ct);
+            data[parameter] = new();
+            await ReadRowsAsync(reader, parameter, (id, time, value) =>
+            {
+                if (locations.ContainsKey(id) && time > windowStart && time <= windowEnd)
+                    data[parameter][(id, time)] = value;
+            }, ct);
         }
         var retrieved = clock.GetUtcNow();
         var issued = DateTimeOffset.ParseExact(run.Key, "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
         if (issued > retrieved || retrieved - issued > TimeSpan.FromHours(6))
             throw new WeatherUnavailableException("Forecast run is outdated.");
-        return data[Parameters[0]].Keys.Order().Where(time => Parameters.All(p => data[p].ContainsKey(time)))
-            .Select(time => new WeatherSnapshot("MeteoSwiss", options.Value.PostalCode, pointId, issued,
-                retrieved, time.AddHours(-1), time, data[Parameters[0]][time], data[Parameters[1]][time],
-                data[Parameters[2]][time], data[Parameters[3]][time])).ToArray();
+        return data[Parameters[0]].Keys.Where(key => Parameters.All(p => data[p].ContainsKey(key)))
+            .Select(key => new WeatherSnapshot("MeteoSwiss", locations[key.PointId], key.PointId, issued,
+                retrieved, key.Time.AddHours(-1), key.Time, data[Parameters[0]][key], data[Parameters[1]][key],
+                data[Parameters[2]][key], data[Parameters[3]][key])).ToArray();
     }
 
     internal static async Task<Dictionary<DateTimeOffset, double>> ReadParameterAsync(
         TextReader reader, string pointId, string parameter, CancellationToken ct)
     {
+        var values = new Dictionary<DateTimeOffset, double>();
+        await ReadRowsAsync(reader, parameter, (id, time, value) =>
+        {
+            if (id == pointId) values[time] = value;
+        }, ct);
+        return values;
+    }
+
+    private static async Task ReadRowsAsync(TextReader reader, string parameter,
+        Action<string, DateTimeOffset, double> accept, CancellationToken ct)
+    {
         var header = (await reader.ReadLineAsync(ct))?.TrimStart('\uFEFF').Split(';');
         if (header is null || !header.SequenceEqual(new[] { "point_id", "point_type_id", "Date", parameter }))
             throw new FormatException("Unexpected forecast CSV header");
-        var values = new Dictionary<DateTimeOffset, double>();
         while (await reader.ReadLineAsync(ct) is { } line)
         {
             var row = line.Split(';');
             if (row.Length != 4) throw new FormatException("Unexpected forecast CSV row");
-            if (row[0] != pointId || row[1] != "2") continue;
+            if (row[1] != "2") continue;
             var time = DateTimeOffset.ParseExact(row[2], "yyyyMMddHHmm", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
             if (double.TryParse(row[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var value) && double.IsFinite(value))
-                values[time] = value;
+                accept(row[0], time, value);
         }
-        return values;
     }
 
     private static Uri Trusted(string url)

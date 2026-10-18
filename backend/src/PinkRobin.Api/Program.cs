@@ -83,9 +83,11 @@ app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command
 app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
     WithSession(context, token => { sessions.Remove(token); return Results.NoContent(); }));
 
-app.MapGet("/api/weather", async Task<IResult> (WeatherService weather, CancellationToken ct) =>
+app.MapGet("/api/weather", async Task<IResult> (string? postalCode, WeatherService weather, CancellationToken ct) =>
 {
-    try { return Results.Ok(await weather.GetAsync(ct)); }
+    if (postalCode is not null && (postalCode.Length != 4 || !postalCode.All(char.IsAsciiDigit)))
+        return Results.Problem(statusCode: 400, title: "A four-digit Swiss postal code is required.");
+    try { return Results.Ok(await weather.GetAsync(postalCode, ct)); }
     catch (WeatherUnavailableException)
     {
         return Results.Problem(statusCode: 503, title: "Weather unavailable",
