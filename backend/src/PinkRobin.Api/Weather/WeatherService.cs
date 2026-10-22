@@ -10,6 +10,9 @@ public sealed class WeatherOptions
 {
     public string PostalCode { get; set; } = "";
     public string? PointId { get; set; }
+
+    public string Provider { get; set; } = "MeteoSwiss";
+    public string TestScenario { get; set; } = "Dry";
 }
 
 public sealed record WeatherSnapshot(string Source, string PostalCode, string PointId,
@@ -21,7 +24,7 @@ public sealed class WeatherUnavailableException(string message) : Exception(mess
 
 // Shared national cache: each request selects its own postal-code forecast.
 public sealed class WeatherService(IHttpClientFactory clients, IOptions<WeatherOptions> options,
-    TimeProvider clock, ILogger<WeatherService> logger)
+    TimeProvider clock, ILogger<WeatherService> logger) : IWeatherSource
 {
     private const string Collection = "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-local-forecasting";
     private const string Points = "https://data.geo.admin.ch/ch.meteoschweiz.ogd-local-forecasting/ogd-local-forecasting_meta_point.csv";

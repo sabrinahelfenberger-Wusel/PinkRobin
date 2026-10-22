@@ -121,7 +121,14 @@
             Wind {{ forecast.windSpeedKmh | number: "1.0-1" }} km/h · Böen
             {{ forecast.windGustKmh | number: "1.0-1" }} km/h
           </p>
-          <small>Stundenprognose · Quelle: MeteoSchweiz</small>
+          <small>
+            Stundenprognose ·
+            {{
+              forecast.source === "Test"
+                ? "Künstliche Testdaten"
+                : "Quelle: MeteoSchweiz"
+            }}
+          </small>
         } @else if (weather.state() === "loading") {
           <p>Wetter wird geladen …</p>
         } @else {

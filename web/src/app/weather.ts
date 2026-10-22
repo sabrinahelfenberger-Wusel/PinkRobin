@@ -1,5 +1,5 @@
 export interface RobinWeather {
-  source: "MeteoSwiss";
+  source: "MeteoSwiss" | "Test";
   postalCode: string;
   pointId: string;
   forecastRunAt: string;
@@ -19,7 +19,7 @@ export function parseWeather(
   if (!value || typeof value !== "object") return null;
   const w = value as Record<string, unknown>;
   if (
-    w["source"] !== "MeteoSwiss" ||
+    (w["source"] !== "MeteoSwiss" && w["source"] !== "Test") ||
     typeof w["postalCode"] !== "string" ||
     !/^\d{4}$/.test(w["postalCode"]) ||
     typeof w["pointId"] !== "string"

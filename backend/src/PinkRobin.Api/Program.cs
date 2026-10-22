@@ -20,11 +20,38 @@ builder.Services.AddRateLimiter(options =>
 });
 builder.Services.AddSingleton<IRobinCoreGateway, NativeRobinCoreGateway>();
 
-builder.Services.AddOptions<WeatherOptions>().BindConfiguration("Weather")
-    .Validate(o => o.PostalCode.Length == 4 && o.PostalCode.All(char.IsAsciiDigit), "Weather:PostalCode must be a four-digit Swiss postal code.")
+builder.Services.AddOptions<WeatherOptions>()
+    .BindConfiguration("Weather")
+    .Validate(
+        o => o.PostalCode.Length == 4 &&
+             o.PostalCode.All(char.IsAsciiDigit),
+        "Weather:PostalCode must be a four-digit Swiss postal code.")
+    .Validate(
+        o => o.Provider != "Test" ||
+             o.TestScenario is "Dry" or "Rain" or "Storm",
+        "Weather:TestScenario must be Dry, Rain or Storm when Provider is Test.")
     .ValidateOnStart();
+
 builder.Services.AddHttpClient("MeteoSwiss", client => client.Timeout = TimeSpan.FromSeconds(90));
-builder.Services.AddSingleton<WeatherService>();
+
+var weatherProvider =
+    builder.Configuration["Weather:Provider"] ?? "MeteoSwiss";
+
+switch (weatherProvider)
+{
+    case "MeteoSwiss":
+        builder.Services.AddSingleton<IWeatherSource, WeatherService>();
+        break;
+
+    case "Test" when builder.Environment.IsDevelopment():
+        builder.Services.AddSingleton<IWeatherSource, TestWeatherSource>();
+        break;
+
+    default:
+        throw new InvalidOperationException(
+            $"Weather provider '{weatherProvider}' is not allowed " +
+            $"in environment '{builder.Environment.EnvironmentName}'.");
+}
 
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 if (origins.Any(origin => origin.Contains('*') ||
@@ -86,7 +113,7 @@ app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =
 
 app.MapGet("/api/weather", async Task<IResult> (
     string? postalCode,
-    WeatherService weather,
+    IWeatherSource weather,
     CancellationToken ct) =>
 {
     if (postalCode is not null &&
@@ -115,7 +142,7 @@ app.MapGet("/api/weather", async Task<IResult> (
 
 app.MapPost("/api/v1/session/weather", async Task<IResult> (
     WeatherReactionRequest request,
-    WeatherService weather,
+    IWeatherSource weather,
     RobinSessions sessions,
     HttpContext context,
     CancellationToken ct) =>
