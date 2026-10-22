@@ -176,3 +176,8 @@ Die Anzeige folgt dem Server mit einer Abfrage alle 250 ms zuzüglich Netzwerkla
 
 Zusätzlicher HTTP-Test bei laufender API: `python3 tests/sessions.py` aus `backend/`.
 Der native Integrationstest prüft Zeitgrenzen und Sitzungsablauf mit einer Testuhr.
+
+## Wetterdienst
+
+`GET /api/weather` liefert normalisierte MeteoSchweiz-Stundenprognosen mit
+einstündigem Cache. Konfiguration, Antwortvertrag und Tests: [WEATHER.md](WEATHER.md).

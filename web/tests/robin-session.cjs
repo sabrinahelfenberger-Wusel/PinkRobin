@@ -32,7 +32,7 @@ function fixture() {
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const state = (sequence = 0, revision = 0, headContact = false) => ({ mode: 'awake',
   mood: headContact ? 'happy' : 'curious', expression: headContact ? 'happy' : 'curious',
-  headContact, timeMs: 7100, revision, sequence });
+  headContact, timeMs: 7100, revision, sequence, transformation: 'none' });
 (async () => {
   const f = fixture(), connecting = f.service.connect(false);
   assert.equal(f.requests[0].url, 'api/v1/sessions');

@@ -1,12 +1,21 @@
 using System.Security.Cryptography;
 using PinkRobin.Api.Core;
+using PinkRobin.Api.Weather;
 
 namespace PinkRobin.Api.Sessions;
 
 public sealed record CreateSessionRequest(bool ReducedMotion = false);
 public sealed record RobinCommand(long Sequence, string Event);
-public sealed record SessionState(string Mode, string Mood, string Expression, bool HeadContact,
-    ulong TimeMs, ulong Revision, long Sequence);
+public sealed record SessionState(
+    string Mode,
+    string Mood,
+    string Expression,
+    bool HeadContact,
+    ulong TimeMs,
+    ulong Revision,
+    long Sequence,
+    string Transformation);
+
 public sealed record CreatedSession(string Token, SessionState State);
 public sealed class SessionFailure(int status, string message) : Exception(message)
 {
@@ -58,6 +67,70 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     public SessionState Read(string token) => Execute(token, null);
     public SessionState Send(string token, RobinCommand command) => Execute(token, command);
 
+    private static CoreWeatherForecast? ToCoreWeather(
+        WeatherSnapshot weather,
+        DateTimeOffset utcNow,
+        ulong coreNowMs)
+    {
+        if (weather.ValidFrom >= weather.ValidTo ||
+            weather.ValidTo <= utcNow)
+        {
+            return null;
+        }
+
+        var remainingMs = Math.Floor(
+            (weather.ValidTo - utcNow).TotalMilliseconds);
+
+        if (remainingMs < 1)
+        {
+            return null;
+        }
+
+        var untilStartMs = Math.Max(
+            0,
+            Math.Ceiling(
+                (weather.ValidFrom - utcNow).TotalMilliseconds));
+
+        return new CoreWeatherForecast(
+            weather.TemperatureC,
+            weather.PrecipitationMm,
+            weather.WindSpeedKmh,
+            weather.WindGustKmh,
+            checked(coreNowMs + (ulong)untilStartMs),
+            checked(coreNowMs + (ulong)remainingMs));
+    }
+
+    public bool UpdateWeather(
+        string token,
+        WeatherSnapshot weather)
+    {
+        lock (sync)
+        {
+            SweepLocked();
+
+            if (!sessions.TryGetValue(token, out var session))
+            {
+                throw new SessionFailure(404, "Session expired or unknown");
+            }
+
+            var currentState = Execute(token, null);
+
+            var forecast = ToCoreWeather(
+                weather,
+                clock.GetUtcNow(),
+                currentState.TimeMs);
+
+            if (forecast is null)
+            {
+                return false;
+            }
+
+            session.Core.PostWeather(forecast);
+
+            return true;
+        }
+    }
+
     private SessionState Execute(string token, RobinCommand? command)
     {
         lock (sync)
@@ -106,10 +179,20 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     private static SessionState State(Session session)
     {
         var s = session.Core.GetSnapshot();
-        return new(s.Mode.ToString().ToLowerInvariant(), s.Mood.ToString().ToLowerInvariant(),
-            s.Expression == RobinExpression.HeartEyes ? "heartEyes" : s.Expression.ToString().ToLowerInvariant(),
-            s.HeadContact, s.TimeMs, s.Revision, session.Sequence);
+
+        return new(
+            s.Mode.ToString().ToLowerInvariant(),
+            s.Mood.ToString().ToLowerInvariant(),
+            s.Expression == RobinExpression.HeartEyes
+                ? "heartEyes" 
+                : s.Expression.ToString().ToLowerInvariant(),
+            s.HeadContact,
+            s.TimeMs,
+            s.Revision,
+            session.Sequence,
+            session.Core.GetTransformation().ToString().ToLowerInvariant());
     }
+
     public void Remove(string token)
     {
         lock (sync) { if (sessions.Remove(token, out var session)) session.Core.Dispose(); }

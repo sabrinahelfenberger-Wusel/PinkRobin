@@ -54,7 +54,50 @@
           <stop offset="1" stop-color="#000" stop-opacity="0" />
         </radialGradient>
       </defs>
+      @if (transformation() === "octopus" || transformation() === "raincoat") {
+        <g class="rain" aria-hidden="true" pointer-event="none">
+          <path d="M65 90 l-12 28" />
+          <path d="M160 40 l-12 28" />
+          <path d="M270 65 l-12 28" />
+          <path d="M380 40 l-12 28" />
+          <path d="M455 110 l-12 28" />
+          <path d="M45 250 l-12 28" />
+          <path d="M450 290 l-12 28" />
+          <path d="M80 410 l-12 28" />
+          <path d="M420 440 l-12 28" />
+        </g>
+      }
       <ellipse cx="250" cy="536" rx="170" ry="23" fill="url(#shadow)" />
+      @if (transformation() === "octopus") {
+        <g
+          fill="none"
+          stroke="#ff8fbc"
+          stroke-width="18"
+          stroke-linecap="round"
+          pointer-events="none"
+          aria-hidden="true"
+        >
+          <!-- Vier Arme links -->
+          <g>
+            <path d="M180 395 C140 390 90 375 78 345 C68 320 90 310 100 330" />
+            <path d="M175 420 C130 420 75 425 50 400 C30 380 45 360 62 375" />
+            <path d="M175 450 C130 450 85 485 58 465 C38 450 50 430 68 440" />
+            <path
+              d="M185 480 C155 490 135 530 108 518 C88 510 95 490 112 495"
+            />
+          </g>
+
+          <!-- Dieselben vier Arme rechts gespiegelt -->
+          <g transform="translate(500 0) scale(-1 1)">
+            <path d="M180 395 C140 390 90 375 78 345 C68 320 90 310 100 330" />
+            <path d="M175 420 C130 420 75 425 50 400 C30 380 45 360 62 375" />
+            <path d="M175 450 C130 450 85 485 58 465 C38 450 50 430 68 440" />
+            <path
+              d="M185 480 C155 490 135 530 108 518 C88 510 95 490 112 495"
+            />
+          </g>
+        </g>
+      }
       <rect x="183" y="495" width="53" height="35" rx="17" fill="#242326" />
       <rect x="270" y="495" width="53" height="35" rx="17" fill="#242326" />
       <rect x="217" y="312" width="66" height="53" rx="20" fill="#18191b" />
@@ -70,6 +113,34 @@
           d="M179 355Q250 338 321 355Q346 363 352 409L361 481Q360 511 333 514H167Q140 511 139 481L148 409Q154 363 179 355Z"
         />
       </g>
+      @if (transformation() === "raincoat") {
+        <g
+          fill="#ffd447"
+          stroke="#c58a18"
+          stroke-width="2"
+          stroke-linejoin="round"
+          pointer-events="none"
+          aria-hidden="true"
+        >
+          <!-- Linker Ärmel -->
+          <path
+            d="M156 378Q136 366 123 390L105 452Q99 477 119 483Q142 490 150 462L171 402Z"
+          />
+
+          <!-- Rechter Ärmel -->
+          <path
+            d="M344 378Q364 366 377 390L395 452Q401 477 381 483Q358 490 350 462L329 402Z"
+          />
+
+          <!-- Mantel über dem Körper -->
+          <path
+            d="M179 355Q250 338 321 355Q346 363 352 409L361 481Q360 511 333 514H167Q140 511 139 481L148 409Q154 363 179 355Z"
+          />
+
+          <!-- Kragen -->
+          <path d="M210 350L235 375L250 351L265 375L290 350" />
+        </g>
+      }
       <rect
         x="184"
         y="377"
@@ -257,6 +328,7 @@
   <p class="heart-hint" id="heart-hint">
     Berühre mein Herz oder streichle meinen Kopf. ♡
   </p>
+
   <p class="stage-caption">
     <span class="status-dot"></span><span id="state">{{ state() }}</span
     ><span class="version">Virtual Robin · 0.1</span>

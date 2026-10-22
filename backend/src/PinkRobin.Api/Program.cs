@@ -3,6 +3,9 @@ using PinkRobin.Api.Core;
 using PinkRobin.Api.Sessions;
 using System.Threading.RateLimiting;
 
+using PinkRobin.Api.Weather;
+using PinkRobin.Api.Reactions;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -16,6 +19,39 @@ builder.Services.AddRateLimiter(options =>
         { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 builder.Services.AddSingleton<IRobinCoreGateway, NativeRobinCoreGateway>();
+
+builder.Services.AddOptions<WeatherOptions>()
+    .BindConfiguration("Weather")
+    .Validate(
+        o => o.PostalCode.Length == 4 &&
+             o.PostalCode.All(char.IsAsciiDigit),
+        "Weather:PostalCode must be a four-digit Swiss postal code.")
+    .Validate(
+        o => o.Provider != "Test" ||
+             o.TestScenario is "Dry" or "Rain" or "Storm",
+        "Weather:TestScenario must be Dry, Rain or Storm when Provider is Test.")
+    .ValidateOnStart();
+
+builder.Services.AddHttpClient("MeteoSwiss", client => client.Timeout = TimeSpan.FromSeconds(90));
+
+var weatherProvider =
+    builder.Configuration["Weather:Provider"] ?? "MeteoSwiss";
+
+switch (weatherProvider)
+{
+    case "MeteoSwiss":
+        builder.Services.AddSingleton<IWeatherSource, WeatherService>();
+        break;
+
+    case "Test" when builder.Environment.IsDevelopment():
+        builder.Services.AddSingleton<IWeatherSource, TestWeatherSource>();
+        break;
+
+    default:
+        throw new InvalidOperationException(
+            $"Weather provider '{weatherProvider}' is not allowed " +
+            $"in environment '{builder.Environment.EnvironmentName}'.");
+}
 
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 if (origins.Any(origin => origin.Contains('*') ||
@@ -74,4 +110,69 @@ app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command
     WithSession(context, token => Results.Ok(sessions.Send(token, command))));
 app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
     WithSession(context, token => { sessions.Remove(token); return Results.NoContent(); }));
+
+app.MapGet("/api/weather", async Task<IResult> (
+    string? postalCode,
+    IWeatherSource weather,
+    CancellationToken ct) =>
+{
+    if (postalCode is not null &&
+        (postalCode.Length != 4 ||
+         !postalCode.All(char.IsAsciiDigit)))
+    {
+        return Results.Problem(
+            statusCode: 400,
+            title: "A four-digit Swiss postal code is required.");
+    }
+
+    try
+    {
+        var forecast = await weather.GetAsync(postalCode, ct);
+
+        return Results.Ok(forecast);
+    }
+    catch (WeatherUnavailableException)
+    {
+        return Results.Problem(
+            statusCode: 503,
+            title: "Weather unavailable",
+            detail: "No current MeteoSwiss forecast is available.");
+    }
+});
+
+app.MapPost("/api/v1/session/weather", async Task<IResult> (
+    WeatherReactionRequest request,
+    IWeatherSource weather,
+    RobinSessions sessions,
+    HttpContext context,
+    CancellationToken ct) =>
+{
+    if (request.PostalCode is null ||
+        request.PostalCode.Length != 4 ||
+        !request.PostalCode.All(char.IsAsciiDigit))
+    {
+        return Results.Problem(
+            statusCode: 400,
+            title: "A four-digit Swiss postal code is required.");
+    }
+
+    try
+    {
+        var forecast = await weather.GetAsync(request.PostalCode, ct);
+
+        return WithSession(context, token =>
+        {
+            var accepted = sessions.UpdateWeather(token, forecast);
+
+            return Results.Ok(new { accepted });
+        });
+    }
+    catch (WeatherUnavailableException)
+    {
+        return Results.Problem(
+            statusCode: 503,
+            title: "Weather unavailable");
+    }
+});
+
 app.Run();

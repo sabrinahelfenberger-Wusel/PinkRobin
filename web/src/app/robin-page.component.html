@@ -83,6 +83,62 @@
         </div>
       </div>
     </div>
+    <div class="weather-panel">
+      <form
+        (submit)="
+          $event.preventDefault(); weather.selectPostalCode(postalCode.value)
+        "
+      >
+        <label for="weather-postal-code">Wetter an deinem Ort</label>
+        <div class="weather-location">
+          <input
+            #postalCode
+            id="weather-postal-code"
+            name="postalCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="postal-code"
+            pattern="[0-9]{4}"
+            maxlength="4"
+            placeholder="Schweizer PLZ"
+            required
+            aria-describedby="weather-message"
+          />
+          <button type="submit">Wetter laden</button>
+        </div>
+      </form>
+      <div id="weather-message" role="status" aria-live="polite">
+        @if (weather.error()) {
+          <p>{{ weather.error() }}</p>
+        }
+        @if (weather.weather(); as forecast) {
+          <p>
+            PLZ {{ forecast.postalCode }} ·
+            {{ forecast.temperatureC | number: "1.0-1" }} °C
+          </p>
+          <p>
+            Niederschlag {{ forecast.precipitationMm | number: "1.0-1" }} mm/h ·
+            Wind {{ forecast.windSpeedKmh | number: "1.0-1" }} km/h · Böen
+            {{ forecast.windGustKmh | number: "1.0-1" }} km/h
+          </p>
+          <small>
+            Stundenprognose ·
+            {{
+              forecast.source === "Test"
+                ? "Künstliche Testdaten"
+                : "Quelle: MeteoSchweiz"
+            }}
+          </small>
+        } @else if (weather.state() === "loading") {
+          <p>Wetter wird geladen …</p>
+        } @else {
+          <p>
+            Für diesen Ort sind gerade keine Wetterdaten verfügbar. Bitte später
+            erneut versuchen oder eine andere PLZ wählen.
+          </p>
+        }
+      </div>
+    </div>
   </section>
   <pr-robin #robin />
 </main>

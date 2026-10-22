@@ -7,3 +7,11 @@ GET {{baseUrl}}/health/ready
 
 ### Preparation status
 GET {{baseUrl}}/api/v1/status
+
+### MeteoSwiss forecast for configured postal code
+GET http://localhost:5080/api/weather
+Accept: application/json
+
+### Forecast for a postal code chosen in Angular
+GET http://localhost:5080/api/weather?postalCode=3011
+Accept: application/json
