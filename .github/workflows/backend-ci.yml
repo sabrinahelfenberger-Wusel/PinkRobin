@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: "10.0.x"
       - name: Build backend
         run: dotnet build ../PinkRobin.slnx -c Release
       - name: Weather cache and location tests
@@ -39,7 +39,7 @@ jobs:
       - name: Test API with missing native library
         run: |
           mv src/PinkRobin.Api/bin/Release/net10.0/libpinkrobin_core.so /tmp/pinkrobin-core-disabled.so
-          dotnet src/PinkRobin.Api/bin/Release/net10.0/PinkRobin.Api.dll --urls http://127.0.0.1:5080 >/tmp/pinkrobin-missing-core.log 2>&1 &
+          dotnet src/PinkRobin.Api/bin/Release/net10.0/PinkRobin.Api.dll --urls http://127.0.0.1:5080 --contentRoot "$PWD/src/PinkRobin.Api" >/tmp/pinkrobin-missing-core.log 2>&1 &
           backend_pid=$!
           trap 'kill "$backend_pid" || true; mv /tmp/pinkrobin-core-disabled.so src/PinkRobin.Api/bin/Release/net10.0/libpinkrobin_core.so; cat /tmp/pinkrobin-missing-core.log' EXIT
           for attempt in $(seq 1 30); do
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: "10.0.x"
       - name: Test native C# bridge
         run: dotnet run --project backend/tests/Interop -c Release
 
@@ -112,10 +112,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: "10.0.x"
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: "22"
       - name: Test combined development profile
         working-directory: backend
         run: |
