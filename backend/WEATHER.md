@@ -18,7 +18,65 @@ Ohne Queryparameter gilt die konfigurierte Standard-PLZ. Angular kann mit
 `GET /api/weather?postalCode=3011` eine andere Schweizer PLZ anfordern.
 Ungültige Formate liefern 400, unbekannte oder mehrdeutige PLZ 503.
 `Weather:PointId` präzisiert bei Bedarf nur die konfigurierte Standard-PLZ.
-Die Zuordnung erfolgt über die Punktmetadaten mit `point_type_id=2`.
+Bei der echten Quelle erfolgt die Zuordnung über die Punktmetadaten mit `point_type_id=2`.
+
+## Echte Prognosen oder künstliches Testwetter
+
+Beide Wetter-Endpoints verwenden `IWeatherSource`. Die Registrierung in `Program.cs`
+wählt die Implementierung einmal beim Backend-Start:
+
+| `Weather:Provider` | Implementierung | Umgebung |
+|---|---|---|
+| `MeteoSwiss` (Standard) | `WeatherService` mit Stunden-Cache | Alle |
+| `Test` | `TestWeatherSource`, ohne Netzwerkzugriff | Nur `Development` |
+
+In `appsettings.Development.json` beispielsweise:
+
+```jsonc
+"Weather": {
+  "Provider": "Test",
+  // "Provider": "MeteoSwiss",
+  "TestScenario": "Storm"
+}
+```
+
+Nur eine Provider-Zeile aktiv lassen. ASP.NET Core akzeptiert hier Kommentare.
+Nach Änderungen das Backend neu starten und Angular neu laden, damit eine neue
+Sitzung ohne alten Cooldown entsteht. In der Startausgabe muss für die Testquelle
+`Hosting environment: Development` stehen. Außerhalb von Development führt
+`Provider: Test` zum Startabbruch; es gibt keinen stillen Rückfall auf eine andere Quelle.
+
+| `Weather:TestScenario` | Niederschlag (mm/h) | Wind (km/h) | Böen (km/h) | Core-Auswahl |
+|---|---:|---:|---:|---|
+| `Dry` (Standard) | 0 | 5 | 10 | Keine |
+| `Rain` | 2 | 10 | 20 | Regenmantel |
+| `Storm` | 12 | 30 | 70 | Octopus |
+
+Alle Testszenarien liefern 8,5 °C und eine ab dem Abruf eine Stunde gültige Prognose.
+Die Testquelle verwendet die angefragte oder konfigurierte PLZ ohne geografische
+Zuordnung; sie ersetzt bewusst die MeteoSchweiz-Abfrage. Jeder Abruf erzeugt neue
+Zeitstempel, keinen MeteoSchweiz-Cacheeintrag.
+
+Die Rückgabe trägt `source: "Test"` und `pointId: "test-point"`. Angular kennzeichnet
+sie als „Künstliche Testdaten“. Auswahl, Bereitschaft, Wartezeit, Dauer und Cooldown
+bleiben dieselbe Core-Logik wie bei echten Prognosen. Es werden keine Outfits direkt
+vom Testprovider angefordert und keine Core-Regeln zum Testen umgeschrieben.
+
+### Manueller Kurztest
+
+1. Mit `Provider: Test` nacheinander `Dry`, `Rain` und `Storm` konfigurieren.
+2. Jeweils Backend neu starten, Angular neu laden und die Quellenanzeige kontrollieren.
+3. Bei verbundenem, bereitem Robin die Auswahl gemäß Tabelle prüfen. Eine gestartete
+   Verwandlung endet nach zehn Sekunden.
+4. Mit Testquelle `TestScenario: Strom` eintragen: Die Optionsvalidierung muss bereits
+   beim Start mit dem Hinweis auf `Dry`, `Rain` oder `Storm` abbrechen. Danach korrigieren.
+5. Auf `Provider: MeteoSwiss` wechseln und nach dem Neustart echte Prognosen sowie
+   die entsprechende Quellenbeschriftung prüfen.
+
+Die Schreibweise der Werte ist exakt einzuhalten. Das Szenario wird beim Start nur
+für `Provider: Test` geprüft; der `switch` der Testquelle weist unbekannte Werte
+zusätzlich beim Abruf ab. Die Testquelle bietet derzeit nur die drei gültigen Szenarien,
+keine konfigurierbare Einspeisung ungültiger Prognosewerte oder Netzwerkfehler.
 
 ## Antwortvertrag
 
@@ -49,7 +107,7 @@ Angular kann den vorhandenen `/api/**`-Entwicklungsproxy verwenden. Ein passende
 
 ```ts
 export interface RobinWeather {
-  source: 'MeteoSwiss';
+  source: 'MeteoSwiss' | 'Test';
   postalCode: string;
   pointId: string;
   forecastRunAt: string;
@@ -71,7 +129,7 @@ Bei 503 Wetterreaktionen auslassen und später erneut abfragen; fehlende Werte
 nicht als trockenes Wetter interpretieren. Bei Wiedergabe/Weitergabe sichtbar
 „Quelle: MeteoSchweiz“ angeben.
 
-## Datenabruf und Cache
+## MeteoSchweiz-Datenabruf und Cache
 
 Der Singleton nutzt `IHttpClientFactory`, einen Refresh-Lock und einen einstündigen
 In-Memory-Cache für alle PLZ. Gespeichert werden nur vollständige Werte der nächsten
@@ -132,14 +190,15 @@ Ein zweiter Abruf lieferte dieselbe Antwort einschließlich `retrievedAt`.
 
 Die Robin-Seite zeigt die Stundenprognose und eine manuelle PLZ-Eingabe.
 `WeatherService` stellt `weather`, `state` und `error` als Signals bereit. Er fragt
-beim Öffnen zunächst den Standardort und danach jede Minute den Backend-Cache ab;
+beim Öffnen zunächst den Standardort und danach jede Minute die gewählte Backend-Quelle ab;
 beim Verlassen der Seite werden Abfragen beendet. Bei Ortswechsel wird ein laufender
 Abruf abgebrochen. Fehler oder ungültige Antworten entfernen die Wetterdaten.
 Die PLZ wird nur im Seitenspeicher gehalten. Es erfolgt keine IP-Ortung.
 
 Die Robin-Seite übermittelt bei gültiger Prognose und bestehender Sitzung die PLZ
-an `POST /api/v1/session/weather` mit `X-Robin-Session`. Das Backend lädt die Prognose
-aus demselben Cache und übergibt sie mit umgerechneter Gültigkeit an den C++-Core.
+an `POST /api/v1/session/weather` mit `X-Robin-Session`. Das Backend beschafft die
+Prognose aus der gewählten Quelle (bei MeteoSchweiz aus demselben Cache) und übergibt
+sie mit umgerechneter Gültigkeit an den C++-Core.
 Der Core entscheidet über Octopus oder Regenmantel und verwaltet Wartezeit, Dauer
 und Cooldown. Angular zeichnet den aktiven Zustand aus `GET /api/v1/session`.
 Ablaufgrafiken und Zuständigkeiten: [Wetterwissen und Verwandlungen](../docs/architecture/Wetterreaktionen.md).

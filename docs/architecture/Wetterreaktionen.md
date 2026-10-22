@@ -9,11 +9,13 @@ Zustand dar. Das Backend beschafft und übersetzt die Daten.
 ```mermaid
 flowchart TD
     A[Angular: PLZ auswählen] --> B[GET /api/weather]
-    B --> C[WeatherService: gemeinsamer Stunden-Cache]
+    B --> S[IWeatherSource: Auswahl beim Backend-Start]
+    S -->|MeteoSwiss| C[WeatherService: gemeinsamer Stunden-Cache]
     C <-->|STAC und CSV| M[MeteoSchweiz]
+    S -->|Test, nur Development| T[TestWeatherSource: Dry, Rain oder Storm]
     B --> D[Angular: Prognose anzeigen]
     D -->|PLZ und Sitzungstoken| E[POST /api/v1/session/weather]
-    E --> C
+    E --> S
     E --> F[RobinSessions: UTC in Core-Zeit umrechnen]
     F --> G[C-Schnittstelle: robin_core_post_weather]
     G --> H[Core: Wetter-Nachricht vormerken]
@@ -23,8 +25,11 @@ flowchart TD
     K --> L[Angular: Outfit und Regen zeichnen]
 ```
 
-Die beiden HTTP-Wetteraufrufe verwenden denselben Cache. Der POST lädt die Prognose
-serverseitig anhand der PLZ; Angular übermittelt keine eigenen Wetterwerte.
+Die beiden HTTP-Wetteraufrufe verwenden dieselbe ausgewählte Wetterquelle. Bei
+MeteoSchweiz teilen sie sich den Stunden-Cache. In Development kann stattdessen
+künstliches Testwetter gewählt werden. Der POST beschafft die Prognose serverseitig
+anhand der PLZ; Angular übermittelt keine eigenen Wetterwerte.
+[Konfiguration und Testfälle](../../backend/WEATHER.md#echte-prognosen-oder-künstliches-testwetter).
 `X-Robin-Session` ordnet die Nachricht einer bestehenden Sitzung zu.
 `{"accepted": true}` bestätigt die Annahme der Nachricht, keinen gestarteten Effekt.
 Die Sitzungsabfrage liefert dagegen den tatsächlichen Zustand als
