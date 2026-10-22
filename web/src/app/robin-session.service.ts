@@ -2,6 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { DestroyRef, Injectable, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { firstValueFrom, timeout } from "rxjs";
+import { RobinTransformation } from "./weather";
 
 export type RobinEvent =
   | "restart"
@@ -17,6 +18,7 @@ export interface CoreState {
   timeMs: number;
   revision: number;
   sequence: number;
+  transformation: "none" | "octopus" | "raincoat";
 }
 export function parseCoreState(value: unknown): CoreState {
   const s = value as CoreState;
@@ -25,6 +27,7 @@ export function parseCoreState(value: unknown): CoreState {
     !["sleeping", "waking", "awake"].includes(s.mode) ||
     !["curious", "happy", "affectionate"].includes(s.mood) ||
     !["sleeping", "curious", "happy", "heartEyes"].includes(s.expression) ||
+    !["none", "octopus", "raincoat"].includes(s.transformation) ||
     typeof s.headContact !== "boolean" ||
     ![s.timeMs, s.revision, s.sequence].every(
       (n) => Number.isSafeInteger(n) && n >= 0,
@@ -47,6 +50,7 @@ export class RobinSessionService {
   private destroyed = false;
   private busy = false;
   private creating = false;
+  private weatherBusy = false;
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -97,6 +101,37 @@ export class RobinSessionService {
     }
   }
 
+  async updateWeather(postalCode: string): Promise<boolean> {
+    if (!this.token || this.destroyed || this.weatherBusy) {
+      return false;
+    }
+
+    this.weatherBusy = true;
+    const token = this.token;
+
+    try {
+      const response = await this.request<{ accepted: unknown }>(
+        "POST",
+        "api/v1/session/weather",
+        { postalCode },
+        token,
+        95_000,
+      );
+
+      if (this.destroyed || this.token !== token) {
+        return false;
+      }
+
+      if (typeof response?.accepted !== "boolean") {
+        throw new Error("Invalid weather response");
+      }
+
+      return response.accepted;
+    } finally {
+      this.weatherBusy = false;
+    }
+  }
+
   private async pump(): Promise<void> {
     if (!this.token || this.destroyed || this.busy) return;
     this.busy = true;
@@ -127,6 +162,7 @@ export class RobinSessionService {
     url: string,
     body?: unknown,
     token?: string,
+    timeoutMs = 5000,
   ): Promise<T> {
     return firstValueFrom(
       this.http
@@ -134,7 +170,7 @@ export class RobinSessionService {
           body,
           headers: token ? { "X-Robin-Session": token } : {},
         })
-        .pipe(timeout(5000), takeUntilDestroyed(this.destroyRef)),
+        .pipe(timeout(timeoutMs), takeUntilDestroyed(this.destroyRef)),
     );
   }
   private schedule(delay = 250): void {

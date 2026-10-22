@@ -4,6 +4,7 @@ using PinkRobin.Api.Sessions;
 using System.Threading.RateLimiting;
 
 using PinkRobin.Api.Weather;
+using PinkRobin.Api.Reactions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
@@ -83,15 +84,67 @@ app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command
 app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
     WithSession(context, token => { sessions.Remove(token); return Results.NoContent(); }));
 
-app.MapGet("/api/weather", async Task<IResult> (string? postalCode, WeatherService weather, CancellationToken ct) =>
+app.MapGet("/api/weather", async Task<IResult> (
+    string? postalCode,
+    WeatherService weather,
+    CancellationToken ct) =>
 {
-    if (postalCode is not null && (postalCode.Length != 4 || !postalCode.All(char.IsAsciiDigit)))
-        return Results.Problem(statusCode: 400, title: "A four-digit Swiss postal code is required.");
-    try { return Results.Ok(await weather.GetAsync(postalCode, ct)); }
+    if (postalCode is not null &&
+        (postalCode.Length != 4 ||
+         !postalCode.All(char.IsAsciiDigit)))
+    {
+        return Results.Problem(
+            statusCode: 400,
+            title: "A four-digit Swiss postal code is required.");
+    }
+
+    try
+    {
+        var forecast = await weather.GetAsync(postalCode, ct);
+
+        return Results.Ok(forecast);
+    }
     catch (WeatherUnavailableException)
     {
-        return Results.Problem(statusCode: 503, title: "Weather unavailable",
-            detail: "No current MeteoSwiss forecast is available. Robin should skip weather reactions.");
+        return Results.Problem(
+            statusCode: 503,
+            title: "Weather unavailable",
+            detail: "No current MeteoSwiss forecast is available.");
+    }
+});
+
+app.MapPost("/api/v1/session/weather", async Task<IResult> (
+    WeatherReactionRequest request,
+    WeatherService weather,
+    RobinSessions sessions,
+    HttpContext context,
+    CancellationToken ct) =>
+{
+    if (request.PostalCode is null ||
+        request.PostalCode.Length != 4 ||
+        !request.PostalCode.All(char.IsAsciiDigit))
+    {
+        return Results.Problem(
+            statusCode: 400,
+            title: "A four-digit Swiss postal code is required.");
+    }
+
+    try
+    {
+        var forecast = await weather.GetAsync(request.PostalCode, ct);
+
+        return WithSession(context, token =>
+        {
+            var accepted = sessions.UpdateWeather(token, forecast);
+
+            return Results.Ok(new { accepted });
+        });
+    }
+    catch (WeatherUnavailableException)
+    {
+        return Results.Problem(
+            statusCode: 503,
+            title: "Weather unavailable");
     }
 });
 

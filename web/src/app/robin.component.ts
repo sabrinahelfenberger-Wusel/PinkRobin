@@ -23,7 +23,6 @@ const MOOD_LABELS: Record<RobinMood, string> = {
 @Component({
   selector: "pr-robin",
   standalone: true,
-  providers: [RobinSessionService],
   templateUrl: "./robin.component.html",
   styleUrl: "./robin.component.css",
 })
@@ -45,6 +44,7 @@ export class RobinComponent {
   readonly look = signal<"left" | "right" | null>(null);
   readonly speech = signal("Pssst … Robin schläft noch.");
   readonly state = computed(() => MOOD_LABELS[this.mood()]);
+  readonly transformation = signal<"none" | "octopus" | "raincoat">("none");
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private reducedMotion?: MediaQueryList;
@@ -69,6 +69,7 @@ export class RobinComponent {
           this.applyCoreState(state);
         }
       } else if (this.coreActive) {
+        this.transformation.set("none");
         this.coreGreeting = true;
         this.headHeld = false;
         this.coreActive = false;
@@ -98,6 +99,7 @@ export class RobinComponent {
   }
 
   private applyCoreState(state: CoreState): void {
+    this.transformation.set(state.transformation);
     this.clearTimers();
     this.blinking.set(false);
     this.look.set(null);
