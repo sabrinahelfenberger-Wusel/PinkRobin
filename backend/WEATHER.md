@@ -64,8 +64,9 @@ export interface RobinWeather {
 // this.http.get<RobinWeather>('/api/weather', { params: { postalCode: '3011' } })
 ```
 
-Die ReactionEngine entscheidet selbst über Schwellen, Seltenheit und Cooldowns.
-Der Endpoint startet keine Animation und bietet keinen Animationskatalog.
+Die Verhaltensentscheidung liegt im C++-Core. Aktuell gelten feste Schwellen und
+ein gemeinsamer Wetter-Cooldown; zusätzliche Zufalls- oder Seltenheitsregeln sind
+noch nicht umgesetzt. Der GET-Endpoint startet keine Animation.
 Bei 503 Wetterreaktionen auslassen und später erneut abfragen; fehlende Werte
 nicht als trockenes Wetter interpretieren. Bei Wiedergabe/Weitergabe sichtbar
 „Quelle: MeteoSchweiz“ angeben.
@@ -136,8 +137,13 @@ beim Verlassen der Seite werden Abfragen beendet. Bei Ortswechsel wird ein laufe
 Abruf abgebrochen. Fehler oder ungültige Antworten entfernen die Wetterdaten.
 Die PLZ wird nur im Seitenspeicher gehalten. Es erfolgt keine IP-Ortung.
 
-Die künftige ReactionEngine kann `weather()` lesen und muss vor jeder Reaktion
-`validFrom <= jetzt < validTo` prüfen, da Hintergrund-Tabs Timer verzögern können.
-Aktuell werden keine Wetteranimationen ausgelöst. Frontend-Prüfung: `cd web`,
-`npm test` und `npm run build`. Der zusätzliche Parser-Test prüft fehlende Werte,
+Die Robin-Seite übermittelt bei gültiger Prognose und bestehender Sitzung die PLZ
+an `POST /api/v1/session/weather` mit `X-Robin-Session`. Das Backend lädt die Prognose
+aus demselben Cache und übergibt sie mit umgerechneter Gültigkeit an den C++-Core.
+Der Core entscheidet über Octopus oder Regenmantel und verwaltet Wartezeit, Dauer
+und Cooldown. Angular zeichnet den aktiven Zustand aus `GET /api/v1/session`.
+Ablaufgrafiken und Zuständigkeiten: [Wetterwissen und Verwandlungen](../docs/architecture/Wetterreaktionen.md).
+
+Frontend-Prüfung: `cd web`, `npm test` und `npm run build`.
+Der zusätzliche Parser-Test prüft fehlende Werte,
 falsche Datentypen sowie zukünftige und abgelaufene Intervalle.
