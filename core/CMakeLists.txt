@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(PinkRobinCore VERSION 0.1.0 LANGUAGES C CXX)
+project(PinkRobinCore VERSION 0.1.1 LANGUAGES C CXX)
 include(CTest)
 option(ROBIN_BUILD_EXAMPLES "Build the deterministic console demo" ON)
 option(ROBIN_ENABLE_SANITIZERS "Enable address/undefined behavior checks" OFF)
