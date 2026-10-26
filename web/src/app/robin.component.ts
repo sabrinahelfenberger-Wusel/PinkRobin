@@ -129,6 +129,7 @@ export class RobinComponent {
                 ? "Hallo, ich bin Robin! Schön, dass du da bist. ♡"
                 : "Was entdecken wir als Nächstes?",
     );
+    if (state.mode === "awake") this.coreGreeting = false;
     if (
       state.mode === "awake" &&
       state.mood === "curious" &&

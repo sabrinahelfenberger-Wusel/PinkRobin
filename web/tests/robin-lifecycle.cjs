@@ -220,3 +220,65 @@ rapid.robin.startPetting();
 assert.deepEqual(rapid.sent, ['headStarted', 'headEnded', 'headStarted']);
 rapid.destroy();
 console.log('Rapid release and renewed press before acknowledgement passed.');
+
+for (const [transformation, comment] of [
+    ['raincoat', 'Gut, dass ich meinen Regenmantel dabei habe!'],
+    ['octopus', 'Bei dem Wetter Verwandle ich mich besser in einen Tintenfisch!'],
+]) {
+    const weather = fixture(true);
+
+    const baseState = {
+        mode: 'awake',
+        mood: 'curious',
+        expression: 'curious',
+        headContact: false,
+        transformation: 'none',
+        timeMs: 8000,
+        revision: 1,
+        sequence: 0,
+    };
+
+    // Zunächst einen normalen Zustand übernehmen.
+    weather.core(baseState);
+
+    // Der Core startet die Wetterverwandlung.
+    weather.core({
+        ...baseState,
+        transformation,
+        revision: 2,
+    });
+
+    assert.equal(weather.robin.speech(), comment);
+
+    // Eine Herzberührung hat Vorrang vor dem Wetterkommentar.
+    weather.core({
+        ...baseState,
+        transformation,
+        mood: 'happy',
+        expression: 'happy',
+        revision: 3,
+    });
+
+    assert.equal(
+        weather.robin.speech(),
+        'Das tut gut. Schön, dass du da bist. ♡',
+    );
+
+    // Nach Ende der Verwandlung erscheint wieder normaler Text.
+    weather.core({
+        ...baseState,
+        timeMs: 18000,
+        revision: 4,
+    });
+
+    assert.equal(
+        weather.robin.speech(),
+        'Was entdecken wir als Nächstes?',
+    );
+
+    weather.destroy();
+}
+
+console.log(
+    'Weather comments, interaction priority and return to normal passed.',
+);
