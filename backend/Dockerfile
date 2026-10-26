@@ -1,12 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
-WORKDIR /src
-COPY global.json ./
-COPY src/PinkRobin.Api/PinkRobin.Api.csproj src/PinkRobin.Api/
+RUN apk add --no-cache cmake build-base
+WORKDIR /src/backend
+COPY backend/global.json ./
+COPY backend/NativeCore.targets ./
+COPY backend/src/PinkRobin.Api/PinkRobin.Api.csproj src/PinkRobin.Api/
 RUN dotnet restore src/PinkRobin.Api/PinkRobin.Api.csproj
-COPY src/ src/
+COPY backend/src/ src/
+COPY core/ /src/core/
 RUN dotnet publish src/PinkRobin.Api/PinkRobin.Api.csproj -c Release --no-restore -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+RUN apk add --no-cache libstdc++
 WORKDIR /app
 ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/sabrinahelfenberger-Wusel/PinkRobin" \

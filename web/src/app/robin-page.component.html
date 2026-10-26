@@ -1,34 +1,148 @@
-  <header><a class="brand" routerLink="/">pink<span>robin.</span></a><a routerLink="/">Zur Projektseite <span aria-hidden="true">↗</span></a></header>
-  <main>
-    <section class="introduction">
-      <p class="eyebrow">Die erste Begegnung</p>
-      <h1>Hallo, Welt.<br>Ich bin <span>Robin.</span></h1>
-      <p class="description">Ein kleiner Begleiter mit einer grossen Portion Neugier. Mein Abenteuer beginnt hier. Mit dir.</p>
-      <button id="restart" (click)="robin.greet()" type="button">Robin nochmal begrüssen <span aria-hidden="true">↗</span></button>
-      <p class="note">Noch ganz am Anfang. Schon voller Persönlichkeit.</p>
-      <div class="backend-status" role="status" aria-live="polite"
-        [class.connected]="backend.connection() === 'connected'">
+<header>
+  <a class="brand" routerLink="/">pink<span>robin.</span></a
+  ><a routerLink="/">Zur Projektseite <span aria-hidden="true">↗</span></a>
+</header>
+<main>
+  <section class="introduction">
+    <p class="eyebrow">Die erste Begegnung</p>
+    <h1>Hallo, Welt.<br />Ich bin <span>Robin.</span></h1>
+    <p class="description">
+      Ein kleiner Begleiter mit einer grossen Portion Neugier. Mein Abenteuer
+      beginnt hier. Mit dir.
+    </p>
+    <button id="restart" (click)="robin.greet()" type="button">
+      Robin nochmal begrüssen <span aria-hidden="true">↗</span>
+    </button>
+    <p class="note">Noch ganz am Anfang. Schon voller Persönlichkeit.</p>
+    <p class="note" role="status">
+      @switch (robin.session.connection()) {
+        @case ("checking") {
+          Verbindung zu deinem Robin wird hergestellt …
+        }
+        @case ("connected") {
+          Dein Robin wird vom Core gesteuert.
+        }
+        @case ("local") {
+          Lokale Demo – die Verbindung zum Core ist unterbrochen oder nicht
+          verfügbar.
+        }
+      }
+    </p>
+    @if (robin.session.connection() === "local") {
+      <button type="button" (click)="robin.reconnect()">
+        Verbindung erneut versuchen
+      </button>
+    }
+    <div role="status" aria-live="polite">
+      <div
+        class="backend-status"
+        [class.connected]="
+          robin.session.connection() === 'connected' ||
+          backend.connection() === 'connected'
+        "
+      >
         <span class="connection-dot" aria-hidden="true"></span>
         <div>
-          @switch (backend.connection()) {
-            @case ('checking') { <span>Backend-Verbindung wird geprüft …</span> }
-            @case ('connected') {
-              <span>Backend verbunden</span>
-              <small>{{ backend.status()?.core?.connected ? 'Core verbunden' : 'Core noch nicht angebunden' }}</small>
-            }
-            @case ('unreachable') {
-              <span>Backend nicht erreichbar</span>
-              <small>Robin lässt sich weiterhin als Demo ausprobieren.</small>
-            }
-            @case ('incompatible') {
-              <span>Backend-Antwort nicht kompatibel</span>
-              <small>Robin lässt sich weiterhin als Demo ausprobieren.</small>
+          @if (robin.session.connection() === "connected") {
+            <span>Backend verbunden</span>
+          } @else {
+            @switch (backend.connection()) {
+              @case ("checking") {
+                <span>Backend-Verbindung wird geprüft …</span>
+              }
+              @case ("connected") {
+                <span>Backend verbunden</span>
+              }
+              @case ("unreachable") {
+                <span>Backend nicht erreichbar</span>
+              }
+              @case ("incompatible") {
+                <span>Backend-Antwort nicht kompatibel</span>
+              }
             }
           }
         </div>
       </div>
-    </section>
-    <pr-robin #robin />
-
-  </main>
-  <footer><span>Pink Robin · Ein Projekt von Sabrina Helfenberger</span><span>Ein kleiner Anfang. Eine grosse Idee.</span></footer>
+      <div
+        class="backend-status core-status"
+        [class.connected]="robin.session.connection() === 'connected'"
+      >
+        <span class="connection-dot" aria-hidden="true"></span>
+        <div>
+          @switch (robin.session.connection()) {
+            @case ("checking") {
+              <span>Core-Verbindung wird geprüft …</span>
+            }
+            @case ("connected") {
+              <span>Core verbunden</span>
+            }
+            @case ("local") {
+              <span>Core-Sitzung nicht verbunden</span>
+            }
+          }
+        </div>
+      </div>
+    </div>
+    <div class="weather-panel">
+      <form
+        (submit)="
+          $event.preventDefault(); weather.selectPostalCode(postalCode.value)
+        "
+      >
+        <label for="weather-postal-code">Wetter an deinem Ort</label>
+        <div class="weather-location">
+          <input
+            #postalCode
+            id="weather-postal-code"
+            name="postalCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="postal-code"
+            pattern="[0-9]{4}"
+            maxlength="4"
+            placeholder="Schweizer PLZ"
+            required
+            aria-describedby="weather-message"
+          />
+          <button type="submit">Wetter laden</button>
+        </div>
+      </form>
+      <div id="weather-message" role="status" aria-live="polite">
+        @if (weather.error()) {
+          <p>{{ weather.error() }}</p>
+        }
+        @if (weather.weather(); as forecast) {
+          <p>
+            PLZ {{ forecast.postalCode }} ·
+            {{ forecast.temperatureC | number: "1.0-1" }} °C
+          </p>
+          <p>
+            Niederschlag {{ forecast.precipitationMm | number: "1.0-1" }} mm/h ·
+            Wind {{ forecast.windSpeedKmh | number: "1.0-1" }} km/h · Böen
+            {{ forecast.windGustKmh | number: "1.0-1" }} km/h
+          </p>
+          <small>
+            Stundenprognose ·
+            {{
+              forecast.source === "Test"
+                ? "Künstliche Testdaten"
+                : "Quelle: MeteoSchweiz"
+            }}
+          </small>
+        } @else if (weather.state() === "loading") {
+          <p>Wetter wird geladen …</p>
+        } @else {
+          <p>
+            Für diesen Ort sind gerade keine Wetterdaten verfügbar. Bitte später
+            erneut versuchen oder eine andere PLZ wählen.
+          </p>
+        }
+      </div>
+    </div>
+  </section>
+  <pr-robin #robin />
+</main>
+<footer>
+  <span>Pink Robin · Ein Projekt von Sabrina Helfenberger</span
+  ><span>Ein kleiner Anfang. Eine grosse Idee.</span>
+</footer>

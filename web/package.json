@@ -1,11 +1,11 @@
 {
   "name": "pinkrobin-web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "test": "node tests/robin-lifecycle.cjs && node tests/backend-status.cjs"
+    "test": "node tests/robin-lifecycle.cjs && node tests/backend-status.cjs && node tests/robin-session.cjs && node tests/weather.cjs"
   },
   "dependencies": {
     "@angular/common": "^20.3.0",

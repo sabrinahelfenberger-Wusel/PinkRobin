@@ -12,6 +12,10 @@ const compiled = ts.transpileModule(source, {
 function fixture(reduce = false) {
   let clock = 0, nextId = 0, destroy, render, listener;
   const timers = new Map();
+  const effects = [], sent = [];
+  let coreState = null, connection = 'local';
+  const session = { connection: () => connection, state: () => coreState,
+    connect: async () => {}, send: event => sent.push(event) };
   const media = {
     matches: reduce,
     addEventListener: (_event, fn) => { listener = fn; },
@@ -20,7 +24,8 @@ function fixture(reduce = false) {
   const angular = {
     Component: () => target => target,
     DestroyRef: {},
-    inject: () => ({ onDestroy: fn => { destroy = fn; } }),
+    effect: fn => effects.push(fn),
+    inject: token => token === angular.DestroyRef ? ({ onDestroy: fn => { destroy = fn; } }) : session,
     afterNextRender: fn => { render = fn; },
     computed: read => read,
     signal: value => {
@@ -30,7 +35,7 @@ function fixture(reduce = false) {
     },
   };
   const context = {
-    exports: {}, require: name => { assert.equal(name, '@angular/core'); return angular; },
+    exports: {}, require: name => name === '@angular/core' ? angular : { RobinSessionService: {} },
     window: { matchMedia: () => media }, document: { hidden: false },
     setTimeout: (fn, delay) => { const id = ++nextId; timers.set(id, { fn, due: clock + delay }); return id; },
     clearTimeout: id => timers.delete(id),
@@ -39,7 +44,8 @@ function fixture(reduce = false) {
   const robin = new context.exports.RobinComponent();
   render();
   return {
-    robin, timers,
+    robin, timers, sent,
+    core(state) { coreState = state; connection = state ? 'connected' : 'local'; effects.forEach(fn => fn()); },
     tick(ms) {
       const end = clock + ms;
       while (true) {
@@ -179,3 +185,100 @@ pet.robin.startPetting();
 pet.destroy();
 assert.equal(pet.timers.size, 0);
 console.log('Petting, exact five-second heart eyes, early release, interruption and cleanup passed.');
+
+const online = fixture(true);
+online.core({ mode: 'awake', mood: 'curious', headContact: false, revision: 1 });
+online.robin.startPetting();
+assert.equal(online.robin.mood(), 'curious'); // No optimistic local state decision.
+online.robin.stopPetting(); // Release before the server acknowledges the press.
+assert.deepEqual(online.sent, ['headStarted', 'headEnded']);
+online.core({ mode: 'awake', mood: 'happy', headContact: true, revision: 2 });
+assert.equal(online.robin.mood(), 'happy');
+online.tick(5000);
+assert.equal(online.robin.mood(), 'happy'); // Only the Core may decide the threshold.
+online.core({ mode: 'awake', mood: 'affectionate', headContact: true, revision: 3 });
+assert.equal(online.robin.mood(), 'affectionate');
+online.core({ mode: 'awake', mood: 'curious', headContact: false, revision: 4 });
+online.robin.touchHeart();
+assert.equal(online.sent.at(-1), 'heartTouched');
+online.core({ mode: 'awake', mood: 'happy', headContact: false, revision: 5 });
+online.tick(6000);
+assert.equal(online.robin.mood(), 'happy');
+online.robin.greet();
+assert.equal(online.sent.at(-1), 'restart');
+online.core(null);
+assert.equal(online.robin.mood(), 'curious');
+online.destroy();
+console.log('Server-owned expressions, early release and local fallback passed.');
+
+const rapid = fixture(true);
+rapid.core({ mode: 'awake', mood: 'happy', headContact: true, revision: 1 });
+// A new press must be accepted even while an older release is awaiting acknowledgement.
+rapid.robin.startPetting();
+rapid.robin.stopPetting();
+rapid.robin.startPetting();
+assert.deepEqual(rapid.sent, ['headStarted', 'headEnded', 'headStarted']);
+rapid.destroy();
+console.log('Rapid release and renewed press before acknowledgement passed.');
+
+for (const [transformation, comment] of [
+    ['raincoat', 'Gut, dass ich meinen Regenmantel dabei habe!'],
+    ['octopus', 'Bei dem Wetter Verwandle ich mich besser in einen Tintenfisch!'],
+]) {
+    const weather = fixture(true);
+
+    const baseState = {
+        mode: 'awake',
+        mood: 'curious',
+        expression: 'curious',
+        headContact: false,
+        transformation: 'none',
+        timeMs: 8000,
+        revision: 1,
+        sequence: 0,
+    };
+
+    // Zunächst einen normalen Zustand übernehmen.
+    weather.core(baseState);
+
+    // Der Core startet die Wetterverwandlung.
+    weather.core({
+        ...baseState,
+        transformation,
+        revision: 2,
+    });
+
+    assert.equal(weather.robin.speech(), comment);
+
+    // Eine Herzberührung hat Vorrang vor dem Wetterkommentar.
+    weather.core({
+        ...baseState,
+        transformation,
+        mood: 'happy',
+        expression: 'happy',
+        revision: 3,
+    });
+
+    assert.equal(
+        weather.robin.speech(),
+        'Das tut gut. Schön, dass du da bist. ♡',
+    );
+
+    // Nach Ende der Verwandlung erscheint wieder normaler Text.
+    weather.core({
+        ...baseState,
+        timeMs: 18000,
+        revision: 4,
+    });
+
+    assert.equal(
+        weather.robin.speech(),
+        'Was entdecken wir als Nächstes?',
+    );
+
+    weather.destroy();
+}
+
+console.log(
+    'Weather comments, interaction priority and return to normal passed.',
+);

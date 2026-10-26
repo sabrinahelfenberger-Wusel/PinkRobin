@@ -7,6 +7,7 @@ import urllib.request
 parser = argparse.ArgumentParser()
 parser.add_argument('base', nargs='?', default='http://127.0.0.1:5080')
 parser.add_argument('--development', action='store_true')
+parser.add_argument('--without-core', action='store_true')
 args = parser.parse_args()
 
 
@@ -25,13 +26,19 @@ code, headers, body = request('/health/live')
 assert code == 200 and json.loads(body)['status'] == 'alive'
 assert headers['Cache-Control'] == 'no-store'
 code, _, body = request('/health/ready')
-assert code == 503 and json.loads(body)['title'] == 'Core not connected'
+if args.without_core:
+    assert code == 503 and json.loads(body)['title'] == 'Core not connected'
+else:
+    assert code == 200 and json.loads(body)['status'] == 'ready'
 code, _, body = request('/api/v1/status')
 status = json.loads(body)
 assert code == 200 and status['service'] == 'PinkRobin.Api'
 assert status['apiVersion'] == '1.0' and status['stage'] == 'preparation'
-assert status['core'] == {'connected': False, 'implementation': 'not-connected'}
-assert not any(status[key] for key in ('sessionsAvailable', 'commandsAvailable', 'realtimeAvailable'))
+assert status['core'] == ({'connected': False, 'implementation': 'not-connected'} if args.without_core
+    else {'connected': True, 'implementation': 'native-cabi-v1'})
+assert status['sessionsAvailable'] == (not args.without_core)
+assert status['commandsAvailable'] == (not args.without_core)
+assert status['realtimeAvailable'] is False
 assert request('/api/v1/status', method='POST')[0] == 405
 assert request('/api/v1/commands')[0] == 404
 assert request('/hubs/robin/negotiate', method='POST')[0] == 404

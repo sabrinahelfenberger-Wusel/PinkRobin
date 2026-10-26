@@ -1,0 +1,32 @@
+<Project>
+  <PropertyGroup>
+    <RobinCoreSource>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../core'))</RobinCoreSource>
+    <RobinCoreBuild>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/obj/native/$(Configuration)'))</RobinCoreBuild>
+    <RobinCoreStage>$(RobinCoreBuild)/installed</RobinCoreStage>
+    <RobinCoreFile Condition="$([MSBuild]::IsOSPlatform('Windows'))">pinkrobin_core.dll</RobinCoreFile>
+    <RobinCoreFile Condition="$([MSBuild]::IsOSPlatform('OSX'))">libpinkrobin_core.dylib</RobinCoreFile>
+    <RobinCoreFile Condition="'$(RobinCoreFile)' == ''">libpinkrobin_core.so</RobinCoreFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(RobinCoreStage)/$(RobinCoreFile)" Link="$(RobinCoreFile)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="BuildRobinCore" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <RobinCMake Condition="'$(RobinCMake)' == '' And Exists('$(VSInstallDir)Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe')">$(VSInstallDir)Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe</RobinCMake>
+      <RobinVSWhere>$(MSBuildProgramFiles32)/Microsoft Visual Studio/Installer/vswhere.exe</RobinVSWhere>
+    </PropertyGroup>
+    <Exec Condition="'$(RobinCMake)' == '' And $([MSBuild]::IsOSPlatform('Windows')) And Exists('$(RobinVSWhere)')"
+          Command="&quot;$(RobinVSWhere)&quot; -latest -products * -requires Microsoft.VisualStudio.Component.VC.CMake.Project -find Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe"
+          ConsoleToMSBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="RobinCMake" />
+    </Exec>
+    <PropertyGroup>
+      <RobinCMake Condition="'$(RobinCMake)' == ''">cmake</RobinCMake>
+    </PropertyGroup>
+    <Message Importance="high" Text="Robin Core: CMake = $(RobinCMake)" />
+    <Exec Command="&quot;$(RobinCMake)&quot; -S &quot;$(RobinCoreSource)&quot; -B &quot;$(RobinCoreBuild)&quot; -DBUILD_TESTING=OFF -DROBIN_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=$(Configuration)" />
+    <Exec Command="&quot;$(RobinCMake)&quot; --build &quot;$(RobinCoreBuild)&quot; --config $(Configuration) --target pinkrobin_core" />
+    <Exec Command="&quot;$(RobinCMake)&quot; --install &quot;$(RobinCoreBuild)&quot; --config $(Configuration) --prefix &quot;$(RobinCoreStage)&quot;" />
+  </Target>
+</Project>

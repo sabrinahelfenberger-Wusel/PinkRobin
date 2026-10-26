@@ -6,7 +6,19 @@
 
 Begleitroboter mit Embedded-Software, gemeinsamem C++-Verhaltenskern und Angular-Weboberfläche.
 
-**Stand:** Konzept und Verzeichnisgerüst. VirtualRobin zeigt erste Stimmungen und Berührungsreaktionen; Core und Backend folgen
+**Stand:** Angular-Demo und ASP.NET-Core-Status-API laufen. Der portable C++-Core ist an das Backend angebunden; Angular steuert Berührungen über getrennte Backend-Sitzungen und zeigt Core-Zustände an.
+
+## In Visual Studio starten
+
+1. [PinkRobin.slnx](PinkRobin.slnx) im Repository-Hauptverzeichnis öffnen.
+2. Falls nötig, **PinkRobin.Api** als Startprojekt festlegen.
+3. Neben dem grünen Startknopf **PinkRobin Demo** wählen und **F5** drücken.
+
+Damit starten Backend und Angular gemeinsam. Der native C++-Core wird automatisch
+mitgebaut und vom Backend geladen. Voraussetzungen und Details:
+[Entwicklungsstart](backend/README.md#in-visual-studio-mit-dem-grünen-startknopf).
+Die Datei `PinkRobin.code-workspace` ist für Visual Studio Code bestimmt; das
+Öffnen des Repository-Ordners als CMake-Projekt startet nur die separate Core-Demo.
 
 ## Projektstruktur
 
@@ -30,17 +42,17 @@ Pink Robin soll Emotionen und Zustände nicht nur sprachlich, sondern auch visue
 
 ## Architektur und Umsetzung
 
-Der portable C++-Core läuft auf dem Roboter lokal und für Virtual Robin nativ auf dem Server hinter ASP.NET Core. Angular stellt den Simulator dar und kommuniziert über HTTPS sowie den vorgesehenen SignalR-Echtzeitkanal. Bibliothek oder eigener C++-Prozess bleibt als Backend-Anbindung offen. Der Websimulator benötigt eine Serververbindung; der physische Grundbetrieb bleibt offline verfügbar.
+Der portable C++-Core läuft auf dem Roboter lokal und für Virtual Robin nativ auf dem Server hinter ASP.NET Core. Angular stellt den Simulator dar und kommuniziert über HTTPS sowie den vorgesehenen SignalR-Echtzeitkanal. Das Backend lädt den Core als native Bibliothek über dessen C-Schnittstelle. Der Websimulator benötigt eine Serververbindung; der physische Grundbetrieb bleibt offline verfügbar.
 
-Die statische Startseite ist bereits unter https://pinkrobin.wanderwusel.ch über einen NGINX-Container und Synology-Reverse-Proxy mit HTTPS erreichbar. Angular, Backend, Core und Pipeline sind noch nicht implementiert.
+Die Angular-Weboberfläche ist unter https://pinkrobin.wanderwusel.ch über einen NGINX-Container und Synology-Reverse-Proxy mit HTTPS erreichbar. Backend, Core und Build-Pipeline sind implementiert; neue Backend-Versionen werden separat auf der NAS installiert.
 
-Als nächste Architekturphase sind ein kleiner C++-Core, getrennte Backend-Sitzungen und deren Verbindung zum Angular-Gesicht mit Berührungsreaktion und Nickauftrag vorgesehen. Details: [Technologiekonzept](docs/Technologiekonzept.md).
+Getrennte Backend-Sitzungen verbinden Berührungen mit dem Angular-Gesicht. Weitere Bewegungen und ein Nickauftrag sind als nächste Erweiterungen vorgesehen. Details: [Technologiekonzept](docs/Technologiekonzept.md).
 
 ## Repository und CI/CD
 
-PinkRobin ist die zentrale Entwicklungsbasis; Ziel ist ein privates Repository. Der tatsächliche Sichtbarkeitsstatus muss separat in GitHub eingestellt werden. Der Core bleibt privat. Ein weiteres öffentliches Repository erhält nur ausdrücklich freigegebene Inhalte; es wird nicht automatisch aus main gespiegelt.
+PinkRobin ist aktuell ein öffentliches Repository. Der erste C++-Core im Anfangsstadium ist ausdrücklich zur Veröffentlichung freigegeben (16. Oktober 2026). Die frühere Vorgabe eines privaten Cores ist für diesen frühen Stand aufgehoben; dies ist keine pauschale Freigabe späterer vertraulicher Bestandteile. Ein weiteres öffentliches Repository wird nicht automatisch aus main gespiegelt.
 
-CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionierte Frontend-/Backend-Releases bereitstellen. Die Synology soll freigegebene Releases mit begrenzten Leserechten abholen. Webseitenbereitstellung und öffentliche Quellcode-Freigabe sind getrennte Abläufe.
+GitHub Actions prüft dev und main, baut und veröffentlicht auf main versionierte Frontend-/Backend-Images. Die Synology holt Frontend-Releases automatisch ab; Backend-Releases werden zunächst manuell installiert. Webseitenbereitstellung und öffentliche Quellcode-Freigabe sind getrennte Abläufe.
 
 ## Dokumentation
 
@@ -57,4 +69,11 @@ CI/CD ist im PinkRobin-Repository auf main geplant: prüfen, bauen und versionie
 
 Ein ausführbares ASP.NET-Core-Grundgerüst mit Status-API, Gesundheitsprüfungen,
 Core-Schnittstelle und eigenem CI-/Docker-Test ist unter [backend/](backend/)
-vorbereitet. Die native Core-Anbindung und NAS-Auslieferung folgen separat.
+vorbereitet. Die native Core-Anbindung ist implementiert; die neue Version muss separat auf der NAS ausgeliefert werden.
+
+## Erster nativer Core
+
+Unter [core/](core/) ist der erste portable C++17-Verhaltenskern implementiert:
+Aufwachen, Herzreaktion und Kopfstreicheln mit Herzaugen. CMake, Tests und eine
+versionierte C-Schnittstelle bilden die Grundlage der C#-Anbindung. Das Backend
+lädt den Core nativ; Angular verwendet ihn über die Sitzungs-API; ohne Backend steht eine gekennzeichnete lokale Demo bereit.

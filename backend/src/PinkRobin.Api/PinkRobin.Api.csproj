@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <SpaRoot>../../../web/</SpaRoot>
     <SpaProxyServerUrl>http://localhost:4200</SpaProxyServerUrl>
     <SpaProxyRedirectUrl>http://localhost:4200/#/virtual-robin</SpaProxyRedirectUrl>
@@ -26,4 +26,5 @@
     <Message Importance="high" Text="Angular-Abhängigkeiten werden einmalig installiert ..." />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" />
   </Target>
+  <Import Project="../../NativeCore.targets" />
 </Project>

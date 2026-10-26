@@ -46,8 +46,10 @@ curl --fail --show-error http://127.0.0.1:5080/api/v1/status
 ```
 
 Erwartet: Container Up (healthy), `/health/live` liefert `{"status":"alive"}` und
-Status liefert `core.connected=false`. `/health/ready` bleibt absichtlich 503,
-solange der C++-Core nicht verbunden ist. Die Docker-Gesundheitsprüfung verwendet
+Status liefert `core.connected=true` und `implementation="native-cabi-v1"`.
+`curl --fail http://127.0.0.1:5080/health/ready` muss 200 mit `{"status":"ready"}` liefern.
+Bei 503 die Backend-Logs auf Lade-, Architektur- oder ABI-Fehler prüfen.
+Der C++-Core wird im Backend-Image mitgeliefert; kein eigener Container ist nötig. Die Docker-Gesundheitsprüfung verwendet
 Liveness, nicht diesen Readiness-Endpunkt.
 
 ## 3. Neustartregel erst nach erfolgreichem Test

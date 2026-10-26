@@ -1,0 +1,30 @@
+name: Core CI
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure
+        run: cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build core/build --config Release
+      - name: Test behavior and C ABI
+        run: ctest --test-dir core/build -C Release --output-on-failure
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Debug -DROBIN_ENABLE_SANITIZERS=ON
+      - run: cmake --build core/build
+      - run: ctest --test-dir core/build --output-on-failure

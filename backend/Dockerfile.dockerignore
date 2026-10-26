@@ -1,0 +1,10 @@
+**
+!backend/
+!backend/**
+!core/
+!core/**
+**/bin/
+**/obj/
+core/build/
+core/out/
+**/.vs/
