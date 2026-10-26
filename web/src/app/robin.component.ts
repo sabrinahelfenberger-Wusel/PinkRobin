@@ -129,7 +129,23 @@ export class RobinComponent {
                 ? "Hallo, ich bin Robin! Schön, dass du da bist. ♡"
                 : "Was entdecken wir als Nächstes?",
     );
-    if (state.mode === "awake") this.coreGreeting = false;
+    if (
+      state.mode === "awake" &&
+      state.mood === "curious" &&
+      !state.headContact
+    ) {
+      switch (state.transformation) {
+        case "raincoat":
+          this.speech.set("Gut, dass ich meinen Regenmantel dabei habe!");
+          break;
+
+        case "octopus":
+          this.speech.set(
+            "Bei dem Wetter Verwandle ich mich besser in einen Tintenfisch!",
+          );
+          break;
+      }
+    }
     if (mood !== "sleeping") this.blink();
     if (mood === "waking" && !this.reducedMotion?.matches) {
       this.later(() => this.look.set("left"), 1300);
