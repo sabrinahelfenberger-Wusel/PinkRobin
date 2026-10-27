@@ -196,7 +196,20 @@ namespace pinkrobin {
     Result Core::post_weather(
         const WeatherUpdated& message) noexcept {
 
-        const auto& forecast = message.forecast;
+        const auto result =
+            validate_weather(message.forecast, now_);
+
+        if (result != Result::ok) {
+            return result;
+        }
+
+        pending_weather_ = message;
+        return Result::ok;
+    }
+
+    Result Core::validate_weather(
+        const WeatherForecast& forecast,
+        std::uint64_t now_ms) noexcept {
 
         if (!std::isfinite(forecast.temperature_c) ||
             !std::isfinite(forecast.precipitation_mm) ||
@@ -209,17 +222,55 @@ namespace pinkrobin {
             forecast.wind_speed_kmh < 0 ||
             forecast.wind_gust_kmh < 0 ||
             forecast.valid_from_ms >= forecast.valid_until_ms ||
-            forecast.valid_until_ms <= now_) {
+            forecast.valid_until_ms <= now_ms) {
             return Result::invalid_argument;
         }
-
-        pending_weather_ = message;
 
         return Result::ok;
     }
 
     std::optional<WeatherForecast> Core::weather() const noexcept {
         return weather_;
+    }
+
+    Result Core::receive(
+        const Message& message,
+        std::uint64_t now_ms) noexcept {
+
+        switch (message.metadata.source) {
+        case InputSource::web:
+        case InputSource::companion:
+        case InputSource::device:
+            break;
+
+        default:
+            return Result::invalid_argument;
+        }
+
+        if (now_ms < now_) {
+            return Result::time_reversed;
+        }
+
+        if (const auto* interaction = std::get_if<InteractionReceived>(&message.payload)) {
+            return dispatch(interaction->event, now_ms);
+        }
+
+        if (const auto* weather =
+            std::get_if<WeatherUpdated>(&message.payload)) {
+
+            const auto result =
+                validate_weather(weather->forecast, now_ms);
+
+            if (result != Result::ok) {
+                return result;
+            }
+
+            pending_weather_ = *weather;
+
+            return advance_to(now_ms);
+        }
+
+        return Result::invalid_argument;
     }
 
     void Core::process_weather_reaction() noexcept {
