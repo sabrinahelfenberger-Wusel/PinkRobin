@@ -41,6 +41,9 @@ typedef struct robin_core_handle robin_core_handle;
 #define ROBIN_TRANSFORMATION_NONE 0u
 #define ROBIN_TRANSFORMATION_OCTOPUS 1u
 #define ROBIN_TRANSFORMATION_RAINCOAT 2u
+#define ROBIN_INPUT_SOURCE_WEB 0u
+#define ROBIN_INPUT_SOURCE_COMPANION 1u
+#define ROBIN_INPUT_SOURCE_DEVICE 2u
 
 typedef struct robin_snapshot_v1 {
     uint32_t abi_version;
@@ -81,6 +84,12 @@ ROBIN_API uint32_t ROBIN_CALL robin_core_start_transformation(
 ROBIN_API uint32_t ROBIN_CALL robin_core_get_transformation(
     const robin_core_handle* handle,
     uint32_t* output);
+ROBIN_API uint32_t ROBIN_CALL robin_core_receive_weather(
+    robin_core_handle* handle,
+    const robin_weather_v1* weather,
+    uint32_t weather_size,
+    uint32_t source,
+    uint64_t now_ms);
 
 #ifdef __cplusplus
 }

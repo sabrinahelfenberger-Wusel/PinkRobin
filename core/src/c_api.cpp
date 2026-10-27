@@ -114,4 +114,36 @@ extern "C" {
                 message,
                 handle->core.snapshot().time_ms));
     }
+
+    uint32_t ROBIN_CALL robin_core_receive_weather(
+        robin_core_handle* handle,
+        const robin_weather_v1* weather,
+        uint32_t weather_size,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle || !weather ||
+            weather_size != sizeof(robin_weather_v1)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::WeatherForecast forecast{
+            weather->temperature_c,
+            weather->precipitation_mm,
+            weather->wind_speed_kmh,
+            weather->wind_gust_kmh,
+            weather->valid_from_ms,
+            weather->valid_until_ms
+        };
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::WeatherUpdated{ forecast }
+        };
+
+        return static_cast<uint32_t>(
+            handle->core.receive(message, now_ms));
+    }
 }

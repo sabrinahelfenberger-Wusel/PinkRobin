@@ -125,7 +125,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                 return false;
             }
 
-            session.Core.PostWeather(forecast);
+            session.Core.PostWeather(forecast, CoreInputSource.Web, currentState.TimeMs);
 
             return true;
         }

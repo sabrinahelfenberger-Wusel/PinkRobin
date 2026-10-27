@@ -90,20 +90,26 @@ using (var weatherCore = new NativeRobinCore())
         ValidUntilMs: 18000);
 
     // Gültige Nachricht wird angenommen.
-    weatherCore.PostWeather(forecast);
+    weatherCore.PostWeather(forecast, CoreInputSource.Web,0);
+
+    Throws<ArgumentException>(() =>
+        weatherCore.PostWeather(
+            forecast,
+            (CoreInputSource)999,
+            0));
 
     // Negativer Niederschlag wird vom Core abgewiesen.
     var invalid = forecast with { PrecipitationMm = -1.0 };
 
     Throws<ArgumentException>(() =>
-        weatherCore.PostWeather(invalid));
+        weatherCore.PostWeather(invalid, CoreInputSource.Web, 0));
 
     // Zeit bis zum Ende der Gültigkeit fortschalten.
     weatherCore.AdvanceTo(18000);
 
     // Dieselbe Prognose ist jetzt abgelaufen.
     Throws<ArgumentException>(() =>
-        weatherCore.PostWeather(forecast));
+        weatherCore.PostWeather(forecast, CoreInputSource.Web, 18000));
 }
 
 Console.WriteLine(
