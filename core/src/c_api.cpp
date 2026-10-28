@@ -47,6 +47,29 @@ extern "C" {
             handle->core.receive(message, now_ms));
     }
 
+    uint32_t ROBIN_CALL robin_core_receive_interaction(
+        robin_core_handle* handle,
+        uint32_t event,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        return static_cast<uint32_t>(
+            handle->core.receive(message, now_ms));
+    }
+
     uint32_t ROBIN_CALL robin_core_get_snapshot(const robin_core_handle* handle,
         robin_snapshot_v1* output, uint32_t output_size) {
         if (!handle || !output || output_size != sizeof(robin_snapshot_v1)) return ROBIN_INVALID_ARGUMENT;

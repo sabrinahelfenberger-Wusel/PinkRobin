@@ -141,9 +141,17 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             session.LastSeen = elapsed;
             var now = (ulong)elapsed.TotalMilliseconds + session.Offset;
             // A lost connection must not leave Robin being stroked indefinitely.
-            if (session.Core.GetSnapshot().HeadContact && elapsed - session.LastContact > TimeSpan.FromSeconds(2))
-                session.Core.Dispatch(RobinEvent.HeadEnded, now);
+            if (session.Core.GetSnapshot().HeadContact &&
+                elapsed - session.LastContact > TimeSpan.FromSeconds(2))
+            {
+                session.Core.Dispatch(
+                    RobinEvent.HeadEnded,
+                    CoreInputSource.Backend,
+                    now);
+            }
+
             session.Core.AdvanceTo(now);
+
             if (command is not null)
             {
                 if (command.Sequence == session.Sequence && command.Event == session.LastEvent)
@@ -162,7 +170,10 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                 var second = (long)elapsed.TotalSeconds;
                 if (second != session.CommandSecond) { session.CommandSecond = second; session.Commands = 0; }
                 if (++session.Commands > 30) throw new SessionFailure(429, "Too many commands");
-                session.Core.Dispatch(input, now);
+                session.Core.Dispatch(
+                    input,
+                    CoreInputSource.Backend,
+                    now);
                 if (input == RobinEvent.Restart && session.Reduced)
                 {
                     session.Offset += 7100;
@@ -209,7 +220,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                 sessions.Remove(pair.Key);
             }
             else if (pair.Value.Core.GetSnapshot().HeadContact && elapsed - pair.Value.LastContact > TimeSpan.FromSeconds(2))
-                pair.Value.Core.Dispatch(RobinEvent.HeadEnded, (ulong)elapsed.TotalMilliseconds + pair.Value.Offset);
+                pair.Value.Core.Dispatch(RobinEvent.HeadEnded, CoreInputSource.Web, (ulong)elapsed.TotalMilliseconds + pair.Value.Offset);
         }
     }
     public void Dispose()

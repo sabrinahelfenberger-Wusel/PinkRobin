@@ -17,7 +17,8 @@ namespace pinkrobin {
     enum class InputSource : std::uint32_t {
         web = 0,
         companion = 1,
-        device = 2
+        device = 2,
+        backend = 3
     };
 
     struct MessageMetadata {

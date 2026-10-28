@@ -9,6 +9,7 @@ namespace pinkrobin {
         case InputSource::web:
         case InputSource::companion:
         case InputSource::device:
+        case InputSource::backend:
             break;
 
         default:

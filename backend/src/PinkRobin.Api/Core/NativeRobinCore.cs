@@ -55,12 +55,21 @@ public sealed class NativeRobinCore : IDisposable
         }
     }
 
-    public RobinSnapshot Dispatch(RobinEvent input, ulong nowMs)
+    public RobinSnapshot Dispatch(
+        RobinEvent input,
+        CoreInputSource source,
+        ulong nowMs)
     {
         lock (sync)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            Check(NativeMethods.Dispatch(handle, (uint)input, nowMs));
+
+            Check(NativeMethods.ReceiveInteraction(
+                handle,
+                (uint)input,
+                (uint)source,
+                nowMs));
+
             return ReadSnapshot();
         }
     }
@@ -227,6 +236,16 @@ internal static class NativeMethods
         CoreHandle handle,
         in NativeWeather weather,
         uint weatherSize,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_interaction",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveInteraction(
+        CoreHandle handle,
+        uint eventValue,
         uint source,
         ulong nowMs);
 
