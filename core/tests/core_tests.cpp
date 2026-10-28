@@ -102,6 +102,33 @@ void test_isolation_and_clock_limits() {
     CHECK(near_end.advance_to(0) == Result::time_reversed);
 }
 
+void test_robin_state_access() {
+    Core core;
+
+    CHECK(core.state().mode == Mode::sleeping);
+    CHECK(core.state().mood == Mood::curious);
+    CHECK(core.state().expression == Expression::sleeping);
+    CHECK(!core.state().head_contact);
+    CHECK(core.state().transformation == Transformation::none);
+
+    CHECK(
+        core.dispatch(Event::heart_touched, 100)
+        == Result::ok
+    );
+
+    CHECK(core.state().mode == Mode::awake);
+    CHECK(core.state().mood == Mood::happy);
+    CHECK(core.state().expression == Expression::happy);
+
+    const auto snapshot = core.snapshot();
+
+    CHECK(snapshot.mode == core.state().mode);
+    CHECK(snapshot.mood == core.state().mood);
+    CHECK(snapshot.expression == core.state().expression);
+    CHECK(snapshot.head_contact == core.state().head_contact);
+    CHECK(snapshot.transformation == core.state().transformation);
+}
+
 } // namespace
 
 int main() {
@@ -111,5 +138,6 @@ int main() {
         {"core: head_contact", test_head_contact},
         {"core: restart_and_invalid_input", test_restart_and_invalid_input},
         {"core: isolation_and_clock_limits", test_isolation_and_clock_limits},
+        {"core: robin_state_access", test_robin_state_access},
     });
 }

@@ -2,10 +2,10 @@
 
 namespace pinkrobin {
     void Core::curious() noexcept {
-        mode_ = Mode::awake;
-        mood_ = Mood::curious;
-        expression_ = Expression::curious;
-        head_contact_ = false;
+        state_.mode = Mode::awake;
+        state_.mood = Mood::curious;
+        state_.expression = Expression::curious;
+        state_.head_contact = false;
         heart_pending_ = false;
         ++revision_;
     }
@@ -34,21 +34,21 @@ namespace pinkrobin {
         
         switch (event) {
         case Event::restart:
-            mode_ = Mode::sleeping;
-            mood_ = Mood::curious;
-            expression_ = Expression::sleeping;
-            head_contact_ = false;
+            state_.mode = Mode::sleeping;
+            state_.mood = Mood::curious;
+            state_.expression = Expression::sleeping;
+            state_.head_contact = false;
             heart_pending_ = false;
             greeting_started_ = now_;
-            transformation_ = Transformation::none;
+            state_.transformation = Transformation::none;
             ++revision_;
             break;
 
         case Event::heart_touched:
-            mode_ = Mode::awake;
-            mood_ = Mood::happy;
-            expression_ = Expression::happy;
-            head_contact_ = false;
+            state_.mode = Mode::awake;
+            state_.mood = Mood::happy;
+            state_.expression = Expression::happy;
+            state_.head_contact = false;
             heart_pending_ = true;
             interaction_started_ = now_;
             ++revision_;
@@ -56,14 +56,14 @@ namespace pinkrobin {
 
         case Event::head_started:
             // Wiederholte Eingaben verschieben die Zeitgrenze nicht.
-            if (head_contact_) {
+            if (state_.head_contact) {
                 break;
             }
 
-            mode_ = Mode::awake;
-            mood_ = Mood::happy;
-            expression_ = Expression::happy;
-            head_contact_ = true;
+            state_.mode = Mode::awake;
+            state_.mood = Mood::happy;
+            state_.expression = Expression::happy;
+            state_.head_contact = true;
             heart_pending_ = false;
             interaction_started_ = now_;
             ++revision_;
@@ -71,7 +71,7 @@ namespace pinkrobin {
 
         case Event::head_ended:
         case Event::interaction_cancelled:
-            if (head_contact_) {
+            if (state_.head_contact) {
                 curious();
             }
             break;

@@ -104,7 +104,7 @@ namespace pinkrobin {
         }
 
         // Robin ist bereit: Verwandlung tatsächlich starten.
-        transformation_ = pending_transformation_;
+        state_.transformation = pending_transformation_;
         transformation_started_ = now_;
         weather_reaction_started_ = now_;
 
