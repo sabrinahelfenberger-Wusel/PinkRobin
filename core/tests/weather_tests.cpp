@@ -1,4 +1,5 @@
 #include "pinkrobin/core.hpp"
+#include "pinkrobin/weather_behavior.hpp"
 #include "test_support.hpp"
 #include <cstdint>
 
@@ -144,7 +145,6 @@ void test_busy_retry() {
 
     CHECK(waiting_weather.advance_to(8000) == Result::ok);
 
-    // Robin wird gerade gestreichelt.
     CHECK(waiting_weather.dispatch(
         Event::head_started, 8000) == Result::ok);
 
@@ -156,24 +156,29 @@ void test_busy_retry() {
     CHECK(waiting_weather.post_weather(
         WeatherUpdated{ waiting_forecast }) == Result::ok);
 
-    // Beschäftigt: kein Start. Nächster Versuch frühestens bei 18000.
+    // Während des Streichelns startet keine Verwandlung.
     CHECK(waiting_weather.advance_to(8000) == Result::ok);
+    CHECK(waiting_weather.advance_to(8999) == Result::ok);
     CHECK(waiting_weather.snapshot().transformation ==
         Transformation::none);
 
-    // Streicheln endet bereits nach einer Sekunde.
     CHECK(waiting_weather.dispatch(
         Event::head_ended, 9000) == Result::ok);
 
-    // Obwohl Robin bereit ist, bleibt die Wartezeit bestehen.
-    CHECK(waiting_weather.advance_to(17999) == Result::ok);
-    CHECK(waiting_weather.snapshot().transformation ==
-        Transformation::none);
-
-    // Genau zehn Sekunden nach der Ablehnung startet Octopus.
-    CHECK(waiting_weather.advance_to(18000) == Result::ok);
+    // Beim nächsten Verarbeiten ist Robin frei:
+    // keine zusätzliche Zehn-Sekunden-Wartezeit.
+    CHECK(waiting_weather.advance_to(9000) == Result::ok);
     CHECK(waiting_weather.snapshot().transformation ==
         Transformation::octopus);
+
+    // Die Verwandlung dauert weiterhin zehn Sekunden.
+    CHECK(waiting_weather.advance_to(18999) == Result::ok);
+    CHECK(waiting_weather.snapshot().transformation ==
+        Transformation::octopus);
+
+    CHECK(waiting_weather.advance_to(19000) == Result::ok);
+    CHECK(waiting_weather.snapshot().transformation ==
+        Transformation::none);
 }
 
 void test_expiry_while_waiting() {
@@ -260,6 +265,38 @@ void test_raincoat() {
         Transformation::raincoat);
 }
 
+void test_weather_behavior_proposals() {
+    WeatherBehavior behavior;
+    WorldModel world;
+
+    CHECK(behavior.propose(world) == Transformation::none);
+
+    WeatherObservation observation{
+        WeatherForecast{
+            15.0, 0.49, 10.0, 60.0,
+            0, 60000
+        },
+        InputSource::companion,
+        0
+    };
+
+    world.update_weather(observation);
+    CHECK(behavior.propose(world) == Transformation::none);
+
+    observation.forecast.precipitation_mm = 0.5;
+    world.update_weather(observation);
+    CHECK(behavior.propose(world) == Transformation::raincoat);
+
+    observation.forecast.precipitation_mm = 10.0;
+    observation.forecast.wind_gust_kmh = 59.0;
+    world.update_weather(observation);
+    CHECK(behavior.propose(world) == Transformation::raincoat);
+
+    observation.forecast.wind_gust_kmh = 60.0;
+    world.update_weather(observation);
+    CHECK(behavior.propose(world) == Transformation::octopus);
+}
+
 } // namespace
 
 int main() {
@@ -272,5 +309,6 @@ int main() {
         {"weather: expiry_while_waiting", test_expiry_while_waiting},
         {"weather: changed_forecast_cancels_reaction", test_changed_forecast_cancels_reaction},
         {"weather: raincoat", test_raincoat},
+        {"weather: behavior_proposals", test_weather_behavior_proposals},
     });
 }

@@ -52,64 +52,27 @@ namespace pinkrobin {
     }
 
     Transformation Core::choose_weather_transformation() const noexcept {
-        const auto forecast = weather();
-
-        if (!forecast) {
-            return Transformation::none;
-        }
-
-        if (forecast->precipitation_mm >= 10.0 &&
-            forecast->wind_gust_kmh >= 60.0) {
-            return Transformation::octopus;
-        }
-
-        if (forecast->precipitation_mm >= 0.5) {
-            return Transformation::raincoat;
-        }
-
-        return Transformation::none;
+        return weather_behavior_.propose(world_);
     }
 
     void Core::process_weather_reaction() noexcept {
         const auto proposed = choose_weather_transformation();
 
-        // Kein passendes Wetter mehr: Vormerkung verwerfen.
         if (proposed == Transformation::none) {
-            pending_transformation_ = Transformation::none;
-            weather_retry_started_.reset();
             return;
         }
 
-        // Ein neuer Vorschlag darf sofort geprüft werden.
-        if (pending_transformation_ != proposed) {
-            pending_transformation_ = proposed;
-            weather_retry_started_.reset();
-        }
-
-        // Nach einem tatsächlichen Start: 30 Minuten Pause.
-        if (weather_reaction_started_ &&
-            now_ - *weather_reaction_started_ < 1800000) {
+        if (!behavior_controller_.can_start_weather_reaction(
+            state_,
+            now_)) {
             return;
         }
 
-        // Nach einer Ablehnung: zehn Sekunden warten.
-        if (weather_retry_started_ &&
-            now_ - *weather_retry_started_ < 10000) {
-            return;
-        }
-
-        if (!can_start_transformation()) {
-            weather_retry_started_ = now_;
-            return;
-        }
-
-        // Robin ist bereit: Verwandlung tatsächlich starten.
-        state_.transformation = pending_transformation_;
+        state_.transformation = proposed;
         transformation_started_ = now_;
-        weather_reaction_started_ = now_;
 
-        pending_transformation_ = Transformation::none;
-        weather_retry_started_.reset();
+        behavior_controller_.mark_weather_reaction_started(now_);
+
         ++revision_;
     }
 

@@ -7,6 +7,8 @@
 #include "pinkrobin/message.hpp"
 #include "pinkrobin/world_model.hpp"
 #include "pinkrobin/robin_state.hpp"
+#include "pinkrobin/weather_behavior.hpp"
+#include "pinkrobin/behavior_controller.hpp"
 
 namespace pinkrobin {
     enum class Result : std::uint32_t { ok = 0, invalid_argument = 1, time_reversed = 2, busy = 3 };
@@ -54,9 +56,6 @@ namespace pinkrobin {
         bool can_start_transformation() const noexcept;
         Transformation choose_weather_transformation() const noexcept;
 
-        Transformation pending_transformation_{ Transformation::none };
-        std::optional<std::uint64_t> weather_retry_started_;
-        std::optional<std::uint64_t> weather_reaction_started_;
         void process_weather_reaction() noexcept;
         
         static Result validate_weather(
@@ -93,5 +92,7 @@ namespace pinkrobin {
 
         WorldModel world_;
         RobinState state_;
+        WeatherBehavior weather_behavior_;
+        BehaviorController behavior_controller_;
     };
 }
