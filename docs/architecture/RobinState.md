@@ -8,7 +8,9 @@ RobinState bündelt die aktuellen Zustandswerte einer Core-Instanz.
 | --- | --- |
 | WorldModel | Umweltwissen, zunächst Wetter samt Herkunft und Gültigkeit |
 | RobinState | Schlafmodus, Stimmung, Ausdruck, Kopfkontakt und aktive Verwandlung |
-| Core | Nachrichtenverarbeitung, Zustandsübergänge, Zeitregeln und Verhaltensentscheidung |
+| WeatherBehavior | Vorschlag einer Wetterverwandlung |
+| BehaviorController | Freigabe und Wetter-Cooldown |
+| Core | Nachrichtenverarbeitung, Zustandsübergänge und Ausführung |
 
 Das WorldModel beschreibt, was Robin über seine Umgebung weiss.
 RobinState beschreibt, wie es Robin gerade geht und was er darstellt.
@@ -45,16 +47,23 @@ Zustandsvertrag.
 
 ## Ablaufregeln
 
-Zeitmarken, wartende Reaktionen, Wiederprüfungen, Cooldowns und
-Revision bleiben vorerst im Core.
+Core-Zeit, Verwandlungsdauer und Revision bleiben im Core.
+Der BehaviorController verwaltet die Verwandlungsfreigabe und
+den Wiederholungsschutz für spontane Wetteraktionen.
+
+Ein Wettervorschlag wird bei der Verarbeitung neu ermittelt.
+Es gibt weder eine separate wartende Outfit-Absicht noch eine
+feste Zehn-Sekunden-Wiederprüfungsfrist.
+
+Die Aufteilung ist in [Verhalten.md](Verhalten.md) beschrieben.
 
 RobinState besitzt keine eigene Uhr und führt keine Aktionen aus.
 Die Zusammenführung verändert keine bestehenden Verhaltensregeln.
 
 ## Spätere Erweiterungen
 
-Persönlichkeit, Gesprächszustand und Verhaltenskoordination werden
-in eigenen Schritten ergänzt.
+Persönlichkeit, Gesprächszustand und eine allgemeine Koordination
+mehrerer Aktionsarten werden in eigenen Schritten ergänzt.
 
 ## Prüfung
 
