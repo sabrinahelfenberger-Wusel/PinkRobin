@@ -37,23 +37,23 @@ namespace pinkrobin {
         world_.expire_weather(now_);
 
         // Subtraktion vermeidet Überläufe am Ende des Zeitbereichs.
-        if (mode_ == Mode::sleeping &&
+        if (state_.mode == Mode::sleeping &&
             now_ - greeting_started_ >= 4000) {
-            mode_ = Mode::waking;
-            expression_ = Expression::curious;
+            state_.mode = Mode::waking;
+            state_.expression = Expression::curious;
             ++revision_;
         }
 
-        if (mode_ == Mode::waking &&
+        if (state_.mode == Mode::waking &&
             now_ - greeting_started_ >= 7100) {
             curious();
         }
 
-        if (head_contact_ &&
+        if (state_.head_contact &&
             mood_ != Mood::affectionate &&
             now_ - interaction_started_ >= 5000) {
             mood_ = Mood::affectionate;
-            expression_ = Expression::heart_eyes;
+            state_.expression = Expression::heart_eyes;
             ++revision_;
         }
 
@@ -63,9 +63,9 @@ namespace pinkrobin {
         }
 
         // Aktive Verwandlung nach zehn Sekunden beenden.
-        if (transformation_ != Transformation::none &&
+        if (state_.transformation != Transformation::none &&
             now_ - transformation_started_ >= 10000) {
-            transformation_ = Transformation::none;
+            state_.transformation = Transformation::none;
             ++revision_;
         }
 
@@ -104,10 +104,10 @@ namespace pinkrobin {
     }
 
     bool Core::can_start_transformation() const noexcept {
-        return mode_ == Mode::awake &&
+        return state_.mode == Mode::awake &&
             mood_ == Mood::curious &&
-            !head_contact_ &&
-            transformation_ == Transformation::none;
+            !state_.head_contact &&
+            state_.transformation == Transformation::none;
     }
 
     Result Core::start_transformation(
@@ -129,7 +129,7 @@ namespace pinkrobin {
             return Result::busy;
         }
 
-        transformation_ = transformation;
+        state_.transformation = transformation;
         transformation_started_ = now_;
         ++revision_;
 
@@ -138,13 +138,13 @@ namespace pinkrobin {
 
     Snapshot Core::snapshot() const noexcept {
         return {
-            mode_,
+            state_.mode,
             mood_,
-            expression_,
-            head_contact_,
+            state_.expression,
+            state_.head_contact,
             now_,
             revision_,
-            transformation_
+            state_.transformation
         };
     }
 

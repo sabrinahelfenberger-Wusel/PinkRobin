@@ -6,17 +6,10 @@
 #include <cstddef>
 #include "pinkrobin/message.hpp"
 #include "pinkrobin/world_model.hpp"
+#include "pinkrobin/robin_state.hpp"
 
 namespace pinkrobin {
-    enum class Mode : std::uint32_t { sleeping = 0, waking = 1, awake = 2 };
-    enum class Mood : std::uint32_t { curious = 0, happy = 1, affectionate = 2 };
-    enum class Expression : std::uint32_t { sleeping = 0, curious = 1, happy = 2, heart_eyes = 3 };
     enum class Result : std::uint32_t { ok = 0, invalid_argument = 1, time_reversed = 2, busy = 3 };
-    enum class Transformation : std::uint32_t { 
-        none = 0, 
-        octopus = 1,
-        raincoat = 2
-    };
 
     struct Snapshot {
         Mode mode;
@@ -47,10 +40,7 @@ namespace pinkrobin {
 
     private:
         void curious() noexcept;
-        Mode mode_{Mode::sleeping};
         Mood mood_{Mood::curious};
-        Expression expression_{Expression::sleeping};
-        bool head_contact_{false};
         bool heart_pending_{false};
         std::uint64_t now_;
         std::uint64_t greeting_started_;
@@ -73,7 +63,6 @@ namespace pinkrobin {
             const WeatherForecast& forecast,
             std::uint64_t now_ms) noexcept;
 
-        Transformation transformation_{ Transformation::none };
         std::uint64_t transformation_started_{ 0 };
 
         struct PendingInteraction {
@@ -103,5 +92,6 @@ namespace pinkrobin {
         Result advance_state_to(std::uint64_t now_ms) noexcept;
 
         WorldModel world_;
+        RobinState state_;
     };
 }
