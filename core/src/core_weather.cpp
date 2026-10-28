@@ -56,19 +56,37 @@ namespace pinkrobin {
     }
 
     void Core::process_weather_reaction() noexcept {
-        const auto proposed = choose_weather_transformation();
+        const auto transformation = choose_weather_transformation();
 
-        if (proposed == Transformation::none) {
+        if (transformation == Transformation::none) {
+            return;
+        }
+
+        const ActionProposal proposal{
+            TransformationAction{ transformation }
+        };
+
+        const auto occupied =
+            state_.transformation == Transformation::none
+            ? ActionResource::none
+            : ActionResource::outfit;
+
+        if (!behavior_controller_.can_start_action(
+            proposal,
+            state_,
+            occupied)) {
             return;
         }
 
         if (!behavior_controller_.can_start_weather_reaction(
+            proposal,
             state_,
+            occupied,
             now_)) {
             return;
         }
 
-        state_.transformation = proposed;
+        state_.transformation = transformation;
         transformation_started_ = now_;
 
         behavior_controller_.mark_weather_reaction_started(now_);
