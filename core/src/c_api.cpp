@@ -125,17 +125,9 @@ extern "C" {
             weather->valid_until_ms
         };
 
-        const pinkrobin::Message message{
-            pinkrobin::MessageMetadata{
-                pinkrobin::InputSource::web
-            },
-            pinkrobin::WeatherUpdated{ forecast }
-        };
-
         return static_cast<uint32_t>(
-            handle->core.receive(
-                message,
-                handle->core.snapshot().time_ms));
+            handle->core.post_weather(
+                pinkrobin::WeatherUpdated{ forecast }));
     }
 
     uint32_t ROBIN_CALL robin_core_receive_weather(
