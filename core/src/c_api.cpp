@@ -19,6 +19,42 @@ static_assert(
 static_assert(sizeof(robin_snapshot_v1) == 40, "ABI v1 snapshot must occupy 40 bytes");
 static_assert(offsetof(robin_snapshot_v1, time_ms) == 24, "ABI v1 clock offset mismatch");
 
+uint32_t acceptance_to_api_result(
+    pinkrobin::MessageAcceptance acceptance) noexcept {
+
+    switch (acceptance) {
+    case pinkrobin::MessageAcceptance::accepted:
+    case pinkrobin::MessageAcceptance::replaced:
+        return ROBIN_OK;
+
+    case pinkrobin::MessageAcceptance::invalid_argument:
+        return ROBIN_INVALID_ARGUMENT;
+
+    case pinkrobin::MessageAcceptance::time_reversed:
+        return ROBIN_TIME_REVERSED;
+
+    case pinkrobin::MessageAcceptance::full:
+        return ROBIN_QUEUE_FULL;
+    }
+
+    return ROBIN_INVALID_ARGUMENT;
+}
+
+uint32_t receive_and_advance(
+    pinkrobin::Core& core,
+    const pinkrobin::Message& message,
+    uint64_t now_ms) noexcept {
+
+    const auto acceptance = core.receive(message, now_ms);
+    const auto result = acceptance_to_api_result(acceptance);
+
+    if (result != ROBIN_OK) {
+        return result;
+    }
+
+    return static_cast<uint32_t>(
+        core.advance_to(now_ms));
+}
 
 extern "C" {
     uint32_t ROBIN_CALL robin_core_abi_version(void) { return ROBIN_ABI_VERSION; }
@@ -43,8 +79,10 @@ extern "C" {
             }
         };
 
-        return static_cast<uint32_t>(
-            handle->core.receive(message, now_ms));
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
     }
 
     uint32_t ROBIN_CALL robin_core_receive_interaction(
@@ -66,8 +104,10 @@ extern "C" {
             }
         };
 
-        return static_cast<uint32_t>(
-            handle->core.receive(message, now_ms));
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
     }
 
     uint32_t ROBIN_CALL robin_core_get_snapshot(const robin_core_handle* handle,
@@ -158,7 +198,34 @@ extern "C" {
             pinkrobin::WeatherUpdated{ forecast }
         };
 
-        return static_cast<uint32_t>(
-            handle->core.receive(message, now_ms));
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
+    }
+
+    uint32_t ROBIN_CALL robin_core_post_interaction(
+        robin_core_handle* handle,
+        uint32_t event,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        const auto acceptance =
+            handle->core.receive(message, now_ms);
+
+        return acceptance_to_api_result(acceptance);
     }
 }

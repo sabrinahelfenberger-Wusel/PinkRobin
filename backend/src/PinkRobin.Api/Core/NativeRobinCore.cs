@@ -64,13 +64,43 @@ public sealed class NativeRobinCore : IDisposable
         {
             ObjectDisposedException.ThrowIf(disposed, this);
 
-            Check(NativeMethods.ReceiveInteraction(
+            var result = NativeMethods.ReceiveInteraction(
+                handle,
+                (uint)input,
+                (uint)source,
+                nowMs);
+
+            if (result == 4)
+            {
+                AdvanceTo(nowMs);
+
+                result = NativeMethods.ReceiveInteraction(
+                    handle,
+                    (uint)input,
+                    (uint)source,
+                    nowMs);
+            }
+
+            Check(result);
+
+            return ReadSnapshot();
+        }
+    }
+
+    public void PostInteraction(
+        RobinEvent input,
+        CoreInputSource source,
+        ulong nowMs)
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            Check(NativeMethods.PostInteraction(
                 handle,
                 (uint)input,
                 (uint)source,
                 nowMs));
-
-            return ReadSnapshot();
         }
     }
 
@@ -155,9 +185,20 @@ public sealed class NativeRobinCore : IDisposable
 
     private static void Check(uint result)
     {
-        if (result == 1) throw new ArgumentException("Invalid Core argument or event.");
-        if (result == 2) throw new ArgumentOutOfRangeException("nowMs", "Core time must not move backwards.");
-        if (result != 0) throw new InvalidOperationException($"Unknown Core result: {result}.");
+        if (result == 1)
+            throw new ArgumentException("Invalid Core argument or event.");
+
+        if (result == 2)
+            throw new ArgumentOutOfRangeException(
+                "nowMs",
+                "Core time must not move backwards.");
+
+        if (result == 4)
+            throw new CoreMessageQueueFullException();
+
+        if (result != 0)
+            throw new InvalidOperationException(
+                $"Unknown Core result: {result}.");
     }
 
     public void Dispose()
@@ -244,6 +285,16 @@ internal static class NativeMethods
         EntryPoint = "robin_core_receive_interaction",
         CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint ReceiveInteraction(
+        CoreHandle handle,
+        uint eventValue,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_post_interaction",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint PostInteraction(
         CoreHandle handle,
         uint eventValue,
         uint source,

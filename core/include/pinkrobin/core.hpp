@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <optional>
 #include <cmath>
+#include <array>
+#include <cstddef>
 #include "pinkrobin/message.hpp"
 
 namespace pinkrobin {
@@ -34,7 +36,9 @@ namespace pinkrobin {
         Result dispatch(Event event, std::uint64_t now_ms) noexcept;
         Result start_transformation(Transformation transformation, std::uint64_t now_ms) noexcept;
         Result post_weather(const WeatherUpdated& message) noexcept;
-        Result receive(const Message& message, std::uint64_t now_ms) noexcept;
+        
+        MessageAcceptance receive(const Message& message, std::uint64_t now_ms) noexcept;
+        
         std::optional<WeatherForecast> weather() const noexcept;
         Snapshot snapshot() const noexcept;
 
@@ -51,7 +55,10 @@ namespace pinkrobin {
         std::uint64_t revision_{0};
 
         std::optional<WeatherUpdated> pending_weather_;
+        std::uint64_t pending_weather_received_at_ms_{ 0 };
+
         std::optional<WeatherForecast> weather_;
+
         bool can_start_transformation() const noexcept;
         Transformation choose_weather_transformation() const noexcept;
 
@@ -59,12 +66,38 @@ namespace pinkrobin {
         std::optional<std::uint64_t> weather_retry_started_;
         std::optional<std::uint64_t> weather_reaction_started_;
         void process_weather_reaction() noexcept;
-
+        
         static Result validate_weather(
             const WeatherForecast& forecast,
             std::uint64_t now_ms) noexcept;
 
         Transformation transformation_{ Transformation::none };
         std::uint64_t transformation_started_{ 0 };
+
+        struct PendingInteraction {
+            MessageMetadata metadata;
+            InteractionReceived interaction;
+            std::uint64_t received_at_ms;
+        };
+
+        static constexpr std::size_t interaction_capacity = 8;
+
+        std::array<PendingInteraction, interaction_capacity>
+            pending_interactions_{};
+
+        std::size_t interaction_head_{ 0 };
+        std::size_t interaction_count_{ 0 };
+
+        MessageAcceptance enqueue_interaction(
+            const MessageMetadata& metadata,
+            const InteractionReceived& interaction,
+            std::uint64_t received_at_ms) noexcept;
+
+        std::optional<PendingInteraction> dequeue_interaction(
+            std::uint64_t now_ms) noexcept;
+
+        void apply_interaction(Event event) noexcept;
+        std::uint64_t last_message_received_at_ms_{ 0 };
+        Result advance_state_to(std::uint64_t now_ms) noexcept;
     };
 }

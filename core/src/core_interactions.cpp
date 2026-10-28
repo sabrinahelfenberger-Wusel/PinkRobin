@@ -25,6 +25,13 @@ namespace pinkrobin {
             return result;
         }
 
+        apply_interaction(event);
+
+        return Result::ok;
+    }
+
+    void Core::apply_interaction(Event event) noexcept {
+        
         switch (event) {
         case Event::restart:
             mode_ = Mode::sleeping;
@@ -69,8 +76,6 @@ namespace pinkrobin {
             }
             break;
         }
-
-        return Result::ok;
     }
 
 }

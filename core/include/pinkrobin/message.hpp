@@ -21,6 +21,14 @@ namespace pinkrobin {
         backend = 3
     };
 
+    enum class MessageAcceptance : std::uint32_t {
+        accepted = 0,
+        replaced = 1,
+        invalid_argument = 2,
+        time_reversed = 3,
+        full = 4
+    };
+
     struct MessageMetadata {
         InputSource source;
     };

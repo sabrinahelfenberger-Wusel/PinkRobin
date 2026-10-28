@@ -214,6 +214,45 @@ using (var weatherSessions = new PinkRobin.Api.Sessions.RobinSessions(
 Console.WriteLine(
     "Session weather, UTC conversion, isolation and expiry passed.");
 
+using (var queuedCore = new NativeRobinCore())
+{
+    for (ulong time = 1; time <= 8; ++time)
+    {
+        queuedCore.PostInteraction(
+            RobinEvent.HeadStarted,
+            CoreInputSource.Web,
+            time);
+    }
+
+    // Einreihen allein verändert den sichtbaren Zustand nicht.
+    Require(
+        queuedCore.GetSnapshot() is
+            { TimeMs: 0, HeadContact: false },
+        "Queued interactions must not execute immediately");
+
+    // Der neunte Eintrag passt nicht mehr hinein.
+    Throws<CoreMessageQueueFullException>(() =>
+        queuedCore.PostInteraction(
+            RobinEvent.HeadEnded,
+            CoreInputSource.Web,
+            9));
+
+    // Dispatch muss den vollen Puffer verarbeiten und
+    // das zunächst abgelehnte Loslassen erneut übergeben.
+    var released = queuedCore.Dispatch(
+        RobinEvent.HeadEnded,
+        CoreInputSource.Web,
+        9);
+
+    Require(
+        released is { TimeMs: 9, HeadContact: false } &&
+        released.Expression == RobinExpression.Curious,
+        "Dispatch must drain the full queue and retry head release");
+}
+
+Console.WriteLine(
+    "Interaction queue capacity and dispatch retry passed.");
+
 sealed class ManualClock : TimeProvider
 {
     private long ticks;
