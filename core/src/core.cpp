@@ -50,9 +50,9 @@ namespace pinkrobin {
         }
 
         if (state_.head_contact &&
-            mood_ != Mood::affectionate &&
+            state_.mood != Mood::affectionate &&
             now_ - interaction_started_ >= 5000) {
-            mood_ = Mood::affectionate;
+            state_.mood = Mood::affectionate;
             state_.expression = Expression::heart_eyes;
             ++revision_;
         }
@@ -105,7 +105,7 @@ namespace pinkrobin {
 
     bool Core::can_start_transformation() const noexcept {
         return state_.mode == Mode::awake &&
-            mood_ == Mood::curious &&
+            state_.mood == Mood::curious &&
             !state_.head_contact &&
             state_.transformation == Transformation::none;
     }
@@ -139,7 +139,7 @@ namespace pinkrobin {
     Snapshot Core::snapshot() const noexcept {
         return {
             state_.mode,
-            mood_,
+            state_.mood,
             state_.expression,
             state_.head_contact,
             now_,
@@ -150,6 +150,10 @@ namespace pinkrobin {
 
     const WorldModel& Core::world() const noexcept {
         return world_;
+    }
+
+    const RobinState& Core::state() const noexcept {
+        return state_;
     }
 
 }

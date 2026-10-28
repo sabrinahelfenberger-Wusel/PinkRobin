@@ -3,7 +3,7 @@
 namespace pinkrobin {
     void Core::curious() noexcept {
         state_.mode = Mode::awake;
-        mood_ = Mood::curious;
+        state_.mood = Mood::curious;
         state_.expression = Expression::curious;
         state_.head_contact = false;
         heart_pending_ = false;
@@ -35,7 +35,7 @@ namespace pinkrobin {
         switch (event) {
         case Event::restart:
             state_.mode = Mode::sleeping;
-            mood_ = Mood::curious;
+            state_.mood = Mood::curious;
             state_.expression = Expression::sleeping;
             state_.head_contact = false;
             heart_pending_ = false;
@@ -46,7 +46,7 @@ namespace pinkrobin {
 
         case Event::heart_touched:
             state_.mode = Mode::awake;
-            mood_ = Mood::happy;
+            state_.mood = Mood::happy;
             state_.expression = Expression::happy;
             state_.head_contact = false;
             heart_pending_ = true;
@@ -61,7 +61,7 @@ namespace pinkrobin {
             }
 
             state_.mode = Mode::awake;
-            mood_ = Mood::happy;
+            state_.mood = Mood::happy;
             state_.expression = Expression::happy;
             state_.head_contact = true;
             heart_pending_ = false;

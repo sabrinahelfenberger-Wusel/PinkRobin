@@ -37,10 +37,10 @@ namespace pinkrobin {
         Snapshot snapshot() const noexcept;
 
         const WorldModel& world() const noexcept;
+        const RobinState& state() const noexcept;
 
     private:
         void curious() noexcept;
-        Mood mood_{Mood::curious};
         bool heart_pending_{false};
         std::uint64_t now_;
         std::uint64_t greeting_started_;
