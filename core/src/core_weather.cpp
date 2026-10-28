@@ -35,26 +35,35 @@ namespace pinkrobin {
         }
 
         pending_weather_ = message;
+        pending_weather_source_ = InputSource::backend;
         pending_weather_received_at_ms_ = now_;
 
         return Result::ok;
     }
 
     std::optional<WeatherForecast> Core::weather() const noexcept {
-        return weather_;
+        const auto observation = world_.weather();
+
+        if (!observation) {
+            return std::nullopt;
+        }
+
+        return observation->forecast;
     }
 
     Transformation Core::choose_weather_transformation() const noexcept {
-        if (!weather_) {
+        const auto forecast = weather();
+
+        if (!forecast) {
             return Transformation::none;
         }
 
-        if (weather_->precipitation_mm >= 10.0 &&
-            weather_->wind_gust_kmh >= 60.0) {
+        if (forecast->precipitation_mm >= 10.0 &&
+            forecast->wind_gust_kmh >= 60.0) {
             return Transformation::octopus;
         }
 
-        if (weather_->precipitation_mm >= 0.5) {
+        if (forecast->precipitation_mm >= 0.5) {
             return Transformation::raincoat;
         }
 
