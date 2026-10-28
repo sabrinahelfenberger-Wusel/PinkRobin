@@ -345,7 +345,17 @@ int main() {
             InteractionReceived{ Event::heart_touched }
         };
 
-        CHECK(message_core.receive(heart_message, 100) == Result::ok);
+        CHECK(
+            message_core.receive(heart_message, 100)
+            == MessageAcceptance::accepted
+        );
+
+        // Angenommen, aber noch nicht ausgeführt.
+        CHECK(message_core.snapshot().time_ms == 0);
+        CHECK(message_core.snapshot().mode == Mode::sleeping);
+
+        CHECK(message_core.advance_to(100) == Result::ok);
+
         CHECK(message_core.snapshot().time_ms == 100);
         CHECK(message_core.snapshot().mood == Mood::happy);
         CHECK(message_core.snapshot().expression == Expression::happy);
@@ -361,7 +371,7 @@ int main() {
 
         CHECK(
             message_core.receive(invalid_source_message, 200)
-            == Result::invalid_argument
+            == MessageAcceptance::invalid_argument
         );
 
         const auto after_invalid_source = message_core.snapshot();
@@ -388,7 +398,7 @@ int main() {
 
         CHECK(
             expired_message_core.receive(expired_weather_message, 100)
-            == Result::invalid_argument
+            == MessageAcceptance::invalid_argument
         );
 
         CHECK(expired_message_core.snapshot().time_ms == 0);
@@ -413,8 +423,14 @@ int main() {
 
         CHECK(
             weather_message_core.receive(valid_weather_message, 100)
-            == Result::ok
+            == MessageAcceptance::accepted
         );
+
+        // Wetter wurde nur vorgemerkt.
+        CHECK(weather_message_core.snapshot().time_ms == 0);
+        CHECK(!weather_message_core.weather().has_value());
+
+        CHECK(weather_message_core.advance_to(100) == Result::ok);
 
         CHECK(weather_message_core.snapshot().time_ms == 100);
 
@@ -429,7 +445,7 @@ int main() {
 
         CHECK(
             weather_message_core.receive(valid_weather_message, 99)
-            == Result::time_reversed
+            == MessageAcceptance::time_reversed
         );
 
         CHECK(
@@ -441,6 +457,235 @@ int main() {
             weather_message_core.snapshot().revision
             == before_reversed_time.revision
         );
+
+        Core queued_interactions;
+
+        const Message queued_head_started{
+            MessageMetadata{ InputSource::web },
+            InteractionReceived{ Event::head_started }
+        };
+
+        const Message queued_head_ended{
+            MessageMetadata{ InputSource::web },
+            InteractionReceived{ Event::head_ended }
+        };
+
+        CHECK(
+            queued_interactions.receive(queued_head_started, 100)
+            == MessageAcceptance::accepted
+        );
+
+        CHECK(
+            queued_interactions.receive(queued_head_ended, 6100)
+            == MessageAcceptance::accepted
+        );
+
+        // Beide Ereignisse warten noch.
+        CHECK(queued_interactions.snapshot().time_ms == 0);
+        CHECK(!queued_interactions.snapshot().head_contact);
+
+        // Nur das erste Ereignis ist jetzt fällig.
+        CHECK(queued_interactions.advance_to(100) == Result::ok);
+        CHECK(queued_interactions.snapshot().head_contact);
+
+        // Fünf Sekunden nach Beginn: Herzaugen.
+        CHECK(queued_interactions.advance_to(5100) == Result::ok);
+        CHECK(
+            queued_interactions.snapshot().expression
+            == Expression::heart_eyes
+        );
+
+        // Loslassen verarbeiten.
+        CHECK(queued_interactions.advance_to(6100) == Result::ok);
+        CHECK(!queued_interactions.snapshot().head_contact);
+        CHECK(
+            queued_interactions.snapshot().expression
+            == Expression::curious
+        );
+
+        Core full_queue;
+
+        const Message repeated_head_started{
+            MessageMetadata{ InputSource::web },
+            InteractionReceived{ Event::head_started }
+        };
+
+        const Message release_head{
+            MessageMetadata{ InputSource::web },
+            InteractionReceived{ Event::head_ended }
+        };
+
+        for (std::uint64_t time = 1; time <= 8; ++time) {
+            CHECK(
+                full_queue.receive(repeated_head_started, time)
+                == MessageAcceptance::accepted
+            );
+        }
+
+        CHECK(
+            full_queue.receive(release_head, 9)
+            == MessageAcceptance::full
+        );
+
+        // Annahme allein hat noch nichts ausgeführt.
+        CHECK(full_queue.snapshot().time_ms == 0);
+        CHECK(!full_queue.snapshot().head_contact);
+
+        // Puffer verarbeiten und dadurch Plätze freigeben.
+        CHECK(full_queue.advance_to(8) == Result::ok);
+        CHECK(full_queue.snapshot().head_contact);
+
+        // Das zuvor abgelehnte Loslassen erneut übergeben.
+        CHECK(
+            full_queue.receive(release_head, 9)
+            == MessageAcceptance::accepted
+        );
+
+        CHECK(full_queue.advance_to(9) == Result::ok);
+        CHECK(!full_queue.snapshot().head_contact);
+
+        Core queued_weather;
+
+        const WeatherForecast queued_forecast{
+            15.0, 2.0, 10.0, 20.0,
+            0, 60000
+        };
+
+        const Message initial_weather{
+            MessageMetadata{ InputSource::companion },
+            WeatherUpdated{ queued_forecast }
+        };
+
+        CHECK(
+            queued_weather.receive(initial_weather, 100)
+            == MessageAcceptance::accepted
+        );
+
+        auto invalid_forecast = queued_forecast;
+        invalid_forecast.precipitation_mm = -1.0;
+
+        const Message invalid_replacement{
+            MessageMetadata{ InputSource::companion },
+            WeatherUpdated{ invalid_forecast }
+        };
+
+        CHECK(
+            queued_weather.receive(invalid_replacement, 200)
+            == MessageAcceptance::invalid_argument
+        );
+
+        // Die Ablehnung darf auch den Empfangszeitpunkt nicht verändern.
+        CHECK(queued_weather.advance_to(100) == Result::ok);
+
+        const auto retained_weather = queued_weather.weather();
+
+        CHECK(retained_weather.has_value());
+        CHECK(retained_weather->precipitation_mm == 2.0);
+        CHECK(queued_weather.snapshot().time_ms == 100);
+
+        Core replaced_weather;
+
+        const WeatherForecast older_forecast{
+            15.0, 2.0, 10.0, 20.0,
+            0, 60000
+        };
+
+        auto newer_forecast = older_forecast;
+        newer_forecast.precipitation_mm = 5.0;
+
+        CHECK(
+            replaced_weather.receive(
+                Message{
+                    MessageMetadata{ InputSource::companion },
+                    WeatherUpdated{ older_forecast }
+                },
+                100)
+            == MessageAcceptance::accepted
+        );
+
+        CHECK(
+            replaced_weather.receive(
+                Message{
+                    MessageMetadata{ InputSource::companion },
+                    WeatherUpdated{ newer_forecast }
+                },
+                200)
+            == MessageAcceptance::replaced
+        );
+
+        // Die alte Prognose wurde ersetzt.
+        // Die neue darf vor ihrem Empfangszeitpunkt nicht erscheinen.
+        CHECK(replaced_weather.advance_to(100) == Result::ok);
+        CHECK(!replaced_weather.weather().has_value());
+
+        CHECK(replaced_weather.advance_to(200) == Result::ok);
+
+        const auto newest_weather = replaced_weather.weather();
+
+        CHECK(newest_weather.has_value());
+        CHECK(newest_weather->precipitation_mm == 5.0);
+
+        Core wrapped_queue;
+
+        // Alle acht Plätze belegen.
+        for (std::uint64_t time = 1; time <= 8; ++time) {
+            CHECK(
+                wrapped_queue.receive(queued_head_started, time)
+                == MessageAcceptance::accepted
+            );
+        }
+
+        // Drei Ereignisse entnehmen: Der Lesekopf steht jetzt bei Position 3.
+        CHECK(wrapped_queue.advance_to(3) == Result::ok);
+        CHECK(wrapped_queue.snapshot().head_contact);
+
+        // Die drei freien Plätze am Array-Anfang wieder belegen.
+        for (std::uint64_t time = 9; time <= 11; ++time) {
+            CHECK(
+                wrapped_queue.receive(queued_head_ended, time)
+                == MessageAcceptance::accepted
+            );
+        }
+
+        CHECK(
+            wrapped_queue.receive(queued_head_ended, 12)
+            == MessageAcceptance::full
+        );
+
+        // Die älteren Starts müssen vor den neu eingereihten Enden liegen.
+        CHECK(wrapped_queue.advance_to(8) == Result::ok);
+        CHECK(wrapped_queue.snapshot().head_contact);
+
+        CHECK(wrapped_queue.advance_to(11) == Result::ok);
+        CHECK(!wrapped_queue.snapshot().head_contact);
+
+        Core ordered_messages;
+
+        CHECK(
+            ordered_messages.receive(valid_weather_message, 200)
+            == MessageAcceptance::accepted
+        );
+
+        // Die Core-Zeit steht noch bei 0.
+        // Trotzdem darf nach einer Nachricht für 200 ms keine für 100 ms folgen.
+        CHECK(
+            ordered_messages.receive(queued_head_started, 100)
+            == MessageAcceptance::time_reversed
+        );
+
+        // Gleicher Zeitpunkt ist erlaubt.
+        CHECK(
+            ordered_messages.receive(queued_head_started, 200)
+            == MessageAcceptance::accepted
+        );
+
+        // Die abgelehnte Nachricht darf nicht im Puffer liegen.
+        CHECK(ordered_messages.advance_to(100) == Result::ok);
+        CHECK(!ordered_messages.snapshot().head_contact);
+
+        CHECK(ordered_messages.advance_to(200) == Result::ok);
+        CHECK(ordered_messages.snapshot().head_contact);
+        CHECK(ordered_messages.weather().has_value());
 
         std::cout << "Core behavior, timing boundaries, interruption, isolation and clock validation passed.\n";
         return 0;

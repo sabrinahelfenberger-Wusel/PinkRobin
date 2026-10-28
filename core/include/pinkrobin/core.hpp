@@ -36,7 +36,9 @@ namespace pinkrobin {
         Result dispatch(Event event, std::uint64_t now_ms) noexcept;
         Result start_transformation(Transformation transformation, std::uint64_t now_ms) noexcept;
         Result post_weather(const WeatherUpdated& message) noexcept;
-        Result receive(const Message& message, std::uint64_t now_ms) noexcept;
+        
+        MessageAcceptance receive(const Message& message, std::uint64_t now_ms) noexcept;
+        
         std::optional<WeatherForecast> weather() const noexcept;
         Snapshot snapshot() const noexcept;
 
@@ -95,7 +97,7 @@ namespace pinkrobin {
             std::uint64_t now_ms) noexcept;
 
         void apply_interaction(Event event) noexcept;
-
+        std::uint64_t last_message_received_at_ms_{ 0 };
         Result advance_state_to(std::uint64_t now_ms) noexcept;
     };
 }

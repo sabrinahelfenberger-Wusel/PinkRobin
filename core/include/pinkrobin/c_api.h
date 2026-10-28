@@ -45,6 +45,7 @@ typedef struct robin_core_handle robin_core_handle;
 #define ROBIN_INPUT_SOURCE_COMPANION 1u
 #define ROBIN_INPUT_SOURCE_DEVICE 2u
 #define ROBIN_INPUT_SOURCE_BACKEND 3u
+#define ROBIN_QUEUE_FULL 4u
 
 typedef struct robin_snapshot_v1 {
     uint32_t abi_version;
@@ -98,6 +99,13 @@ ROBIN_API uint32_t ROBIN_CALL robin_core_receive_weather(
     uint32_t weather_size,
     uint32_t source,
     uint64_t now_ms);
+
+ROBIN_API uint32_t ROBIN_CALL robin_core_post_interaction(
+    robin_core_handle* handle,
+    uint32_t event,
+    uint32_t source,
+    uint64_t now_ms);
+
 
 #ifdef __cplusplus
 }

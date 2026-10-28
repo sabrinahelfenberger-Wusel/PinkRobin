@@ -1,7 +1,7 @@
 #include "pinkrobin/core.hpp"
 
 namespace pinkrobin {
-    Result Core::receive(
+    MessageAcceptance Core::receive(
         const Message& message,
         std::uint64_t now_ms) noexcept {
 
@@ -13,34 +13,50 @@ namespace pinkrobin {
             break;
 
         default:
-            return Result::invalid_argument;
+            return MessageAcceptance::invalid_argument;
         }
 
-        if (now_ms < now_) {
-            return Result::time_reversed;
+        if (now_ms < now_ ||
+            now_ms < last_message_received_at_ms_) {
+            return MessageAcceptance::time_reversed;
         }
 
-        if (const auto* interaction = std::get_if<InteractionReceived>(&message.payload)) {
-            return dispatch(interaction->event, now_ms);
+        if (const auto* interaction =
+            std::get_if<InteractionReceived>(&message.payload)) {
+
+            const auto acceptance = enqueue_interaction(
+                message.metadata,
+                *interaction,
+                now_ms);
+
+            if (acceptance == MessageAcceptance::accepted) {
+                last_message_received_at_ms_ = now_ms;
+            }
+
+            return acceptance;
         }
 
         if (const auto* weather =
             std::get_if<WeatherUpdated>(&message.payload)) {
 
-            const auto result =
-                validate_weather(weather->forecast, now_ms);
-
-            if (result != Result::ok) {
-                return result;
+            if (validate_weather(weather->forecast, now_ms)
+                != Result::ok) {
+                return MessageAcceptance::invalid_argument;
             }
+
+            const bool replaces_pending =
+                pending_weather_.has_value();
 
             pending_weather_ = *weather;
             pending_weather_received_at_ms_ = now_ms;
+            last_message_received_at_ms_ = now_ms;
 
-            return advance_to(now_ms);
+            return replaces_pending
+                ? MessageAcceptance::replaced
+                : MessageAcceptance::accepted;
         }
 
-        return Result::invalid_argument;
+        return MessageAcceptance::invalid_argument;
     }
 
     MessageAcceptance Core::enqueue_interaction(
