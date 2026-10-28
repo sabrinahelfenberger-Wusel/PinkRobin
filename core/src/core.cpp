@@ -104,10 +104,7 @@ namespace pinkrobin {
     }
 
     bool Core::can_start_transformation() const noexcept {
-        return state_.mode == Mode::awake &&
-            state_.mood == Mood::curious &&
-            !state_.head_contact &&
-            state_.transformation == Transformation::none;
+        return behavior_controller_.can_start_transformation(state_);
     }
 
     Result Core::start_transformation(

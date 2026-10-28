@@ -10,6 +10,8 @@ add_library(pinkrobin_behavior STATIC
     src/core_interactions.cpp
     src/core_weather.cpp
     src/world_model.cpp
+    src/weather_behavior.cpp
+    src/behavior_controller.cpp
 )
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)

@@ -1,4 +1,5 @@
 #include "pinkrobin/core.hpp"
+#include "pinkrobin/behavior_controller.hpp"
 #include "test_support.hpp"
 #include <cstdint>
 #include <limits>
@@ -129,6 +130,62 @@ void test_robin_state_access() {
     CHECK(snapshot.transformation == core.state().transformation);
 }
 
+void test_behavior_controller_availability() {
+    BehaviorController controller;
+    RobinState state;
+
+    // Schlafend: keine Verwandlung.
+    CHECK(!controller.can_start_transformation(state));
+
+    state.mode = Mode::awake;
+    CHECK(controller.can_start_transformation(state));
+
+    // Freude nach einer Interaktion ist noch aktiv.
+    state.mood = Mood::happy;
+    CHECK(!controller.can_start_transformation(state));
+
+    state.mood = Mood::curious;
+    state.head_contact = true;
+    CHECK(!controller.can_start_transformation(state));
+
+    state.head_contact = false;
+    state.transformation = Transformation::octopus;
+    CHECK(!controller.can_start_transformation(state));
+
+    // Wieder frei.
+    state.transformation = Transformation::none;
+    CHECK(controller.can_start_transformation(state));
+}
+
+void test_behavior_controller_weather_cooldown() {
+    BehaviorController controller;
+    RobinState state;
+    state.mode = Mode::awake;
+
+    CHECK(controller.can_start_weather_reaction(state, 8000));
+
+    // Eine reine Abfrage verbraucht keine Freigabe.
+    CHECK(controller.can_start_weather_reaction(state, 8001));
+
+    controller.mark_weather_reaction_started(8000);
+
+    // Rückwärtszeit darf den Cooldown nicht umgehen.
+    CHECK(!controller.can_start_weather_reaction(state, 7999));
+
+    // Eine Millisekunde vor Ablauf der 30 Minuten.
+    CHECK(!controller.can_start_weather_reaction(state, 1807999));
+
+    // Genau am Ende ist ein neuer Start erlaubt.
+    CHECK(controller.can_start_weather_reaction(state, 1808000));
+
+    // Ein abgelaufener Cooldown macht einen beschäftigten Robin nicht frei.
+    state.head_contact = true;
+    CHECK(!controller.can_start_weather_reaction(state, 1808000));
+
+    state.head_contact = false;
+    CHECK(controller.can_start_weather_reaction(state, 1808000));
+}
+
 } // namespace
 
 int main() {
@@ -139,5 +196,7 @@ int main() {
         {"core: restart_and_invalid_input", test_restart_and_invalid_input},
         {"core: isolation_and_clock_limits", test_isolation_and_clock_limits},
         {"core: robin_state_access", test_robin_state_access},
+        {"core: behavior_controller_availability", test_behavior_controller_availability},
+        {"core: behavior_controller_weather_cooldown", test_behavior_controller_weather_cooldown},
     });
 }
