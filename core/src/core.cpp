@@ -8,7 +8,7 @@ namespace pinkrobin {
         greeting_started_(now_ms),
         interaction_started_(now_ms) {}
 
-    Result Core::advance_to(std::uint64_t now_ms) noexcept {
+    Result Core::advance_state_to(std::uint64_t now_ms) noexcept {
         if (now_ms < now_) {
             return Result::time_reversed;
         }
@@ -16,7 +16,7 @@ namespace pinkrobin {
         now_ = now_ms;
 
         // Vorgemerkte Wetterprognose verarbeiten.
-        if (pending_weather_) {
+        if (pending_weather_ && pending_weather_received_at_ms_ <= now_) {
             const auto& forecast = pending_weather_->forecast;
 
             if (forecast.valid_until_ms <= now_) {
@@ -71,6 +71,34 @@ namespace pinkrobin {
         return Result::ok;
     }
 
+    Result Core::advance_to(std::uint64_t now_ms) noexcept {
+        if (now_ms < now_) {
+            return Result::time_reversed;
+        }
+
+        while (interaction_count_ > 0) {
+            const auto event_time =
+                pending_interactions_[interaction_head_].received_at_ms;
+
+            if (event_time > now_ms) {
+                break;
+            }
+
+            const auto result = advance_state_to(event_time);
+
+            if (result != Result::ok) {
+                return result;
+            }
+
+            const auto pending = dequeue_interaction(event_time);
+
+            if (pending) {
+                apply_interaction(pending->interaction.event);
+            }
+        }
+
+        return advance_state_to(now_ms);
+    }
 
     bool Core::can_start_transformation() const noexcept {
         return mode_ == Mode::awake &&

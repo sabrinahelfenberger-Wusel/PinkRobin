@@ -35,6 +35,8 @@ namespace pinkrobin {
         }
 
         pending_weather_ = message;
+        pending_weather_received_at_ms_ = now_;
+
         return Result::ok;
     }
 
