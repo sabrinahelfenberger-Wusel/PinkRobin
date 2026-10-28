@@ -25,15 +25,51 @@ extern "C" {
     robin_core_handle* ROBIN_CALL robin_core_create(uint64_t now_ms) {
         return new (std::nothrow) robin_core_handle(now_ms);
     }
+
     void ROBIN_CALL robin_core_destroy(robin_core_handle* handle) { delete handle; }
     uint32_t ROBIN_CALL robin_core_advance(robin_core_handle* handle, uint64_t now_ms) {
         if (!handle) return ROBIN_INVALID_ARGUMENT;
         return static_cast<uint32_t>(handle->core.advance_to(now_ms));
     }
+
     uint32_t ROBIN_CALL robin_core_dispatch(robin_core_handle* handle, uint32_t event, uint64_t now_ms) {
         if (!handle) return ROBIN_INVALID_ARGUMENT;
-        return static_cast<uint32_t>(handle->core.dispatch(static_cast<pinkrobin::Event>(event), now_ms));
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                pinkrobin::InputSource::web
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        return static_cast<uint32_t>(
+            handle->core.receive(message, now_ms));
     }
+
+    uint32_t ROBIN_CALL robin_core_receive_interaction(
+        robin_core_handle* handle,
+        uint32_t event,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        return static_cast<uint32_t>(
+            handle->core.receive(message, now_ms));
+    }
+
     uint32_t ROBIN_CALL robin_core_get_snapshot(const robin_core_handle* handle,
         robin_snapshot_v1* output, uint32_t output_size) {
         if (!handle || !output || output_size != sizeof(robin_snapshot_v1)) return ROBIN_INVALID_ARGUMENT;
@@ -56,6 +92,7 @@ extern "C" {
                 static_cast<pinkrobin::Transformation>(transformation),
                 now_ms));
     }
+
     uint32_t ROBIN_CALL robin_core_get_transformation(
         const robin_core_handle* handle,
         uint32_t* output) {
@@ -91,5 +128,37 @@ extern "C" {
         return static_cast<uint32_t>(
             handle->core.post_weather(
                 pinkrobin::WeatherUpdated{ forecast }));
+    }
+
+    uint32_t ROBIN_CALL robin_core_receive_weather(
+        robin_core_handle* handle,
+        const robin_weather_v1* weather,
+        uint32_t weather_size,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle || !weather ||
+            weather_size != sizeof(robin_weather_v1)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::WeatherForecast forecast{
+            weather->temperature_c,
+            weather->precipitation_mm,
+            weather->wind_speed_kmh,
+            weather->wind_gust_kmh,
+            weather->valid_from_ms,
+            weather->valid_until_ms
+        };
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::WeatherUpdated{ forecast }
+        };
+
+        return static_cast<uint32_t>(
+            handle->core.receive(message, now_ms));
     }
 }

@@ -337,6 +337,111 @@ int main() {
         CHECK(raincoat_weather.snapshot().transformation ==
             Transformation::raincoat);
 
+
+        Core message_core;
+
+        const Message heart_message{
+            MessageMetadata{ InputSource::web },
+            InteractionReceived{ Event::heart_touched }
+        };
+
+        CHECK(message_core.receive(heart_message, 100) == Result::ok);
+        CHECK(message_core.snapshot().time_ms == 100);
+        CHECK(message_core.snapshot().mood == Mood::happy);
+        CHECK(message_core.snapshot().expression == Expression::happy);
+
+
+
+        const auto before_invalid_source = message_core.snapshot();
+
+        const Message invalid_source_message{
+            MessageMetadata{ static_cast<InputSource>(999) },
+            InteractionReceived{ Event::head_started }
+        };
+
+        CHECK(
+            message_core.receive(invalid_source_message, 200)
+            == Result::invalid_argument
+        );
+
+        const auto after_invalid_source = message_core.snapshot();
+
+        CHECK(after_invalid_source.time_ms == before_invalid_source.time_ms);
+        CHECK(after_invalid_source.revision == before_invalid_source.revision);
+        CHECK(after_invalid_source.head_contact == before_invalid_source.head_contact);
+
+        Core expired_message_core;
+
+        const Message expired_weather_message{
+            MessageMetadata{ InputSource::companion },
+            WeatherUpdated{
+                WeatherForecast{
+                    15.0,   // Temperatur
+                    2.0,    // Niederschlag
+                    10.0,   // Wind
+                    20.0,   // Böen
+                    0,      // Gültig ab
+                    100     // Gültig bis (exklusiv)
+                }
+            }
+        };
+
+        CHECK(
+            expired_message_core.receive(expired_weather_message, 100)
+            == Result::invalid_argument
+        );
+
+        CHECK(expired_message_core.snapshot().time_ms == 0);
+        CHECK(expired_message_core.snapshot().revision == 0);
+        CHECK(!expired_message_core.weather().has_value());
+
+        Core weather_message_core;
+
+        const Message valid_weather_message{
+            MessageMetadata{ InputSource::companion },
+            WeatherUpdated{
+                WeatherForecast{
+                    15.0,   // Temperatur
+                    2.0,    // Niederschlag
+                    10.0,   // Wind
+                    20.0,   // Böen
+                    0,      // Gültig ab
+                    60000   // Gültig bis
+                }
+            }
+        };
+
+        CHECK(
+            weather_message_core.receive(valid_weather_message, 100)
+            == Result::ok
+        );
+
+        CHECK(weather_message_core.snapshot().time_ms == 100);
+
+        const auto received_weather = weather_message_core.weather();
+
+        CHECK(received_weather.has_value());
+        CHECK(received_weather->precipitation_mm == 2.0);
+        CHECK(received_weather->valid_until_ms == 60000);
+
+        const auto before_reversed_time =
+            weather_message_core.snapshot();
+
+        CHECK(
+            weather_message_core.receive(valid_weather_message, 99)
+            == Result::time_reversed
+        );
+
+        CHECK(
+            weather_message_core.snapshot().time_ms
+            == before_reversed_time.time_ms
+        );
+
+        CHECK(
+            weather_message_core.snapshot().revision
+            == before_reversed_time.revision
+        );
+
         std::cout << "Core behavior, timing boundaries, interruption, isolation and clock validation passed.\n";
         return 0;
     } catch (const std::exception& error) {

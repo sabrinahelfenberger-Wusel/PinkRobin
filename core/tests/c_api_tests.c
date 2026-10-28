@@ -29,6 +29,105 @@ int main(void) {
     robin_core_destroy(a);
     robin_core_destroy(b);
     robin_core_destroy(NULL);
+
+    robin_core_handle* weather_receiver = robin_core_create(0);
+    CHECK(weather_receiver != NULL);
+
+    robin_weather_v1 received_weather = { 0 };
+    received_weather.temperature_c = 15.0;
+    received_weather.precipitation_mm = 2.0;
+    received_weather.wind_speed_kmh = 10.0;
+    received_weather.wind_gust_kmh = 20.0;
+    received_weather.valid_from_ms = 0;
+    received_weather.valid_until_ms = 60000;
+
+    CHECK(robin_core_receive_weather(
+        weather_receiver,
+        &received_weather,
+        sizeof(received_weather),
+        ROBIN_INPUT_SOURCE_COMPANION,
+        100) == ROBIN_OK);
+
+    robin_snapshot_v1 received_snapshot = { 0 };
+
+    CHECK(robin_core_get_snapshot(
+        weather_receiver,
+        &received_snapshot,
+        sizeof(received_snapshot)) == ROBIN_OK);
+
+    CHECK(received_snapshot.time_ms == 100);
+
+    CHECK(robin_core_receive_weather(
+        weather_receiver,
+        &received_weather,
+        sizeof(received_weather),
+        999u,
+        200) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_snapshot(
+        weather_receiver,
+        &received_snapshot,
+        sizeof(received_snapshot)) == ROBIN_OK);
+
+    CHECK(received_snapshot.time_ms == 100);
+
+    robin_core_destroy(weather_receiver);
+
+    robin_core_handle* interaction_receiver = robin_core_create(0);
+    CHECK(interaction_receiver != NULL);
+
+    CHECK(robin_core_receive_interaction(
+        interaction_receiver,
+        ROBIN_EVENT_HEART_TOUCHED,
+        ROBIN_INPUT_SOURCE_WEB,
+        100) == ROBIN_OK);
+
+    robin_snapshot_v1 interaction_snapshot = { 0 };
+
+    CHECK(robin_core_get_snapshot(
+        interaction_receiver,
+        &interaction_snapshot,
+        sizeof(interaction_snapshot)) == ROBIN_OK);
+
+    CHECK(interaction_snapshot.time_ms == 100);
+    CHECK(interaction_snapshot.mood == ROBIN_MOOD_HAPPY);
+    CHECK(interaction_snapshot.expression == ROBIN_EXPRESSION_HAPPY);
+
+    CHECK(robin_core_receive_interaction(
+        interaction_receiver,
+        ROBIN_EVENT_HEAD_STARTED,
+        999u,
+        200) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_snapshot(
+        interaction_receiver,
+        &interaction_snapshot,
+        sizeof(interaction_snapshot)) == ROBIN_OK);
+
+    CHECK(interaction_snapshot.time_ms == 100);
+    CHECK(interaction_snapshot.head_contact == 0u);
+    CHECK(interaction_snapshot.mood == ROBIN_MOOD_HAPPY);
+
+    const uint64_t revision_before_invalid_event =
+        interaction_snapshot.revision;
+
+    CHECK(robin_core_receive_interaction(
+        interaction_receiver,
+        999u,
+        ROBIN_INPUT_SOURCE_WEB,
+        200) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_snapshot(
+        interaction_receiver,
+        &interaction_snapshot,
+        sizeof(interaction_snapshot)) == ROBIN_OK);
+
+    CHECK(interaction_snapshot.time_ms == 100);
+    CHECK(interaction_snapshot.revision == revision_before_invalid_event);
+    CHECK(interaction_snapshot.head_contact == 0u);
+
+    robin_core_destroy(interaction_receiver);
+
     puts("Pure C consumer, ABI layout, ownership and errors passed.");
     return 0;
 }

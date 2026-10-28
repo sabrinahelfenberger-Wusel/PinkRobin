@@ -55,12 +55,21 @@ public sealed class NativeRobinCore : IDisposable
         }
     }
 
-    public RobinSnapshot Dispatch(RobinEvent input, ulong nowMs)
+    public RobinSnapshot Dispatch(
+        RobinEvent input,
+        CoreInputSource source,
+        ulong nowMs)
     {
         lock (sync)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            Check(NativeMethods.Dispatch(handle, (uint)input, nowMs));
+
+            Check(NativeMethods.ReceiveInteraction(
+                handle,
+                (uint)input,
+                (uint)source,
+                nowMs));
+
             return ReadSnapshot();
         }
     }
@@ -100,7 +109,7 @@ public sealed class NativeRobinCore : IDisposable
         }
     }
 
-    public void PostWeather(CoreWeatherForecast forecast)
+    public void PostWeather(CoreWeatherForecast forecast, CoreInputSource source, ulong nowMs)
     {
         ArgumentNullException.ThrowIfNull(forecast);
 
@@ -118,10 +127,12 @@ public sealed class NativeRobinCore : IDisposable
                 ValidUntilMs = forecast.ValidUntilMs
             };
 
-            Check(NativeMethods.PostWeather(
+            Check(NativeMethods.ReceiveWeather(
                 handle,
                 in weather,
-                (uint)Marshal.SizeOf<NativeWeather>()));
+                (uint)Marshal.SizeOf<NativeWeather>(),
+                (uint)source,
+                nowMs));
         }
     }
 
@@ -217,6 +228,26 @@ internal static class NativeMethods
 
     [DllImport(Library, EntryPoint = "robin_core_post_weather", CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint PostWeather(CoreHandle handle, in NativeWeather weather, uint weatherSize);
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_weather",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveWeather(
+        CoreHandle handle,
+        in NativeWeather weather,
+        uint weatherSize,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_interaction",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveInteraction(
+        CoreHandle handle,
+        uint eventValue,
+        uint source,
+        ulong nowMs);
 
     [DllImport(Library, EntryPoint = "robin_core_start_transformation", CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint StartTransformation(CoreHandle handle, uint transformation, ulong nowMs);

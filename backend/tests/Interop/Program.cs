@@ -15,21 +15,26 @@ using var first = new NativeRobinCore();
 using var second = new NativeRobinCore(123);
 Require(first.GetSnapshot() is { Mode: RobinMode.Sleeping, TimeMs: 0 }, "Initial snapshot/ABI layout");
 Require(first.AdvanceTo(7100) is { Mode: RobinMode.Awake, Expression: RobinExpression.Curious, TimeMs: 7100 }, "Wake up");
-Require(first.Dispatch(RobinEvent.HeartTouched, 7100).Expression == RobinExpression.Happy, "Heart reaction");
+Require(first.Dispatch(RobinEvent.HeartTouched, CoreInputSource.Web, 7100).Expression == RobinExpression.Happy, "Heart reaction");
 Require(second.GetSnapshot() is { Mode: RobinMode.Sleeping, TimeMs: 123 }, "Instance isolation");
 Require(first.AdvanceTo(13100).Expression == RobinExpression.Curious, "Heart timeout");
-Require(first.Dispatch(RobinEvent.HeadStarted, 13100) is { HeadContact: true, Expression: RobinExpression.Happy }, "Head contact");
+Require(first.Dispatch(RobinEvent.HeadStarted, CoreInputSource.Web, 13100) is { HeadContact: true, Expression: RobinExpression.Happy }, "Head contact");
 Require(first.AdvanceTo(18100).Expression == RobinExpression.HeartEyes, "Five seconds of stroking");
-Require(first.Dispatch(RobinEvent.HeadEnded, 18100) is { HeadContact: false, Expression: RobinExpression.Curious }, "Head released");
+Require(first.Dispatch(RobinEvent.HeadEnded, CoreInputSource.Web, 18100) is { HeadContact: false, Expression: RobinExpression.Curious }, "Head released");
 var before = first.GetSnapshot();
 Throws<ArgumentOutOfRangeException>(() => first.AdvanceTo(18099));
-Throws<ArgumentException>(() => first.Dispatch((RobinEvent)99, 18100));
+Throws<ArgumentException>(() =>
+    first.Dispatch(
+        RobinEvent.HeadStarted,
+        (CoreInputSource)999,
+        18100));
+Throws<ArgumentException>(() => first.Dispatch((RobinEvent)99, CoreInputSource.Web, 18100));
 Require(first.GetSnapshot() == before, "Rejected input changed state");
-Require(first.Dispatch(RobinEvent.Restart, 19000).Mode == RobinMode.Sleeping, "Restart");
+Require(first.Dispatch(RobinEvent.Restart, CoreInputSource.Web, 19000).Mode == RobinMode.Sleeping, "Restart");
 first.Dispose();
 first.Dispose();
 Throws<ObjectDisposedException>(() => first.GetSnapshot());
-Throws<ObjectDisposedException>(() => first.Dispatch(RobinEvent.Restart, 0));
+Throws<ObjectDisposedException>(() => first.Dispatch(RobinEvent.Restart, CoreInputSource.Web, 0));
 for (var i = 0; i < 1000; i++)
 {
     using var core = new NativeRobinCore();
@@ -90,20 +95,26 @@ using (var weatherCore = new NativeRobinCore())
         ValidUntilMs: 18000);
 
     // Gültige Nachricht wird angenommen.
-    weatherCore.PostWeather(forecast);
+    weatherCore.PostWeather(forecast, CoreInputSource.Web,0);
+
+    Throws<ArgumentException>(() =>
+        weatherCore.PostWeather(
+            forecast,
+            (CoreInputSource)999,
+            0));
 
     // Negativer Niederschlag wird vom Core abgewiesen.
     var invalid = forecast with { PrecipitationMm = -1.0 };
 
     Throws<ArgumentException>(() =>
-        weatherCore.PostWeather(invalid));
+        weatherCore.PostWeather(invalid, CoreInputSource.Web, 0));
 
     // Zeit bis zum Ende der Gültigkeit fortschalten.
     weatherCore.AdvanceTo(18000);
 
     // Dieselbe Prognose ist jetzt abgelaufen.
     Throws<ArgumentException>(() =>
-        weatherCore.PostWeather(forecast));
+        weatherCore.PostWeather(forecast, CoreInputSource.Web, 18000));
 }
 
 Console.WriteLine(

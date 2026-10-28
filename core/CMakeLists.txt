@@ -4,7 +4,12 @@ include(CTest)
 option(ROBIN_BUILD_EXAMPLES "Build the deterministic console demo" ON)
 option(ROBIN_ENABLE_SANITIZERS "Enable address/undefined behavior checks" OFF)
 
-add_library(pinkrobin_behavior STATIC src/core.cpp)
+add_library(pinkrobin_behavior STATIC
+    src/core.cpp
+    src/core_messages.cpp
+    src/core_interactions.cpp
+    src/core_weather.cpp
+)
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)
 set_target_properties(pinkrobin_behavior PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES)
