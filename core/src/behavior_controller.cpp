@@ -12,10 +12,16 @@ namespace pinkrobin {
     }
 
     bool BehaviorController::can_start_weather_reaction(
+        const ActionProposal& proposal,
         const RobinState& state,
+        ActionResource occupied,
         std::uint64_t now_ms) const noexcept {
 
-        if (!can_start_transformation(state)) {
+        if (proposal.kind() != ActionKind::transformation) {
+            return false;
+        }
+
+        if (!can_start_action(proposal, state, occupied)) {
             return false;
         }
 
@@ -36,5 +42,34 @@ namespace pinkrobin {
         std::uint64_t now_ms) noexcept {
 
         weather_reaction_started_ = now_ms;
+    }
+
+    bool BehaviorController::can_start_action(
+        const ActionProposal& proposal,
+        const RobinState& state,
+        ActionResource occupied) const noexcept {
+
+        if (resources_conflict(
+            proposal.required_resources(),
+            occupied)) {
+            return false;
+        }
+
+        if (const auto* transformation =
+            std::get_if<TransformationAction>(&proposal.payload)) {
+
+            if (transformation->transformation != Transformation::octopus &&
+                transformation->transformation != Transformation::raincoat) {
+                return false;
+            }
+
+            return can_start_transformation(state);
+        }
+
+        if (std::get_if<WeatherAnswerAction>(&proposal.payload)) {
+            return true;
+        }
+
+        return false;
     }
 }

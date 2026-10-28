@@ -1,5 +1,6 @@
 #include "pinkrobin/core.hpp"
 #include "pinkrobin/behavior_controller.hpp"
+#include "pinkrobin/action.hpp"
 #include "test_support.hpp"
 #include <cstdint>
 #include <limits>
@@ -162,28 +163,32 @@ void test_behavior_controller_weather_cooldown() {
     RobinState state;
     state.mode = Mode::awake;
 
-    CHECK(controller.can_start_weather_reaction(state, 8000));
+    const ActionProposal proposal{
+        TransformationAction{ Transformation::raincoat }
+    };
+
+    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 8000));
 
     // Eine reine Abfrage verbraucht keine Freigabe.
-    CHECK(controller.can_start_weather_reaction(state, 8001));
+    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 8001));
 
     controller.mark_weather_reaction_started(8000);
 
     // Rückwärtszeit darf den Cooldown nicht umgehen.
-    CHECK(!controller.can_start_weather_reaction(state, 7999));
+    CHECK(!controller.can_start_weather_reaction(proposal, state, ActionResource::none, 7999));
 
     // Eine Millisekunde vor Ablauf der 30 Minuten.
-    CHECK(!controller.can_start_weather_reaction(state, 1807999));
+    CHECK(!controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1807999));
 
     // Genau am Ende ist ein neuer Start erlaubt.
-    CHECK(controller.can_start_weather_reaction(state, 1808000));
+    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1808000));
 
     // Ein abgelaufener Cooldown macht einen beschäftigten Robin nicht frei.
     state.head_contact = true;
-    CHECK(!controller.can_start_weather_reaction(state, 1808000));
+    CHECK(!controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1808000));
 
     state.head_contact = false;
-    CHECK(controller.can_start_weather_reaction(state, 1808000));
+    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1808000));
 }
 
 } // namespace

@@ -79,3 +79,6 @@ Dieser Anfrage- und Antwortweg ist noch nicht implementiert.
 Geprüft werden Wetter-Schwellenwerte, Freigabe bei verschiedenen
 Zuständen, die genaue Cooldown-Grenze, Rückwärtszeit und der Start
 nach dem Ende einer beschäftigenden Interaktion.
+
+Die typisierten Aktionsvorschläge und Ressourcenregeln sind in
+[Aktionskoordination.md](Aktionskoordination.md) beschrieben.
