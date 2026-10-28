@@ -48,6 +48,7 @@ namespace pinkrobin {
                 pending_weather_.has_value();
 
             pending_weather_ = *weather;
+            pending_weather_source_ = message.metadata.source;
             pending_weather_received_at_ms_ = now_ms;
             last_message_received_at_ms_ = now_ms;
 

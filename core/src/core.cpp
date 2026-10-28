@@ -23,15 +23,18 @@ namespace pinkrobin {
                 pending_weather_.reset();
             }
             else if (forecast.valid_from_ms <= now_) {
-                weather_ = forecast;
+                world_.update_weather(WeatherObservation{
+                    forecast,
+                    pending_weather_source_,
+                    pending_weather_received_at_ms_
+                    });
+
                 pending_weather_.reset();
             }
         }
 
         // Abgelaufenes Wetterwissen entfernen.
-        if (weather_ && weather_->valid_until_ms <= now_) {
-            weather_.reset();
-        }
+        world_.expire_weather(now_);
 
         // Subtraktion vermeidet Überläufe am Ende des Zeitbereichs.
         if (mode_ == Mode::sleeping &&
@@ -143,6 +146,10 @@ namespace pinkrobin {
             revision_,
             transformation_
         };
+    }
+
+    const WorldModel& Core::world() const noexcept {
+        return world_;
     }
 
 }

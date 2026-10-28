@@ -142,7 +142,8 @@ Die Herkunft bleibt im Interaktionspuffer bis zur Verarbeitung erhalten.
 Eine dauerhafte Speicherung von Herkunft und Beobachtungen ist noch
 nicht umgesetzt.
 
-Das WorldModel folgt in Issue #7.
+Das Wetter-WorldModel ist in [WorldModel.md](WorldModel.md)
+beschrieben. Weitere Wahrnehmungsarten bleiben spätere Erweiterungen.
 Allgemeine Aktionsprioritäten und Unterbrechungsregeln gehören zur
 späteren Verhaltens- und Aktionskoordination in Issue #8.
 

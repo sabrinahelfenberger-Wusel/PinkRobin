@@ -9,6 +9,7 @@ add_library(pinkrobin_behavior STATIC
     src/core_messages.cpp
     src/core_interactions.cpp
     src/core_weather.cpp
+    src/world_model.cpp
 )
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)
@@ -34,6 +35,15 @@ if(BUILD_TESTING)
     add_executable(core_tests tests/core_tests.cpp)
     target_link_libraries(core_tests PRIVATE pinkrobin_behavior)
     add_test(NAME behavior COMMAND core_tests)
+    add_executable(weather_tests tests/weather_tests.cpp)
+    target_link_libraries(weather_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME weather COMMAND weather_tests)
+    add_executable(message_tests tests/message_tests.cpp)
+    target_link_libraries(message_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME message COMMAND message_tests)
+    add_executable(world_model_tests tests/world_model_tests.cpp)
+    target_link_libraries(world_model_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME world_model COMMAND world_model_tests)
     add_executable(c_api_tests tests/c_api_tests.c)
     target_link_libraries(c_api_tests PRIVATE pinkrobin_core)
     add_test(NAME c_abi COMMAND c_api_tests)

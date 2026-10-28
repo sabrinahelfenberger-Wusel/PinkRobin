@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include "pinkrobin/message.hpp"
+#include "pinkrobin/world_model.hpp"
 
 namespace pinkrobin {
     enum class Mode : std::uint32_t { sleeping = 0, waking = 1, awake = 2 };
@@ -42,6 +43,8 @@ namespace pinkrobin {
         std::optional<WeatherForecast> weather() const noexcept;
         Snapshot snapshot() const noexcept;
 
+        const WorldModel& world() const noexcept;
+
     private:
         void curious() noexcept;
         Mode mode_{Mode::sleeping};
@@ -55,9 +58,8 @@ namespace pinkrobin {
         std::uint64_t revision_{0};
 
         std::optional<WeatherUpdated> pending_weather_;
+        InputSource pending_weather_source_{ InputSource::backend };
         std::uint64_t pending_weather_received_at_ms_{ 0 };
-
-        std::optional<WeatherForecast> weather_;
 
         bool can_start_transformation() const noexcept;
         Transformation choose_weather_transformation() const noexcept;
@@ -99,5 +101,7 @@ namespace pinkrobin {
         void apply_interaction(Event event) noexcept;
         std::uint64_t last_message_received_at_ms_{ 0 };
         Result advance_state_to(std::uint64_t now_ms) noexcept;
+
+        WorldModel world_;
     };
 }
