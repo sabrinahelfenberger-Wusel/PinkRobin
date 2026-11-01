@@ -119,41 +119,6 @@ h1 em {
 .button:hover {
   background: #ff82b1;
 }
-.specimen {
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--panel);
-  padding: 30px;
-  transform: rotate(3deg);
-}
-.specimen-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-.monogram {
-  font-size: clamp(7rem, 15vw, 12rem);
-  font-weight: 850;
-  line-height: 1.2;
-  text-align: center;
-  letter-spacing: -0.1em;
-  color: var(--pink);
-  padding: 16px 20px 22px 0;
-}
-.specimen-bottom {
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
-}
-.specimen-bottom strong {
-  font-size: 1.2rem;
-}
-.specimen-bottom p {
-  color: var(--muted);
-  margin: 8px 0 0;
-  font-size: 0.95rem;
-}
 .section {
   padding: 66px 0;
   border-top: 1px solid var(--line);
@@ -259,16 +224,6 @@ footer a:hover {
     gap: 32px;
     padding: 60px 0;
     grid-template-columns: 1fr;
-  }
-  .specimen {
-    transform: none;
-    max-width: 420px;
-    width: 100%;
-    margin-top: 5px;
-  }
-  .monogram {
-    font-size: 8rem;
-    padding: 0 20px 10px 0;
   }
   .section-head {
     grid-template-columns: 1fr;
