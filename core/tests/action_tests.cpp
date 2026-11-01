@@ -174,6 +174,37 @@ namespace {
 
         CHECK(!outfit_only.next_output().has_value());
     }
+
+    void test_weather_without_outfit_capability() {
+        Core core{
+            0, PlatformCapabilities{ true, false }
+        };
+
+        CHECK(core.advance_to(8000) == Result::ok);
+
+        const WeatherForecast forecast{
+            8.5, 12.0, 30.0, 70.0,
+            8000, 60000
+        };
+
+        CHECK(core.post_weather(
+            WeatherUpdated{ forecast }) == Result::ok);
+
+        CHECK(core.advance_to(8000) == Result::ok);
+
+        CHECK(core.weather().has_value());
+        CHECK(core.snapshot().transformation ==
+            Transformation::none);
+
+        CHECK(core.request_weather_answer() ==
+            OutputEnqueueResult::accepted);
+
+        const auto output = core.next_output();
+
+        CHECK(output.has_value());
+        CHECK(std::get<WeatherAnswer>(output->payload).kind ==
+            WeatherAnswerKind::storm);
+    }
 }
 
 int main() {
@@ -183,5 +214,6 @@ int main() {
         { "action: platform_capabilities", test_platform_capabilities },
         { "action: core_without_capabilities", test_core_without_capabilities },
         { "action: core_with_partial_capabilities", test_core_with_partial_capabilities },
+        { "action: weather_without_outfit", test_weather_without_outfit_capability },
     });
 }
