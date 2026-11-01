@@ -2,15 +2,18 @@
   <header>
     <a class="brand" routerLink="/">pink<span>robin.</span></a>
     <nav aria-label="Hauptnavigation">
-      <a routerLink="/" fragment="idee">Die Idee</a
-      ><a routerLink="/virtual-robin">Virtual Robin</a
-      ><a
+      <a routerLink="/" fragment="idee">Die Idee</a>
+      <a routerLink="/virtual-robin">Virtual Robin</a>
+      <a routerLink="/" fragment="technik">Technik</a>
+      <a routerLink="/" fragment="ausblick">Ausblick</a>
+      <a
         class="github-link"
         href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="PinkRobin auf GitHub (öffnet einen neuen Tab)"
-        ><svg
+      >
+        <svg
           viewBox="0 0 24 24"
           width="20"
           height="20"
@@ -20,9 +23,10 @@
         >
           <path
             d="M12 .75a11.25 11.25 0 0 0-3.558 21.923c.563.104.768-.244.768-.542 0-.267-.01-.974-.015-1.912-3.13.68-3.791-1.508-3.791-1.508-.512-1.3-1.25-1.646-1.25-1.646-1.022-.699.078-.685.078-.685 1.13.08 1.725 1.16 1.725 1.16 1.005 1.722 2.637 1.225 3.28.937.102-.728.393-1.225.715-1.507-2.499-.284-5.126-1.25-5.126-5.565 0-1.23.44-2.235 1.16-3.023-.116-.285-.503-1.43.11-2.98 0 0 .945-.303 3.094 1.155a10.78 10.78 0 0 1 5.625 0c2.148-1.458 3.092-1.155 3.092-1.155.614 1.55.228 2.695.112 2.98.722.788 1.158 1.793 1.158 3.023 0 4.326-2.631 5.278-5.138 5.557.404.349.765 1.036.765 2.088 0 1.508-.014 2.726-.014 3.096 0 .3.203.65.774.54A11.251 11.251 0 0 0 12 .75Z"
-          /></svg
-        ><span>GitHub</span></a
-      >
+          />
+        </svg>
+        <span>GitHub</span>
+      </a>
     </nav>
   </header>
   <main>
@@ -86,26 +90,96 @@
     </section>
     <section id="virtual-robin" class="section" aria-labelledby="virtual-title">
       <div class="section-head">
-        <p class="eyebrow">Nächster Schritt</p>
-        <h2 id="virtual-title">Erst virtuell.<br />Dann mitten im Leben.</h2>
+        <p class="eyebrow">Heute erlebbar</p>
+        <h2 id="virtual-title">Robin reagiert.<br />Probier es selbst aus.</h2>
       </div>
+
       <div class="development">
         <div>
-          <span class="badge">In Entwicklung</span>
-          <h3>Virtual Robin</h3>
+          <span class="badge">Funktionsstand v0.1.2</span>
+          <h3>Ein kleiner Anfang mit Persönlichkeit</h3>
           <p>
-            Der geplante Simulator macht Robins Verhalten direkt im Browser
-            erlebbar. Ereignisse lassen sich auslösen, Reaktionen beobachten und
-            Abläufe ausprobieren, bevor sie auf echter Hardware laufen.
+            Robin wacht auf, freut sich über eine Herzberührung und geniesst es,
+            am Kopf gestreichelt zu werden. Er reagiert auf Wetterprognosen und
+            beantwortet die Wetterfrage über einen Button. Seine Entscheidungen
+            entstehen bereits im gemeinsamen C++-Core.
           </p>
-          <a class="button" routerLink="/virtual-robin" style="margin-top: 22px"
-            >Robin kennenlernen</a
+          <a
+            class="button"
+            routerLink="/virtual-robin"
+            style="margin-top: 22px"
           >
+            Robin kennenlernen
+          </a>
         </div>
+
         <ol class="steps">
-          <li>Das erste Gesicht gestalten</li>
-          <li>Eine Reaktion erlebbar machen</li>
-          <li>Den gemeinsamen Robin-Kern anbinden</li>
+          <li>Berühre Robins Herz oder streichle seinen Kopf.</li>
+          <li>Lade die Wetterprognose für eine Schweizer PLZ.</li>
+          <li>Frage Robin über den Button nach dem Wetter.</li>
+        </ol>
+      </div>
+    </section>
+    <section id="technik" class="section" aria-labelledby="technology-title">
+      <div class="section-head">
+        <p class="eyebrow">Hinter den Reaktionen</p>
+        <h2 id="technology-title">
+          Ein gemeinsamer Kern.<br />Mehrere Ausdrucksformen.
+        </h2>
+      </div>
+
+      <div class="cards">
+        <article class="card">
+          <span class="number">01 / ANGULAR</span>
+          <h3>Robin erleben</h3>
+          <p>
+            Die Weboberfläche nimmt Berührungen und Fragen entgegen. Sie stellt
+            Robins Gesicht, seine Verwandlungen und seine Antworten dar.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="number">02 / ASP.NET CORE</span>
+          <h3>Informationen verbinden</h3>
+          <p>
+            Das Backend verwaltet getrennte Sitzungen, lädt Wetterprognosen von
+            MeteoSchweiz und vermittelt zwischen Browser und nativem Core.
+          </p>
+        </article>
+
+        <article class="card">
+          <span class="number">03 / C++</span>
+          <h3>Verhalten entscheiden</h3>
+          <p>
+            Der Core verarbeitet Ereignisse, hält Wetterwissen und Robins
+            Zustand und erzeugt passende Reaktionen. Er arbeitet ohne eigenen
+            Netzwerkzugriff und erhält seine Zeit vom jeweiligen Adapter.
+          </p>
+        </article>
+      </div>
+    </section>
+    <section id="ausblick" class="section" aria-labelledby="outlook-title">
+      <div class="section-head">
+        <p class="eyebrow">Wohin Robin wachsen soll</p>
+        <h2 id="outlook-title">Vom Browser<br />in den Alltag.</h2>
+      </div>
+
+      <div class="development">
+        <div>
+          <span class="badge">Geplant</span>
+          <h3>Ein Begleiter, der Begegnungen anregt</h3>
+          <p>
+            Robin soll neugierig auf seine Umgebung reagieren und dazu
+            ermutigen, die Welt zu entdecken und mit Menschen in Kontakt zu
+            kommen. Die virtuelle Version hilft, sein Verhalten Schritt für
+            Schritt zu entwickeln.
+          </p>
+        </div>
+
+        <ol class="steps">
+          <li>Wenige Texteingaben zuverlässig verstehen.</li>
+          <li>Robin als 3D-Figur und auf dem iPad erlebbar machen.</li>
+          <li>Den gemeinsamen Core auf echter Roboterhardware erproben.</li>
         </ol>
       </div>
     </section>
