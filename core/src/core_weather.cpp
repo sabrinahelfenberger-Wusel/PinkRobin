@@ -72,6 +72,7 @@ namespace pinkrobin {
             : ActionResource::outfit;
 
         if (!behavior_controller_.can_start_weather_reaction(
+            capabilities_,
             proposal,
             state_,
             occupied,

@@ -1,5 +1,31 @@
 # Änderungsprotokoll
 
+## 0.1.4 – Plattformfähigkeiten
+
+### Neu
+
+- Adapter melden beim Erstellen einer Core-Instanz ausdrücklich,
+  ob Textausgabe und Outfit-Darstellung unterstützt werden.
+- Spontane Wetterverwandlungen starten nur mit Outfit-Fähigkeit.
+- Direkte Wetterantworten und Verwandlungen melden ausdrücklich,
+  wenn die benötigte Fähigkeit fehlt.
+- Wetterwissen bleibt auch ohne Outfit-Darstellung verfügbar.
+
+### Schnittstellen
+
+- Fähigkeitsübergabe über C-ABI, C#-Adapter und Core-Gateway ergänzt.
+- Web-Sessions melden Textausgabe und Outfit-Darstellung.
+- Ohne ausdrückliche Angaben sind beide Fähigkeiten deaktiviert.
+  Bestehende Aufrufer des alten Erstellungsaufrufs müssen für
+  Wetterantworten und Verwandlungen umgestellt werden.
+- Fähigkeiten bleiben für die Lebensdauer einer Instanz unverändert.
+
+### Tests und Dokumentation
+
+- Tests für fehlende und teilweise unterstützte Fähigkeiten ergänzt.
+- Ungültige Angaben an der C-Schnittstelle werden geprüft.
+- Fähigkeitsvertrag und Adapterverantwortung dokumentiert.
+
 ## 0.1.3 – Robin im Portfolio
 
 ### Neu

@@ -9,5 +9,6 @@ OutputTests.ReadingAndAcknowledgement();
 OutputTests.CapacityAndRecovery();
 OutputTests.WeatherValidity();
 OutputTests.SessionDelivery();
+OutputTests.UnsupportedActions();
 
 Console.WriteLine("All interop tests passed.");

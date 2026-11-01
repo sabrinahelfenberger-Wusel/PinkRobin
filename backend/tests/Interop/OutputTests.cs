@@ -6,7 +6,10 @@ internal static class OutputTests
 {
     public static void ReadingAndAcknowledgement()
     {
-        using (var outputCore = new NativeRobinCore())
+        using (var outputCore = new NativeRobinCore(
+                   capabilities: new CorePlatformCapabilities(
+                       TextOutput: true,
+                       OutfitDisplay: false)))
         {
             Require(
                 outputCore.GetNextOutput() is null,
@@ -41,7 +44,10 @@ internal static class OutputTests
 
     public static void CapacityAndRecovery()
     {
-        using (var fullOutputCore = new NativeRobinCore())
+        using (var fullOutputCore = new NativeRobinCore(
+                   capabilities: new CorePlatformCapabilities(
+                       TextOutput: true,
+                       OutfitDisplay: false)))
         {
             for (ulong nowMs = 1; nowMs <= 8; ++nowMs)
             {
@@ -79,7 +85,10 @@ internal static class OutputTests
 
     public static void WeatherValidity()
     {
-        using (var rainyOutputCore = new NativeRobinCore())
+        using (var rainyOutputCore = new NativeRobinCore(
+                   capabilities: new CorePlatformCapabilities(
+                       TextOutput: true,
+                       OutfitDisplay: false)))
         {
             rainyOutputCore.PostWeather(
                 new CoreWeatherForecast(
@@ -156,5 +165,33 @@ internal static class OutputTests
                 outputSessions.ReadOutput(outputSession.Token) is null,
                 "Repeated command does not create a duplicate output");
         }
+    }
+
+    public static void UnsupportedActions()
+    {
+        using var core = new NativeRobinCore();
+
+        core.AdvanceTo(8000);
+        var before = core.GetSnapshot();
+
+        Throws<NotSupportedException>(() =>
+            core.RequestWeatherAnswer(8000));
+
+        Throws<NotSupportedException>(() =>
+            core.StartTransformation(
+                CoreTransformation.Octopus,
+                8000));
+
+        Require(
+            core.GetNextOutput() is null,
+            "Unsupported answer must not create output");
+
+        Require(
+            core.GetTransformation() == CoreTransformation.None,
+            "Unsupported transformation must not start");
+
+        Require(
+            core.GetSnapshot() == before,
+            "Unsupported actions must preserve the snapshot");
     }
 }

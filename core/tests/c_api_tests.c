@@ -3,6 +3,10 @@
 #include <stdio.h>
 #define CHECK(c) do { if (!(c)) { fprintf(stderr, "Failed at line %d: %s\n", __LINE__, #c); return 1; } } while (0)
 int main(void) {
+    const robin_platform_capabilities_v1 text_capabilities = {
+        1u, 0u
+    };
+
     robin_snapshot_v1 state = {0};
     robin_core_handle* a = robin_core_create(100);
     robin_core_handle* b = robin_core_create(100);
@@ -128,7 +132,11 @@ int main(void) {
 
     robin_core_destroy(interaction_receiver);
 
-    robin_core_handle* output_core = robin_core_create(0);
+    robin_core_handle* output_core =
+        robin_core_create_with_capabilities(
+            0,
+            &text_capabilities,
+            sizeof(text_capabilities));
     CHECK(output_core != NULL);
 
     robin_output_v1 output = { 0 };
@@ -224,7 +232,11 @@ int main(void) {
 
     robin_core_destroy(output_core);
 
-    robin_core_handle* full_output_core = robin_core_create(0);
+    robin_core_handle* full_output_core =
+        robin_core_create_with_capabilities(
+            0,
+            &text_capabilities,
+            sizeof(text_capabilities));
     CHECK(full_output_core != NULL);
 
     for (uint64_t time = 1; time <= 8; ++time) {
@@ -267,6 +279,65 @@ int main(void) {
         sizeof(queued_output)) == ROBIN_NO_OUTPUT);
 
     robin_core_destroy(full_output_core);
+
+    CHECK(sizeof(robin_platform_capabilities_v1) == 8);
+
+    CHECK(robin_core_create_with_capabilities(
+        0,
+        NULL,
+        sizeof(robin_platform_capabilities_v1)) == NULL);
+
+    const robin_platform_capabilities_v1 valid_capabilities = {
+        1u, 1u
+    };
+
+    CHECK(robin_core_create_with_capabilities(
+        0,
+        &valid_capabilities,
+        sizeof(valid_capabilities) - 1) == NULL);
+
+    const robin_platform_capabilities_v1 invalid_text = {
+        2u, 0u
+    };
+
+    CHECK(robin_core_create_with_capabilities(
+        0,
+        &invalid_text,
+        sizeof(invalid_text)) == NULL);
+
+    const robin_platform_capabilities_v1 invalid_outfit = {
+        0u, 2u
+    };
+
+    CHECK(robin_core_create_with_capabilities(
+        0,
+        &invalid_outfit,
+        sizeof(invalid_outfit)) == NULL);
+
+    robin_core_handle* unsupported_core = robin_core_create(0);
+    CHECK(unsupported_core != NULL);
+
+    CHECK(robin_core_advance(
+        unsupported_core,
+        8000) == ROBIN_OK);
+
+    CHECK(robin_core_start_transformation(
+        unsupported_core,
+        ROBIN_TRANSFORMATION_RAINCOAT,
+        8000) == ROBIN_UNSUPPORTED);
+
+    CHECK(robin_core_request_weather_answer(
+        unsupported_core,
+        8000) == ROBIN_UNSUPPORTED);
+
+    robin_output_v1 unsupported_output = { 0 };
+
+    CHECK(robin_core_get_next_output(
+        unsupported_core,
+        &unsupported_output,
+        sizeof(unsupported_output)) == ROBIN_NO_OUTPUT);
+
+    robin_core_destroy(unsupported_core);
 
     puts("Pure C consumer, ABI layout, ownership and errors passed.");
     return 0;

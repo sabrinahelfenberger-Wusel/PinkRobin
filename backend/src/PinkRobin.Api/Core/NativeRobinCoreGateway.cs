@@ -7,7 +7,13 @@ public sealed class NativeRobinCoreGateway(ILogger<NativeRobinCoreGateway> logge
     private readonly CoreConnectionStatus status = Probe(logger);
 
     // The gateway is a factory, not a shared Robin state for all visitors.
-    public NativeRobinCore CreateInstance(ulong nowMs = 0) => new(nowMs);
+    public NativeRobinCore CreateInstance(
+        ulong nowMs = 0,
+        CorePlatformCapabilities capabilities = default)
+    {
+        return new NativeRobinCore(nowMs, capabilities);
+    }
+
     public CoreConnectionStatus GetConnectionStatus() => status;
 
     private static CoreConnectionStatus Probe(ILogger logger)
