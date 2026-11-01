@@ -3,13 +3,12 @@
     "target": "ES2022",
     "module": "preserve",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "experimentalDecorators": true,
     "skipLibCheck": true,
-    "lib": [
-      "ES2022",
-      "dom"
-    ]
+    "lib": ["ES2022", "dom"]
   },
   "angularCompilerOptions": {
     "strictTemplates": true
