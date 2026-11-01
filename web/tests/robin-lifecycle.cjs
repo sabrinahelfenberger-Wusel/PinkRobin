@@ -14,9 +14,14 @@ function fixture(reduce = false) {
   const timers = new Map();
   const effects = [], sent = [];
   let coreState = null, connection = 'local';
-  const session = { connection: () => connection, state: () => coreState,
-    connect: async () => {}, send: event => sent.push(event) };
-  const media = {
+    const session = {
+        connection: () => connection,
+        state: () => coreState,
+        output: () => null,
+        acknowledgeOutput: async () => true,
+        connect: async () => { },
+        send: event => sent.push(event),
+    };  const media = {
     matches: reduce,
     addEventListener: (_event, fn) => { listener = fn; },
     removeEventListener: (_event, fn) => { assert.equal(listener, fn); listener = undefined; },
@@ -24,7 +29,25 @@ function fixture(reduce = false) {
   const angular = {
     Component: () => target => target,
     DestroyRef: {},
-    effect: fn => effects.push(fn),
+      effect: fn => {
+          let cleanup;
+
+          const run = () => {
+              cleanup?.();
+              cleanup = undefined;
+
+              fn(callback => {
+                  cleanup = callback;
+              });
+          };
+
+          run.cleanup = () => {
+              cleanup?.();
+              cleanup = undefined;
+          };
+
+          effects.push(run);
+      },
     inject: token => token === angular.DestroyRef ? ({ onDestroy: fn => { destroy = fn; } }) : session,
     afterNextRender: fn => { render = fn; },
     computed: read => read,
@@ -56,7 +79,11 @@ function fixture(reduce = false) {
       clock = end;
     },
     motion(value) { media.matches = value; listener(); },
-    destroy() { destroy(); assert.equal(listener, undefined); },
+    destroy() {
+        effects.forEach(effect => effect.cleanup());
+        destroy();
+        assert.equal(listener, undefined);
+    },
   };
 }
 
