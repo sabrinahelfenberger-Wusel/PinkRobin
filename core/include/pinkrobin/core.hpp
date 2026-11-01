@@ -2,19 +2,17 @@
 #include <cstdint>
 #include <optional>
 #include <cmath>
+#include <array>
+#include <cstddef>
 #include "pinkrobin/message.hpp"
+#include "pinkrobin/world_model.hpp"
+#include "pinkrobin/robin_state.hpp"
+#include "pinkrobin/weather_behavior.hpp"
+#include "pinkrobin/behavior_controller.hpp"
+#include "pinkrobin/output_queue.hpp"
 
 namespace pinkrobin {
-    enum class Mode : std::uint32_t { sleeping = 0, waking = 1, awake = 2 };
-    enum class Mood : std::uint32_t { curious = 0, happy = 1, affectionate = 2 };
-    enum class Expression : std::uint32_t { sleeping = 0, curious = 1, happy = 2, heart_eyes = 3 };
-    enum class Event : std::uint32_t { restart = 0, heart_touched = 1, head_started = 2, head_ended = 3, interaction_cancelled = 4 };
     enum class Result : std::uint32_t { ok = 0, invalid_argument = 1, time_reversed = 2, busy = 3 };
-    enum class Transformation : std::uint32_t { 
-        none = 0, 
-        octopus = 1,
-        raincoat = 2
-    };
 
     struct Snapshot {
         Mode mode;
@@ -35,14 +33,22 @@ namespace pinkrobin {
         Result dispatch(Event event, std::uint64_t now_ms) noexcept;
         Result start_transformation(Transformation transformation, std::uint64_t now_ms) noexcept;
         Result post_weather(const WeatherUpdated& message) noexcept;
+        
+        MessageAcceptance receive(const Message& message, std::uint64_t now_ms) noexcept;
+        
         std::optional<WeatherForecast> weather() const noexcept;
         Snapshot snapshot() const noexcept;
+
+        const WorldModel& world() const noexcept;
+        const RobinState& state() const noexcept;
+
+        std::optional<Output> next_output() const noexcept;
+
+        bool acknowledge_output(std::uint64_t sequence) noexcept;
+        OutputEnqueueResult request_weather_answer() noexcept;
+        
     private:
         void curious() noexcept;
-        Mode mode_{Mode::sleeping};
-        Mood mood_{Mood::curious};
-        Expression expression_{Expression::sleeping};
-        bool head_contact_{false};
         bool heart_pending_{false};
         std::uint64_t now_;
         std::uint64_t greeting_started_;
@@ -50,16 +56,50 @@ namespace pinkrobin {
         std::uint64_t revision_{0};
 
         std::optional<WeatherUpdated> pending_weather_;
-        std::optional<WeatherForecast> weather_;
+        InputSource pending_weather_source_{ InputSource::backend };
+        std::uint64_t pending_weather_received_at_ms_{ 0 };
+
         bool can_start_transformation() const noexcept;
         Transformation choose_weather_transformation() const noexcept;
 
-        Transformation pending_transformation_{ Transformation::none };
-        std::optional<std::uint64_t> weather_retry_started_;
-        std::optional<std::uint64_t> weather_reaction_started_;
         void process_weather_reaction() noexcept;
+        
+        static Result validate_weather(
+            const WeatherForecast& forecast,
+            std::uint64_t now_ms) noexcept;
 
-        Transformation transformation_{ Transformation::none };
         std::uint64_t transformation_started_{ 0 };
+
+        struct PendingInteraction {
+            MessageMetadata metadata;
+            InteractionReceived interaction;
+            std::uint64_t received_at_ms;
+        };
+
+        static constexpr std::size_t interaction_capacity = 8;
+
+        std::array<PendingInteraction, interaction_capacity>
+            pending_interactions_{};
+
+        std::size_t interaction_head_{ 0 };
+        std::size_t interaction_count_{ 0 };
+
+        MessageAcceptance enqueue_interaction(
+            const MessageMetadata& metadata,
+            const InteractionReceived& interaction,
+            std::uint64_t received_at_ms) noexcept;
+
+        std::optional<PendingInteraction> dequeue_interaction(
+            std::uint64_t now_ms) noexcept;
+
+        void apply_interaction(Event event) noexcept;
+        std::uint64_t last_message_received_at_ms_{ 0 };
+        Result advance_state_to(std::uint64_t now_ms) noexcept;
+
+        WorldModel world_;
+        RobinState state_;
+        WeatherBehavior weather_behavior_;
+        BehaviorController behavior_controller_;
+        OutputQueue outputs_;
     };
 }

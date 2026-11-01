@@ -1,0 +1,68 @@
+#include "pinkrobin/output_queue.hpp"
+#include <limits>
+
+namespace pinkrobin {
+
+    std::optional<Output> OutputQueue::front() const noexcept {
+        if (count_ == 0) {
+            return std::nullopt;
+        }
+
+        return outputs_[head_];
+    }
+
+    OutputEnqueueResult OutputQueue::enqueue(
+        const OutputPayload& payload) noexcept {
+
+        const auto* answer = std::get_if<WeatherAnswer>(&payload);
+
+        if (!answer ||
+            static_cast<std::uint32_t>(answer->kind) >
+            static_cast<std::uint32_t>(WeatherAnswerKind::storm)) {
+            return OutputEnqueueResult::invalid_argument;
+        }
+
+        if (count_ == capacity) {
+            return OutputEnqueueResult::full;
+        }
+
+        if (last_sequence_ ==
+            std::numeric_limits<std::uint64_t>::max()) {
+            return OutputEnqueueResult::sequence_exhausted;
+        }
+
+        const auto position = (head_ + count_) % capacity;
+        const auto sequence = last_sequence_ + 1;
+
+        outputs_[position] = Output{ sequence, payload };
+
+        last_sequence_ = sequence;
+        ++count_;
+
+        return OutputEnqueueResult::accepted;
+    }
+
+    bool OutputQueue::acknowledge(
+        std::uint64_t sequence) noexcept {
+
+        if (sequence == 0) {
+            return false;
+        }
+
+        if (sequence <= last_acknowledged_sequence_) {
+            return true;
+        }
+
+        if (count_ == 0 ||
+            outputs_[head_].sequence != sequence) {
+            return false;
+        }
+
+        last_acknowledged_sequence_ = sequence;
+
+        head_ = (head_ + 1) % capacity;
+        --count_;
+
+        return true;
+    }
+}

@@ -29,6 +29,245 @@ int main(void) {
     robin_core_destroy(a);
     robin_core_destroy(b);
     robin_core_destroy(NULL);
+
+    robin_core_handle* weather_receiver = robin_core_create(0);
+    CHECK(weather_receiver != NULL);
+
+    robin_weather_v1 received_weather = { 0 };
+    received_weather.temperature_c = 15.0;
+    received_weather.precipitation_mm = 2.0;
+    received_weather.wind_speed_kmh = 10.0;
+    received_weather.wind_gust_kmh = 20.0;
+    received_weather.valid_from_ms = 0;
+    received_weather.valid_until_ms = 60000;
+
+    CHECK(robin_core_receive_weather(
+        weather_receiver,
+        &received_weather,
+        sizeof(received_weather),
+        ROBIN_INPUT_SOURCE_COMPANION,
+        100) == ROBIN_OK);
+
+    robin_snapshot_v1 received_snapshot = { 0 };
+
+    CHECK(robin_core_get_snapshot(
+        weather_receiver,
+        &received_snapshot,
+        sizeof(received_snapshot)) == ROBIN_OK);
+
+    CHECK(received_snapshot.time_ms == 100);
+
+    CHECK(robin_core_receive_weather(
+        weather_receiver,
+        &received_weather,
+        sizeof(received_weather),
+        999u,
+        200) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_snapshot(
+        weather_receiver,
+        &received_snapshot,
+        sizeof(received_snapshot)) == ROBIN_OK);
+
+    CHECK(received_snapshot.time_ms == 100);
+
+    robin_core_destroy(weather_receiver);
+
+    robin_core_handle* interaction_receiver = robin_core_create(0);
+    CHECK(interaction_receiver != NULL);
+
+    CHECK(robin_core_receive_interaction(
+        interaction_receiver,
+        ROBIN_EVENT_HEART_TOUCHED,
+        ROBIN_INPUT_SOURCE_WEB,
+        100) == ROBIN_OK);
+
+    robin_snapshot_v1 interaction_snapshot = { 0 };
+
+    CHECK(robin_core_get_snapshot(
+        interaction_receiver,
+        &interaction_snapshot,
+        sizeof(interaction_snapshot)) == ROBIN_OK);
+
+    CHECK(interaction_snapshot.time_ms == 100);
+    CHECK(interaction_snapshot.mood == ROBIN_MOOD_HAPPY);
+    CHECK(interaction_snapshot.expression == ROBIN_EXPRESSION_HAPPY);
+
+    CHECK(robin_core_receive_interaction(
+        interaction_receiver,
+        ROBIN_EVENT_HEAD_STARTED,
+        999u,
+        200) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_snapshot(
+        interaction_receiver,
+        &interaction_snapshot,
+        sizeof(interaction_snapshot)) == ROBIN_OK);
+
+    CHECK(interaction_snapshot.time_ms == 100);
+    CHECK(interaction_snapshot.head_contact == 0u);
+    CHECK(interaction_snapshot.mood == ROBIN_MOOD_HAPPY);
+
+    const uint64_t revision_before_invalid_event =
+        interaction_snapshot.revision;
+
+    CHECK(robin_core_receive_interaction(
+        interaction_receiver,
+        999u,
+        ROBIN_INPUT_SOURCE_WEB,
+        200) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_snapshot(
+        interaction_receiver,
+        &interaction_snapshot,
+        sizeof(interaction_snapshot)) == ROBIN_OK);
+
+    CHECK(interaction_snapshot.time_ms == 100);
+    CHECK(interaction_snapshot.revision == revision_before_invalid_event);
+    CHECK(interaction_snapshot.head_contact == 0u);
+
+    robin_core_destroy(interaction_receiver);
+
+    robin_core_handle* output_core = robin_core_create(0);
+    CHECK(output_core != NULL);
+
+    robin_output_v1 output = { 0 };
+
+    /* Anfangs ist der Puffer leer. */
+    CHECK(robin_core_get_next_output(
+        output_core,
+        &output,
+        sizeof(output)) == ROBIN_NO_OUTPUT);
+
+    /* Ohne Wetterwissen entsteht eine unknown-Antwort. */
+    CHECK(robin_core_request_weather_answer(
+        output_core,
+        100) == ROBIN_OK);
+
+    CHECK(robin_core_get_next_output(
+        output_core,
+        &output,
+        sizeof(output)) == ROBIN_OK);
+
+    CHECK(output.abi_version == ROBIN_ABI_VERSION);
+    CHECK(output.kind == ROBIN_OUTPUT_WEATHER_ANSWER);
+    CHECK(output.sequence == 1);
+    CHECK(output.weather_answer_kind == ROBIN_WEATHER_ANSWER_UNKNOWN);
+    CHECK(output.reserved == 0);
+
+    /* Lesen entfernt nichts. */
+    CHECK(robin_core_get_next_output(
+        output_core,
+        &output,
+        sizeof(output)) == ROBIN_OK);
+
+    CHECK(output.sequence == 1);
+
+    /* Erst die Bestätigung gibt den Platz frei. */
+    CHECK(robin_core_acknowledge_output(
+        output_core,
+        1) == ROBIN_OK);
+
+    CHECK(robin_core_get_next_output(
+        output_core,
+        &output,
+        sizeof(output)) == ROBIN_NO_OUTPUT);
+
+    CHECK(output.sequence == 0);
+
+    /* Eine Bestätigung darf wiederholt werden. */
+    CHECK(robin_core_acknowledge_output(
+        output_core,
+        1) == ROBIN_OK);
+
+    CHECK(robin_core_request_weather_answer(
+        NULL,
+        100) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_next_output(
+        NULL,
+        &output,
+        sizeof(output)) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_next_output(
+        output_core,
+        NULL,
+        sizeof(output)) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_get_next_output(
+        output_core,
+        &output,
+        sizeof(output) - 1) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_acknowledge_output(
+        NULL,
+        1) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_acknowledge_output(
+        output_core,
+        0) == ROBIN_INVALID_ARGUMENT);
+
+    CHECK(robin_core_acknowledge_output(
+        output_core,
+        2) == ROBIN_INVALID_ARGUMENT);
+
+    /* Die Core-Zeit steht bereits bei 100 ms. */
+    CHECK(robin_core_request_weather_answer(
+        output_core,
+        99) == ROBIN_TIME_REVERSED);
+
+    /* Auch die abgelehnte Anfrage darf keine Ausgabe erzeugen. */
+    CHECK(robin_core_get_next_output(
+        output_core,
+        &output,
+        sizeof(output)) == ROBIN_NO_OUTPUT);
+
+    robin_core_destroy(output_core);
+
+    robin_core_handle* full_output_core = robin_core_create(0);
+    CHECK(full_output_core != NULL);
+
+    for (uint64_t time = 1; time <= 8; ++time) {
+        CHECK(robin_core_request_weather_answer(
+            full_output_core,
+            time) == ROBIN_OK);
+    }
+
+    CHECK(robin_core_request_weather_answer(
+        full_output_core,
+        9) == ROBIN_QUEUE_FULL);
+
+    CHECK(robin_core_acknowledge_output(
+        full_output_core,
+        1) == ROBIN_OK);
+
+    /* Nach Freigabe passt wieder eine Ausgabe hinein. */
+    CHECK(robin_core_request_weather_answer(
+        full_output_core,
+        10) == ROBIN_OK);
+
+    robin_output_v1 queued_output = { 0 };
+
+    for (uint64_t sequence = 2; sequence <= 9; ++sequence) {
+        CHECK(robin_core_get_next_output(
+            full_output_core,
+            &queued_output,
+            sizeof(queued_output)) == ROBIN_OK);
+
+        CHECK(queued_output.sequence == sequence);
+
+        CHECK(robin_core_acknowledge_output(
+            full_output_core,
+            sequence) == ROBIN_OK);
+    }
+
+    CHECK(robin_core_get_next_output(
+        full_output_core,
+        &queued_output,
+        sizeof(queued_output)) == ROBIN_NO_OUTPUT);
+
+    robin_core_destroy(full_output_core);
+
     puts("Pure C consumer, ABI layout, ownership and errors passed.");
     return 0;
 }

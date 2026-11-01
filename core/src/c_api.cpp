@@ -8,32 +8,106 @@ struct robin_core_handle {
     explicit robin_core_handle(uint64_t now) noexcept : core(now) {}
 };
 
-static_assert(
-    sizeof(robin_weather_v1) == 48,
-    "Weather v1 must occupy 48 bytes");
-
-static_assert(
-    offsetof(robin_weather_v1, valid_from_ms) == 32,
-    "Weather v1 validity offset mismatch"); 
+static_assert(sizeof(robin_weather_v1) == 48, "Weather v1 must occupy 48 bytes");
+static_assert(offsetof(robin_weather_v1, valid_from_ms) == 32, "Weather v1 validity offset mismatch"); 
 
 static_assert(sizeof(robin_snapshot_v1) == 40, "ABI v1 snapshot must occupy 40 bytes");
 static_assert(offsetof(robin_snapshot_v1, time_ms) == 24, "ABI v1 clock offset mismatch");
 
+static_assert(sizeof(robin_output_v1) == 24, "Output v1 must occupy 24 bytes");
+static_assert(offsetof(robin_output_v1, sequence) == 8,"Output v1 sequence offset mismatch");
+
+uint32_t acceptance_to_api_result(
+    pinkrobin::MessageAcceptance acceptance) noexcept {
+
+    switch (acceptance) {
+    case pinkrobin::MessageAcceptance::accepted:
+    case pinkrobin::MessageAcceptance::replaced:
+        return ROBIN_OK;
+
+    case pinkrobin::MessageAcceptance::invalid_argument:
+        return ROBIN_INVALID_ARGUMENT;
+
+    case pinkrobin::MessageAcceptance::time_reversed:
+        return ROBIN_TIME_REVERSED;
+
+    case pinkrobin::MessageAcceptance::full:
+        return ROBIN_QUEUE_FULL;
+    }
+
+    return ROBIN_INVALID_ARGUMENT;
+}
+
+uint32_t receive_and_advance(
+    pinkrobin::Core& core,
+    const pinkrobin::Message& message,
+    uint64_t now_ms) noexcept {
+
+    const auto acceptance = core.receive(message, now_ms);
+    const auto result = acceptance_to_api_result(acceptance);
+
+    if (result != ROBIN_OK) {
+        return result;
+    }
+
+    return static_cast<uint32_t>(
+        core.advance_to(now_ms));
+}
 
 extern "C" {
     uint32_t ROBIN_CALL robin_core_abi_version(void) { return ROBIN_ABI_VERSION; }
     robin_core_handle* ROBIN_CALL robin_core_create(uint64_t now_ms) {
         return new (std::nothrow) robin_core_handle(now_ms);
     }
+
     void ROBIN_CALL robin_core_destroy(robin_core_handle* handle) { delete handle; }
     uint32_t ROBIN_CALL robin_core_advance(robin_core_handle* handle, uint64_t now_ms) {
         if (!handle) return ROBIN_INVALID_ARGUMENT;
         return static_cast<uint32_t>(handle->core.advance_to(now_ms));
     }
+
     uint32_t ROBIN_CALL robin_core_dispatch(robin_core_handle* handle, uint32_t event, uint64_t now_ms) {
         if (!handle) return ROBIN_INVALID_ARGUMENT;
-        return static_cast<uint32_t>(handle->core.dispatch(static_cast<pinkrobin::Event>(event), now_ms));
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                pinkrobin::InputSource::web
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
     }
+
+    uint32_t ROBIN_CALL robin_core_receive_interaction(
+        robin_core_handle* handle,
+        uint32_t event,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
+    }
+
     uint32_t ROBIN_CALL robin_core_get_snapshot(const robin_core_handle* handle,
         robin_snapshot_v1* output, uint32_t output_size) {
         if (!handle || !output || output_size != sizeof(robin_snapshot_v1)) return ROBIN_INVALID_ARGUMENT;
@@ -56,6 +130,7 @@ extern "C" {
                 static_cast<pinkrobin::Transformation>(transformation),
                 now_ms));
     }
+
     uint32_t ROBIN_CALL robin_core_get_transformation(
         const robin_core_handle* handle,
         uint32_t* output) {
@@ -91,5 +166,143 @@ extern "C" {
         return static_cast<uint32_t>(
             handle->core.post_weather(
                 pinkrobin::WeatherUpdated{ forecast }));
+    }
+
+    uint32_t ROBIN_CALL robin_core_receive_weather(
+        robin_core_handle* handle,
+        const robin_weather_v1* weather,
+        uint32_t weather_size,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle || !weather ||
+            weather_size != sizeof(robin_weather_v1)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::WeatherForecast forecast{
+            weather->temperature_c,
+            weather->precipitation_mm,
+            weather->wind_speed_kmh,
+            weather->wind_gust_kmh,
+            weather->valid_from_ms,
+            weather->valid_until_ms
+        };
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::WeatherUpdated{ forecast }
+        };
+
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
+    }
+
+    uint32_t ROBIN_CALL robin_core_post_interaction(
+        robin_core_handle* handle,
+        uint32_t event,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            pinkrobin::InteractionReceived{
+                static_cast<pinkrobin::Event>(event)
+            }
+        };
+
+        const auto acceptance =
+            handle->core.receive(message, now_ms);
+
+        return acceptance_to_api_result(acceptance);
+    }
+
+    uint32_t ROBIN_CALL robin_core_get_next_output(
+        const robin_core_handle* handle,
+        robin_output_v1* output,
+        uint32_t output_size) {
+
+        if (!handle || !output ||
+            output_size != sizeof(robin_output_v1)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const auto next = handle->core.next_output();
+
+        if (!next) {
+            *output = { ROBIN_ABI_VERSION, 0u, 0u, 0u, 0u };
+            return ROBIN_NO_OUTPUT;
+        }
+
+        const auto* answer =
+            std::get_if<pinkrobin::WeatherAnswer>(&next->payload);
+
+        if (!answer) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        *output = {
+            ROBIN_ABI_VERSION,
+            ROBIN_OUTPUT_WEATHER_ANSWER,
+            next->sequence,
+            static_cast<uint32_t>(answer->kind),
+            0u
+        };
+
+        return ROBIN_OK;
+    }
+
+    uint32_t ROBIN_CALL robin_core_acknowledge_output(
+        robin_core_handle* handle,
+        uint64_t sequence) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        return handle->core.acknowledge_output(sequence)
+            ? ROBIN_OK
+            : ROBIN_INVALID_ARGUMENT;
+    }
+
+    uint32_t ROBIN_CALL robin_core_request_weather_answer(
+        robin_core_handle* handle,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const auto result = handle->core.advance_to(now_ms);
+
+        if (result != pinkrobin::Result::ok) {
+            return static_cast<uint32_t>(result);
+        }
+
+        switch (handle->core.request_weather_answer()) {
+        case pinkrobin::OutputEnqueueResult::accepted:
+            return ROBIN_OK;
+
+        case pinkrobin::OutputEnqueueResult::full:
+            return ROBIN_QUEUE_FULL;
+
+        case pinkrobin::OutputEnqueueResult::sequence_exhausted:
+            return ROBIN_SEQUENCE_EXHAUSTED;
+
+        case pinkrobin::OutputEnqueueResult::invalid_argument:
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        return ROBIN_INVALID_ARGUMENT;
     }
 }

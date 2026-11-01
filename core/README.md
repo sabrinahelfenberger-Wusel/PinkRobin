@@ -40,6 +40,27 @@ Unter Windows eignet sich Visual Studio mit dem Workload **Desktopentwicklung mi
 C++** und CMake-Unterstützung. Für einen eigenen Core-Entwicklungsplatz den Ordner
 `core` als CMake-Projekt öffnen. Die bestehende Backend-Solution bleibt unverändert.
 
+### Aufbau der Tests
+
+Die C++-Tests sind nach Verantwortlichkeiten aufgeteilt. Jeder Bereich besitzt ein
+kleines `main()` und benannte Szenarien; Fehlermeldungen nennen Szenario und Prüfung.
+Gemeinsame Prüf- und Ausgabehilfen stehen in `tests/test_support.hpp`.
+
+| Datei | CTest-Name | Inhalt |
+| --- | --- | --- |
+| `tests/core_tests.cpp` | `behavior` | Begrüssung, Berührung, Neustart, Isolation und Zeitregeln |
+| `tests/weather_tests.cpp` | `weather` | Prognosevalidierung, Gültigkeit, Reaktionen und Cooldown |
+| `tests/message_tests.cpp` | `message` | Nachrichtenannahme, Reihenfolge, Ringpuffer und Überfüllung |
+| `tests/world_model_tests.cpp` | `world_model` | Wetterwissen, Metadaten, Ablauf und Core-Anbindung |
+| `tests/c_api_tests.c` | `c_abi` | Native C-Schnittstelle |
+
+Alle Bereiche laufen weiterhin mit dem oben gezeigten CTest-Befehl, auch in CI.
+Ein einzelner Bereich lässt sich gezielt ausführen:
+
+```sh
+ctest --test-dir core/build -C Release -R "^world_model$" --output-on-failure
+```
+
 Die Konsolendemo zeigt ohne Wartezeiten einen reproduzierbaren Ablauf:
 
 ```sh

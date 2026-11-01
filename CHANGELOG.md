@@ -1,5 +1,42 @@
 # Änderungsprotokoll
 
+## 0.1.2 – Wetterantworten und Core-Struktur
+
+### Neu
+
+- Robin beantwortet über einen Button die Frage „Wie wird das Wetter?“
+  anhand seiner gespeicherten Prognose.
+- Ohne gültige Wetterdaten gibt Robin eine ausdrückliche Rückmeldung.
+- Antworten erscheinen acht Sekunden lang und werden danach bestätigt.
+- Die Versionsanzeige unter Robin übernimmt die Web-Paketversion.
+
+### Core und Backend
+
+- Gemeinsamer Nachrichtenvertrag mit Herkunft und Empfangszeit.
+- Begrenzter Interaktionspuffer und ersetzbare wartende Wetterprognose.
+- WorldModel für Wetterwissen und RobinState für Robins eigenen Zustand.
+- Wetterverhalten und Aktionskoordination in eigene Module ausgelagert.
+- Typisierte Ausgaben mit Sequenznummern, begrenztem Puffer und
+  wiederholbarer Bestätigung über C-ABI, Backend und Angular.
+- Direkte Wetterantworten warten nicht auf Outfit-Freigabe oder
+  den Cooldown spontaner Wetteraktionen.
+- Spontane Wetteraktionen können beim nächsten freien
+  Verarbeitungszeitpunkt starten; die feste Wiederprüfungsfrist entfällt.
+
+### Tests und Dokumentation
+
+- Tests für Nachrichtenreihenfolge, Puffergrenzen, Wettergültigkeit,
+  Session-Trennung, Ausgabebestätigung und Anzeigedauer ergänzt.
+- Core- und Backend-Tests nach Themen aufgeteilt.
+- Architektur und Ausgabeweg mit Ablaufgrafik dokumentiert.
+
+### Bekannte Grenzen
+
+- Ausgabe- und Session-Daten liegen im Arbeitsspeicher und überstehen
+  einen Backend-Neustart nicht.
+- Die Wetterfrage wird über einen Button ausgelöst.
+  Freie Texteingabe, Spracherkennung und Sprachausgabe folgen später.
+
 ## 0.1.1 – Wetterkommentare
 
 ### Neu

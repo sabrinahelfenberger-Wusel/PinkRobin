@@ -55,13 +55,52 @@ public sealed class NativeRobinCore : IDisposable
         }
     }
 
-    public RobinSnapshot Dispatch(RobinEvent input, ulong nowMs)
+    public RobinSnapshot Dispatch(
+        RobinEvent input,
+        CoreInputSource source,
+        ulong nowMs)
     {
         lock (sync)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            Check(NativeMethods.Dispatch(handle, (uint)input, nowMs));
+
+            var result = NativeMethods.ReceiveInteraction(
+                handle,
+                (uint)input,
+                (uint)source,
+                nowMs);
+
+            if (result == 4)
+            {
+                AdvanceTo(nowMs);
+
+                result = NativeMethods.ReceiveInteraction(
+                    handle,
+                    (uint)input,
+                    (uint)source,
+                    nowMs);
+            }
+
+            Check(result);
+
             return ReadSnapshot();
+        }
+    }
+
+    public void PostInteraction(
+        RobinEvent input,
+        CoreInputSource source,
+        ulong nowMs)
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            Check(NativeMethods.PostInteraction(
+                handle,
+                (uint)input,
+                (uint)source,
+                nowMs));
         }
     }
 
@@ -100,7 +139,7 @@ public sealed class NativeRobinCore : IDisposable
         }
     }
 
-    public void PostWeather(CoreWeatherForecast forecast)
+    public void PostWeather(CoreWeatherForecast forecast, CoreInputSource source, ulong nowMs)
     {
         ArgumentNullException.ThrowIfNull(forecast);
 
@@ -118,10 +157,12 @@ public sealed class NativeRobinCore : IDisposable
                 ValidUntilMs = forecast.ValidUntilMs
             };
 
-            Check(NativeMethods.PostWeather(
+            Check(NativeMethods.ReceiveWeather(
                 handle,
                 in weather,
-                (uint)Marshal.SizeOf<NativeWeather>()));
+                (uint)Marshal.SizeOf<NativeWeather>(),
+                (uint)source,
+                nowMs));
         }
     }
 
@@ -131,6 +172,78 @@ public sealed class NativeRobinCore : IDisposable
         {
             ObjectDisposedException.ThrowIf(disposed, this);
             return ReadSnapshot();
+        }
+    }
+
+    public CoreWeatherAnswerOutput? GetNextOutput()
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            var result = NativeMethods.GetNextOutput(
+                handle,
+                out var output,
+                (uint)Marshal.SizeOf<NativeOutput>());
+
+            // Ein leerer Ausgabepuffer ist kein Fehler.
+            if (result == 5)
+            {
+                return null;
+            }
+
+            Check(result);
+
+            if (output.AbiVersion != 1 ||
+                output.Kind != 1 ||
+                output.Sequence == 0 ||
+                output.WeatherAnswerKind > (uint)CoreWeatherAnswerKind.Storm ||
+                output.Reserved != 0)
+            {
+                throw new InvalidOperationException(
+                    "Invalid native Core output.");
+            }
+
+            return new CoreWeatherAnswerOutput(
+                output.Sequence,
+                (CoreWeatherAnswerKind)output.WeatherAnswerKind);
+        }
+    }
+
+    public void AcknowledgeOutput(ulong sequence)
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            Check(NativeMethods.AcknowledgeOutput(
+                handle,
+                sequence));
+        }
+    }
+
+    public void RequestWeatherAnswer(ulong nowMs)
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            var result = NativeMethods.RequestWeatherAnswer(
+                handle,
+                nowMs);
+
+            if (result == 4)
+            {
+                throw new CoreOutputQueueFullException();
+            }
+
+            if (result == 6)
+            {
+                throw new InvalidOperationException(
+                    "The Core output sequence is exhausted.");
+            }
+
+            Check(result);
         }
     }
 
@@ -144,9 +257,20 @@ public sealed class NativeRobinCore : IDisposable
 
     private static void Check(uint result)
     {
-        if (result == 1) throw new ArgumentException("Invalid Core argument or event.");
-        if (result == 2) throw new ArgumentOutOfRangeException("nowMs", "Core time must not move backwards.");
-        if (result != 0) throw new InvalidOperationException($"Unknown Core result: {result}.");
+        if (result == 1)
+            throw new ArgumentException("Invalid Core argument or event.");
+
+        if (result == 2)
+            throw new ArgumentOutOfRangeException(
+                "nowMs",
+                "Core time must not move backwards.");
+
+        if (result == 4)
+            throw new CoreMessageQueueFullException();
+
+        if (result != 0)
+            throw new InvalidOperationException(
+                $"Unknown Core result: {result}.");
     }
 
     public void Dispose()
@@ -174,6 +298,16 @@ internal struct NativeWeather
     public double WindGustKmh;
     public ulong ValidFromMs;
     public ulong ValidUntilMs;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeOutput
+{
+    public uint AbiVersion;
+    public uint Kind;
+    public ulong Sequence;
+    public uint WeatherAnswerKind;
+    public uint Reserved;
 }
 
 internal sealed class CoreHandle : SafeHandleZeroOrMinusOneIsInvalid
@@ -217,6 +351,55 @@ internal static class NativeMethods
 
     [DllImport(Library, EntryPoint = "robin_core_post_weather", CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint PostWeather(CoreHandle handle, in NativeWeather weather, uint weatherSize);
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_weather",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveWeather(
+        CoreHandle handle,
+        in NativeWeather weather,
+        uint weatherSize,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_interaction",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveInteraction(
+        CoreHandle handle,
+        uint eventValue,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_post_interaction",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint PostInteraction(
+        CoreHandle handle,
+        uint eventValue,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(Library, EntryPoint = "robin_core_request_weather_answer",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint RequestWeatherAnswer(
+        CoreHandle handle,
+        ulong nowMs);
+
+    [DllImport(Library, EntryPoint = "robin_core_get_next_output",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint GetNextOutput(
+        CoreHandle handle,
+        out NativeOutput output,
+        uint outputSize);
+
+    [DllImport(Library, EntryPoint = "robin_core_acknowledge_output",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint AcknowledgeOutput(
+        CoreHandle handle,
+        ulong sequence);
 
     [DllImport(Library, EntryPoint = "robin_core_start_transformation", CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint StartTransformation(CoreHandle handle, uint transformation, ulong nowMs);

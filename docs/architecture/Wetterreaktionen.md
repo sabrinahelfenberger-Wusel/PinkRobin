@@ -1,145 +1,137 @@
 # Wetterwissen und Verwandlungen
 
-Stand: 22.10.2026. Robin erhält eine Wetterprognose und entscheidet im C++-Core,
-ob eine Verwandlung passt und wann sie starten darf. Angular stellt den aktiven
-Zustand dar. Das Backend beschafft und übersetzt die Daten.
+Das Backend beschafft Wetterprognosen. Der portable C++-Core hält
+das Wetterwissen, ermittelt Vorschläge und entscheidet über deren
+Ausführung. Angular stellt den tatsächlichen Zustand dar.
 
 ## Datenfluss
 
 ```mermaid
 flowchart TD
     A[Angular: PLZ auswählen] --> B[GET /api/weather]
-    B --> S[IWeatherSource: Auswahl beim Backend-Start]
-    S -->|MeteoSwiss| C[WeatherService: gemeinsamer Stunden-Cache]
-    C <-->|STAC und CSV| M[MeteoSchweiz]
-    S -->|Test, nur Development| T[TestWeatherSource: Dry, Rain oder Storm]
+    B --> S[IWeatherSource]
+    S --> M[MeteoSwiss oder Testquelle in Development]
     B --> D[Angular: Prognose anzeigen]
-    D -->|PLZ und Sitzungstoken| E[POST /api/v1/session/weather]
+    D --> E[POST /api/v1/session/weather: PLZ und Sitzungstoken]
     E --> S
-    E --> F[RobinSessions: UTC in Core-Zeit umrechnen]
-    F --> G[C-Schnittstelle: robin_core_post_weather]
-    G --> H[Core: Wetter-Nachricht vormerken]
-    H --> I[advance_to: übernehmen und Verhalten prüfen]
-    I --> J[Aktive Verwandlung und Revision]
-    J --> K[GET /api/v1/session]
-    K --> L[Angular: Outfit und Regen zeichnen]
+    E --> F[RobinSessions: UTC in monotone Core-Zeit umrechnen]
+    F --> G[C-ABI: robin_core_receive_weather]
+    G --> H[Core: Nachricht prüfen und annehmen]
+    H --> I[advance_to: gültiges Wissen ins WorldModel übernehmen]
+    I --> J[WeatherBehavior: Vorschlag]
+    J --> K[BehaviorController: Freigabe und Cooldown]
+    K --> L[Core: Verwandlung starten]
+    L --> N[Angular: Sitzungszustand abfragen und darstellen]
 ```
 
-Die beiden HTTP-Wetteraufrufe verwenden dieselbe ausgewählte Wetterquelle. Bei
-MeteoSchweiz teilen sie sich den Stunden-Cache. In Development kann stattdessen
-künstliches Testwetter gewählt werden. Der POST beschafft die Prognose serverseitig
-anhand der PLZ; Angular übermittelt keine eigenen Wetterwerte.
-[Konfiguration und Testfälle](../../backend/WEATHER.md#echte-prognosen-oder-künstliches-testwetter).
-`X-Robin-Session` ordnet die Nachricht einer bestehenden Sitzung zu.
-`{"accepted": true}` bestätigt die Annahme der Nachricht, keinen gestarteten Effekt.
-Die Sitzungsabfrage liefert dagegen den tatsächlichen Zustand als
-`transformation: "none"`, `"octopus"` oder `"raincoat"`.
+Der POST beschafft die Prognose serverseitig anhand der PLZ.
+Angular übermittelt keine eigenen Wetterwerte.
+`X-Robin-Session` ordnet den Aufruf einer Sitzung zu.
 
-## Zuständigkeiten und Dateien
+Die synchron arbeitende C-ABI-Funktion nimmt an und verarbeitet
+anschliessend. Die reine C++-Annahme durch `receive()` ist davon getrennt.
 
-| Teil | Aufgabe | Einstieg |
-|---|---|---|
-| Angular | PLZ, Wetteranzeige, Übergabe an Sitzung | [Robin-Seite](../../web/src/app/robin-page.component.ts) |
-| Wetterdienst | Normalisierte MeteoSchweiz-Prognose, gemeinsamer Cache | [WeatherService.cs](../../backend/src/PinkRobin.Api/Weather/WeatherService.cs) |
-| Sitzung | Eigener Core pro Robin, Zeitumrechnung, synchronisierter Zugriff | [RobinSessions.cs](../../backend/src/PinkRobin.Api/Sessions/RobinSessions.cs) |
-| Native Anbindung | C#-Datenlayout und C-Funktionen | [NativeRobinCore.cs](../../backend/src/PinkRobin.Api/Core/NativeRobinCore.cs), [c_api.h](../../core/include/pinkrobin/c_api.h) |
-| Core | Wetterwissen, Auswahl, Wartezeit, Dauer und Cooldown | [core.cpp](../../core/src/core.cpp), [weather.hpp](../../core/include/pinkrobin/weather.hpp) |
-| Darstellung | Gelber Mantel, Tentakel und Regen | [Robin-Template](../../web/src/app/robin.component.html) |
+`{"accepted": true}` bestätigt die Annahme, keinen gestarteten Effekt.
+Die Sitzungsabfrage liefert die tatsächlich aktive Verwandlung.
 
-Die C#-Wetter-ReactionEngine ist entfernt. `WeatherReactionRequest` ist lediglich
-noch das PLZ-Datenpaket des POST-Endpoints, keine Entscheidungslogik.
+## Datenquelle
 
-## Nachrichtenplatz und Wetterwissen
+Bei MeteoSwiss verwenden die Wetteraufrufe denselben Stunden-Cache.
+In Development stehen alternativ die Testfälle Dry, Rain und Storm
+zur Verfügung.
 
-`post_weather` prüft endliche Zahlen, nicht negative Niederschlags-/Windwerte und
-ein gültiges, noch nicht abgelaufenes Zeitintervall. Negative Temperaturen sind erlaubt.
+[Konfiguration und Testablauf](../../backend/WEATHER.md).
 
-- `pending_weather_`: genau ein Platz für eine unverarbeitete `WeatherUpdated`-Nachricht.
-  Eine gültige, später eingehende Nachricht ersetzt die vorgemerkte Nachricht.
-  Eine ungültige Nachricht wird abgewiesen und überschreibt sie nicht.
-- `weather_`: aktuell übernommene Prognose. Eine zukünftige Nachricht wartet bis zu
-  ihrem Beginn; vorhandenes gültiges Wetterwissen bleibt bis dahin verfügbar.
-- `advance_to`: übernimmt gültige Nachrichten und entfernt abgelaufene Prognosen.
+## Nachrichten und Wetterwissen
 
-Das ist ein begrenzter Wetter-Nachrichtenplatz, noch keine allgemeine FIFO-Warteschlange.
-Die Reihenfolge ist die Ankunftsreihenfolge; eine Prüfung der Prognoseversion gibt es
-noch nicht. Berührungen werden weiterhin direkt über `dispatch` verarbeitet.
+Der Core prüft Quelle, Empfangszeit, endliche Wetterwerte,
+nicht negative Niederschlags-/Windwerte und das Gültigkeitsintervall.
+Negative Temperaturen sind erlaubt.
 
-## Entscheidung und Ablauf
+Ein einzelner Wetterplatz hält eine noch nicht übernommene Prognose:
 
-Die Reihenfolge in `choose_weather_transformation` bestimmt die Priorität:
+- Eine neue gültige Prognose ersetzt die wartende.
+- Ungültige Ersatzdaten verändern die wartende Prognose nicht.
+- Die Übernahme erfolgt frühestens ab Empfang und Gültigkeitsbeginn.
+- Vorhandenes gültiges Wissen bleibt bis zur Übernahme oder seinem Ablauf erhalten.
 
-| Bedingung | Verwandlung |
-|---|---|
-| Niederschlag ≥ 10 mm **und** Böen ≥ 60 km/h | Octopus |
-| Sonst Niederschlag ≥ 0,5 mm | Gelber Regenmantel |
-| Sonst oder ohne gültige Prognose | Keine |
+Das WorldModel speichert die übernommene Prognose mit Quelle und
+Empfangszeit. Abgelaufenes Wissen wird beim Zeitfortschritt entfernt.
+Unbekanntes Wetter bedeutet nicht trockenes Wetter.
 
-Die Werte sind eigene Prototypregeln, keine offiziellen Unwetterwarnungen.
-Niederschlag ist die prognostizierte Stundensumme einschließlich möglichem Schnee.
+Interaktionen verwenden einen separaten Ringpuffer mit acht Plätzen.
+Details: [Nachrichtenvertrag](Nachrichtenvertrag.md) und
+[WorldModel](WorldModel.md).
 
-```mermaid
-flowchart TD
-    A[Aktuelles Wetter auswerten] --> B{Passender Vorschlag?}
-    B -->|Nein| C[Vormerkung und Wiederholungszeit löschen]
-    B -->|Ja| D[Vorschlag vormerken oder aktualisieren]
-    D --> E{30-Minuten-Cooldown abgelaufen?}
-    E -->|Nein| W[Auf späteres advance_to warten]
-    E -->|Ja| F{Wartefrist abgelaufen?}
-    F -->|Nein| W
-    F -->|Ja| G{Wach, neugierig, kein Kopfkontakt und nicht verwandelt?}
-    G -->|Nein| H[Nächsten Versuch in 10 Sekunden erlauben]
-    H --> W
-    G -->|Ja| I[Starten, Cooldown merken, Revision erhöhen]
-    I --> J[Nach 10 Sekunden beenden und Revision erhöhen]
-```
+## Auswahl und Freigabe
 
-Der Cooldown beginnt beim tatsächlichen automatischen Start und gilt gemeinsam
-für Wetterverwandlungen. Ein geänderter Vorschlag setzt die Wiederholungswartezeit
-zurück, aber nicht den Cooldown. Ohne passenden Wettervorschlag wird eine wartende
-Absicht verworfen. Eine bereits aktive Verwandlung läuft bis zu ihrem Ende weiter.
-`restart` beendet eine aktive Verwandlung; Wetterwissen und Wetter-Cooldown bleiben
-im aktuellen Code innerhalb derselben Core-Instanz erhalten.
+| Bedingung | Vorschlag |
+| --- | --- |
+| Niederschlag mindestens 10 mm und Böen mindestens 60 km/h | Octopus |
+| Sonst Niederschlag mindestens 0,5 mm | Gelber Regenmantel |
+| Sonst oder ohne Wetterwissen | Keine Verwandlung |
 
-Der Core hat keinen eigenen Timer oder Thread. Alle Zeitregeln werden beim nächsten
-`advance_to` geprüft. Die Websitzung fragt normalerweise alle 250 ms ab; bei fehlenden
-Aufrufen gibt es keine selbstständige Verarbeitung. Sitzungszustand ist flüchtig:
+Diese Schwellenwerte sind eigene Prototypregeln, keine offiziellen
+Unwetterwarnungen. Niederschlag kann auch Schnee enthalten.
+
+WeatherBehavior ermittelt den Vorschlag.
+BehaviorController prüft, ob Robin wach und neugierig ist,
+keinen Kopfkontakt hat und keine andere Verwandlung ausführt.
+
+Ist Robin beschäftigt, erfolgt beim nächsten freien
+Verarbeitungszeitpunkt eine erneute Entscheidung aus dem aktuellen Wissen.
+Es gibt keine zusätzliche feste Zehn-Sekunden-Wartezeit.
+
+## Dauer und Cooldown
+
+Die Verwandlung dauert weiterhin zehn Sekunden.
+
+Der gemeinsame 30-Minuten-Cooldown für spontane Wetterverwandlungen
+beginnt erst bei einem tatsächlichen Start und liegt im BehaviorController.
+Ein anderer Wettervorschlag setzt ihn nicht zurück.
+
+Eine bereits aktive Verwandlung läuft bis zu ihrem Ende weiter.
+`restart` beendet die aktive Verwandlung; Wetterwissen und
+Wetter-Cooldown bleiben innerhalb derselben Core-Instanz erhalten.
+
+Der Core besitzt keinen eigenen Timer oder Thread.
+Verarbeitung erfolgt durch `advance_to()`.
 Eine neue Sitzung erhält einen neuen Core ohne bisherigen Cooldown.
 
-## Zwei Zeitachsen
+Details: [Verhaltensauswahl und Freigabe](Verhalten.md).
 
-Die API-Prognose verwendet UTC. `ToCoreWeather` bildet ihre Gültigkeit auf die
-monotonen Millisekunden der jeweiligen Sitzung ab. Bereits begonnene Intervalle
-beginnen für den Core jetzt; zukünftige Intervalle behalten ihren Abstand.
-Der Beginn wird auf-, das Ende abgerundet. Überläufe werden mit `checked` erkannt.
+## Zeitbasis und native Schnittstelle
 
-Beispiel: UTC jetzt 12:00, Core-Zeit 8000 ms, Prognose gültig bis 12:10.
-Das Ende wird zu `608000 ms`. Es gilt immer `[valid_from_ms, valid_until_ms)`.
+Die Backend-Prognose verwendet UTC. RobinSessions rechnet ihre
+Gültigkeit in monotone Millisekunden der jeweiligen Core-Instanz um.
+Empfangszeit und Prognosegültigkeit bleiben unterschiedliche Angaben.
 
-Die C-Struktur `robin_weather_v1` enthält vier `double`-Werte und zwei `uint64_t`-
-Zeitwerte. Ihr Layout umfasst 48 Bytes; `valid_from_ms` liegt ab Byte 32.
-C# verwendet die entsprechende sequenzielle Struktur. Der bestehende ABI-v1-Snapshot
-bleibt unverändert; die aktive Verwandlung wird separat nativ ausgelesen.
+Es gilt das halboffene Intervall:
+`[valid_from_ms, valid_until_ms)`.
 
-## Prüfen und weiterentwickeln
+`robin_weather_v1` enthält vier double-Werte und zwei uint64_t-Zeitwerte.
+Die Struktur umfasst 48 Bytes; valid_from_ms beginnt bei Byte 32.
+Der ABI-v1-Snapshot bleibt unverändert.
+Die aktive Verwandlung wird separat über die native Schnittstelle gelesen.
 
-Aus der Repository-Wurzel, jeweils erst nach erfolgreichem Build weiterfahren:
+## Prüfung
+
+Im Repository-Hauptordner:
 
 ```powershell
-cmake -S core -B core/build -DBUILD_TESTING=ON
 cmake --build core/build --config Release
 ctest --test-dir core/build -C Release --output-on-failure
 dotnet run --project backend/tests/Interop -c Release
 ```
 
-[Core-Tests](../../core/tests/core_tests.cpp) prüfen Gültigkeitsgrenzen,
-Nachrichtenersetzung, automatische Auswahl, Wartezeit, Cooldown und das Verwerfen
-überholter Absichten. [Interop-Tests](../../backend/tests/Interop/Program.cs) prüfen
-native Übergabe, UTC-Umrechnung und die Trennung zweier Sitzungen. Die Tests verwenden
-künstliche Daten und steuerbare Zeit; sie benötigen keinen echten Regen.
+CTest trennt Grundverhalten, Wetter, Nachrichten, WorldModel und C-ABI.
+Die Tests verwenden künstliche Daten und steuerbare Zeit.
 
-Die gelbe Farbe ist derzeit Teil der Angular-Darstellung. Dauerhafte Vorlieben,
-Sprachausgabe und die Companion-App-Anbindung sind noch nicht implementiert.
-Die Companion-App kann später denselben Core-Nachrichteneingang nutzen; Standort,
-Netzwerk und die Umrechnung ihrer Zeitachse bleiben Aufgaben des jeweiligen Adapters.
-Details zur Datenquelle und PLZ-Konfiguration: [Backend-Wetterdienst](../../backend/WEATHER.md).
+## Weitere Entwicklung
+
+Direkte Wetterfragen sollen unmittelbar beantwortet werden können,
+ohne auf eine freie Outfit-Aktion oder deren Cooldown zu warten.
+Der Anfrage- und Antwortweg ist noch nicht implementiert.
+
+Allgemeine Aktionsprioritäten, Persönlichkeit, dauerhafte Vorlieben,
+Sprachausgabe und Companion-Anbindung bleiben weitere Ausbauschritte.

@@ -14,7 +14,7 @@
   aria-label="Pink Robin stellt sich vor"
 >
   <div class="speech" id="speech" role="status" aria-live="polite">
-    {{ speech() }}
+    {{ displayedSpeech() }}
   </div>
   <div class="robot-frame">
     <svg
@@ -330,7 +330,7 @@
   </p>
 
   <p class="stage-caption">
-    <span class="status-dot"></span><span id="state">{{ state() }}</span
-    ><span class="version">Virtual Robin · 0.1</span>
+    <span class="status-dot"></span><span id="state">{{ state() }}</span>
+    <span class="version">Virtual Robin · {{ version }}</span>
   </p>
 </section>

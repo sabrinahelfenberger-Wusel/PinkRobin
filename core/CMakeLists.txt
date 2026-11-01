@@ -1,10 +1,20 @@
 cmake_minimum_required(VERSION 3.20)
-project(PinkRobinCore VERSION 0.1.1 LANGUAGES C CXX)
+project(PinkRobinCore VERSION 0.1.2 LANGUAGES C CXX)
 include(CTest)
 option(ROBIN_BUILD_EXAMPLES "Build the deterministic console demo" ON)
 option(ROBIN_ENABLE_SANITIZERS "Enable address/undefined behavior checks" OFF)
 
-add_library(pinkrobin_behavior STATIC src/core.cpp)
+add_library(pinkrobin_behavior STATIC
+    src/core.cpp
+    src/core_messages.cpp
+    src/core_interactions.cpp
+    src/core_weather.cpp
+    src/world_model.cpp
+    src/weather_behavior.cpp
+    src/behavior_controller.cpp
+    src/output_queue.cpp
+    src/core_outputs.cpp
+)
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)
 set_target_properties(pinkrobin_behavior PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES)
@@ -29,9 +39,24 @@ if(BUILD_TESTING)
     add_executable(core_tests tests/core_tests.cpp)
     target_link_libraries(core_tests PRIVATE pinkrobin_behavior)
     add_test(NAME behavior COMMAND core_tests)
+    add_executable(weather_tests tests/weather_tests.cpp)
+    target_link_libraries(weather_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME weather COMMAND weather_tests)
+    add_executable(message_tests tests/message_tests.cpp)
+    target_link_libraries(message_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME message COMMAND message_tests)
+    add_executable(world_model_tests tests/world_model_tests.cpp)
+    target_link_libraries(world_model_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME world_model COMMAND world_model_tests)
     add_executable(c_api_tests tests/c_api_tests.c)
     target_link_libraries(c_api_tests PRIVATE pinkrobin_core)
     add_test(NAME c_abi COMMAND c_api_tests)
+    add_executable(action_tests tests/action_tests.cpp)
+    target_link_libraries(action_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME action COMMAND action_tests)
+    add_executable(output_tests tests/output_tests.cpp)
+    target_link_libraries(output_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME output COMMAND output_tests)
 endif()
 if(ROBIN_BUILD_EXAMPLES)
     add_executable(robin_demo examples/demo.cpp)
