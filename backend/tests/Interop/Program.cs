@@ -77,6 +77,74 @@ var limited = new PinkRobin.Api.Sessions.RobinSessions(
     new TestGateway(),
     new ManualClock()
 );
+
+using (var outputCore = new NativeRobinCore())
+{
+    Require(
+        outputCore.GetNextOutput() is null,
+        "Output queue starts empty");
+
+    outputCore.RequestWeatherAnswer(100);
+
+    var firstOutput = outputCore.GetNextOutput();
+
+    Require(
+        firstOutput is not null &&
+        firstOutput.Sequence == 1 &&
+        firstOutput.Kind == CoreWeatherAnswerKind.Unknown,
+        "Weather answer without data is unknown");
+
+    Require(
+        outputCore.GetNextOutput() == firstOutput,
+        "Reading preserves the pending output");
+
+    outputCore.AcknowledgeOutput(firstOutput!.Sequence);
+
+    Require(
+        outputCore.GetNextOutput() is null,
+        "Acknowledged output is removed");
+
+    outputCore.AcknowledgeOutput(firstOutput.Sequence);
+}
+
+Console.WriteLine(
+    "Core output reading and acknowledgement passed.");
+
+using (var fullOutputCore = new NativeRobinCore())
+{
+    for (ulong nowMs = 1; nowMs <= 8; ++nowMs)
+    {
+        fullOutputCore.RequestWeatherAnswer(nowMs);
+    }
+
+    Throws<CoreOutputQueueFullException>(() =>
+        fullOutputCore.RequestWeatherAnswer(9));
+
+    fullOutputCore.AcknowledgeOutput(1);
+
+    // Nach der Bestätigung ist wieder Platz.
+    fullOutputCore.RequestWeatherAnswer(10);
+
+    for (ulong sequence = 2; sequence <= 9; ++sequence)
+    {
+        var queuedOutput = fullOutputCore.GetNextOutput();
+
+        Require(
+            queuedOutput is not null &&
+            queuedOutput.Sequence == sequence,
+            "Outputs retain their sequence after overflow");
+
+        fullOutputCore.AcknowledgeOutput(sequence);
+    }
+
+    Require(
+        fullOutputCore.GetNextOutput() is null,
+        "Output queue is empty after all acknowledgements");
+}
+
+Console.WriteLine(
+    "Core output capacity and recovery passed.");
+
 using (limited)
 {
     for (var i = 0; i < 128; i++) limited.Create(false);
