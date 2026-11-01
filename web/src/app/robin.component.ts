@@ -10,6 +10,7 @@ import {
 
 import { CoreState, RobinSessionService } from "./robin-session.service";
 import { weatherAnswerText } from "./weather-answer";
+import packageInfo from "../../package.json";
 
 type RobinMood = "sleeping" | "waking" | "curious" | "happy" | "affectionate";
 
@@ -28,6 +29,7 @@ const MOOD_LABELS: Record<RobinMood, string> = {
   styleUrl: "./robin.component.css",
 })
 export class RobinComponent {
+  readonly version = `v${packageInfo.version}`;
   readonly session = inject(RobinSessionService);
   private coreRevision: number | null = null;
   private coreActive = false;

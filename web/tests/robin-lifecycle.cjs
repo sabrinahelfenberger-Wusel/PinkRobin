@@ -111,12 +111,14 @@ function fixture(reduce = false) {
     };
     const context = {
         exports: {},
-        require: (name) =>
+        require: name =>
             name === '@angular/core'
                 ? angular
-                : name === './weather-answer'
-                  ? answerContext.exports
-                  : { RobinSessionService: {} },
+                : name === '../../package.json'
+                    ? { default: JSON.parse(fs.readFileSync('package.json', 'utf8')) }
+                    : name === './weather-answer'
+                        ? answerContext.exports
+                        : { RobinSessionService: {} },
         window: { matchMedia: () => media },
         document: { hidden: false },
         setTimeout: (fn, delay) => {
@@ -173,6 +175,10 @@ function fixture(reduce = false) {
 }
 
 const f = fixture();
+assert.equal(
+    f.robin.version,
+    `v${JSON.parse(fs.readFileSync('package.json', 'utf8')).version}`,
+);
 assert.equal(f.robin.awake(), false);
 f.tick(3999);
 assert.equal(f.robin.awake(), false);
