@@ -27,6 +27,8 @@ public sealed record SessionOutput(
     string Kind,
     string WeatherAnswer);
 
+public sealed record AcknowledgeOutputRequest(string Sequence);
+
 // Tokens are bearer credentials, held only in browser memory. All native access and
 // timestamps are serialized here; no native handle is shared between sessions.
 public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock) : IDisposable
