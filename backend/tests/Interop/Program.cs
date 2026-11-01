@@ -180,6 +180,46 @@ using (var rainyOutputCore = new NativeRobinCore())
         "Expired weather produces an unknown answer");
 }
 
+using (var outputSessions = new PinkRobin.Api.Sessions.RobinSessions(
+           new TestGateway(),
+           new ManualClock()))
+{
+    var outputSession = outputSessions.Create(false);
+    
+    var otherOutputSession = outputSessions.Create(false);
+
+    var question = new PinkRobin.Api.Sessions.RobinCommand(
+        1,
+        "weatherAsked");
+
+    outputSessions.Send(outputSession.Token, question);
+    outputSessions.Send(outputSession.Token, question);
+
+    Require(
+        outputSessions.ReadOutput(otherOutputSession.Token) is null,
+        "Outputs remain isolated per session");
+
+    var sessionOutput = outputSessions.ReadOutput(outputSession.Token);
+
+    Require(
+        sessionOutput is not null &&
+        sessionOutput.Sequence == "1" &&
+        sessionOutput.WeatherAnswer == "unknown",
+        "Session weather question produces an output");
+
+    Require(
+        outputSessions.ReadOutput(outputSession.Token) == sessionOutput,
+        "Session reading preserves the output");
+
+    outputSessions.AcknowledgeOutput(
+        outputSession.Token,
+        sessionOutput!.Sequence);
+
+    Require(
+        outputSessions.ReadOutput(outputSession.Token) is null,
+        "Repeated command does not create a duplicate output");
+}
+
 using (limited)
 {
     for (var i = 0; i < 128; i++) limited.Create(false);
