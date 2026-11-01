@@ -8,16 +8,14 @@ struct robin_core_handle {
     explicit robin_core_handle(uint64_t now) noexcept : core(now) {}
 };
 
-static_assert(
-    sizeof(robin_weather_v1) == 48,
-    "Weather v1 must occupy 48 bytes");
-
-static_assert(
-    offsetof(robin_weather_v1, valid_from_ms) == 32,
-    "Weather v1 validity offset mismatch"); 
+static_assert(sizeof(robin_weather_v1) == 48, "Weather v1 must occupy 48 bytes");
+static_assert(offsetof(robin_weather_v1, valid_from_ms) == 32, "Weather v1 validity offset mismatch"); 
 
 static_assert(sizeof(robin_snapshot_v1) == 40, "ABI v1 snapshot must occupy 40 bytes");
 static_assert(offsetof(robin_snapshot_v1, time_ms) == 24, "ABI v1 clock offset mismatch");
+
+static_assert(sizeof(robin_output_v1) == 24, "Output v1 must occupy 24 bytes");
+static_assert(offsetof(robin_output_v1, sequence) == 8,"Output v1 sequence offset mismatch");
 
 uint32_t acceptance_to_api_result(
     pinkrobin::MessageAcceptance acceptance) noexcept {
@@ -227,5 +225,84 @@ extern "C" {
             handle->core.receive(message, now_ms);
 
         return acceptance_to_api_result(acceptance);
+    }
+
+    uint32_t ROBIN_CALL robin_core_get_next_output(
+        const robin_core_handle* handle,
+        robin_output_v1* output,
+        uint32_t output_size) {
+
+        if (!handle || !output ||
+            output_size != sizeof(robin_output_v1)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const auto next = handle->core.next_output();
+
+        if (!next) {
+            *output = { ROBIN_ABI_VERSION, 0u, 0u, 0u, 0u };
+            return ROBIN_NO_OUTPUT;
+        }
+
+        const auto* answer =
+            std::get_if<pinkrobin::WeatherAnswer>(&next->payload);
+
+        if (!answer) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        *output = {
+            ROBIN_ABI_VERSION,
+            ROBIN_OUTPUT_WEATHER_ANSWER,
+            next->sequence,
+            static_cast<uint32_t>(answer->kind),
+            0u
+        };
+
+        return ROBIN_OK;
+    }
+
+    uint32_t ROBIN_CALL robin_core_acknowledge_output(
+        robin_core_handle* handle,
+        uint64_t sequence) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        return handle->core.acknowledge_output(sequence)
+            ? ROBIN_OK
+            : ROBIN_INVALID_ARGUMENT;
+    }
+
+    uint32_t ROBIN_CALL robin_core_request_weather_answer(
+        robin_core_handle* handle,
+        uint64_t now_ms) {
+
+        if (!handle) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        const auto result = handle->core.advance_to(now_ms);
+
+        if (result != pinkrobin::Result::ok) {
+            return static_cast<uint32_t>(result);
+        }
+
+        switch (handle->core.request_weather_answer()) {
+        case pinkrobin::OutputEnqueueResult::accepted:
+            return ROBIN_OK;
+
+        case pinkrobin::OutputEnqueueResult::full:
+            return ROBIN_QUEUE_FULL;
+
+        case pinkrobin::OutputEnqueueResult::sequence_exhausted:
+            return ROBIN_SEQUENCE_EXHAUSTED;
+
+        case pinkrobin::OutputEnqueueResult::invalid_argument:
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        return ROBIN_INVALID_ARGUMENT;
     }
 }

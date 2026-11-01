@@ -47,6 +47,16 @@ typedef struct robin_core_handle robin_core_handle;
 #define ROBIN_INPUT_SOURCE_BACKEND 3u
 #define ROBIN_QUEUE_FULL 4u
 
+#define ROBIN_NO_OUTPUT 5u
+#define ROBIN_SEQUENCE_EXHAUSTED 6u
+
+#define ROBIN_OUTPUT_WEATHER_ANSWER 1u
+
+#define ROBIN_WEATHER_ANSWER_UNKNOWN 0u
+#define ROBIN_WEATHER_ANSWER_DRY 1u
+#define ROBIN_WEATHER_ANSWER_RAIN 2u
+#define ROBIN_WEATHER_ANSWER_STORM 3u
+
 typedef struct robin_snapshot_v1 {
     uint32_t abi_version;
     uint32_t mode;
@@ -66,6 +76,14 @@ typedef struct robin_weather_v1 {
     uint64_t valid_from_ms;
     uint64_t valid_until_ms;
 } robin_weather_v1;
+
+typedef struct robin_output_v1 {
+    uint32_t abi_version;
+    uint32_t kind;
+    uint64_t sequence;
+    uint32_t weather_answer_kind;
+    uint32_t reserved;
+} robin_output_v1;
 
 ROBIN_API uint32_t ROBIN_CALL robin_core_abi_version(void);
 /* NULL means allocation failed. Never share a handle across sessions. */
@@ -106,6 +124,18 @@ ROBIN_API uint32_t ROBIN_CALL robin_core_post_interaction(
     uint32_t source,
     uint64_t now_ms);
 
+ROBIN_API uint32_t ROBIN_CALL robin_core_request_weather_answer(
+    robin_core_handle* handle,
+    uint64_t now_ms);
+
+ROBIN_API uint32_t ROBIN_CALL robin_core_get_next_output(
+    const robin_core_handle* handle,
+    robin_output_v1* output,
+    uint32_t output_size);
+
+ROBIN_API uint32_t ROBIN_CALL robin_core_acknowledge_output(
+    robin_core_handle* handle,
+    uint64_t sequence);
 
 #ifdef __cplusplus
 }
