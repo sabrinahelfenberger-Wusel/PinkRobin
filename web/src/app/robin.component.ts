@@ -9,6 +9,7 @@ import {
 } from "@angular/core";
 
 import { CoreState, RobinSessionService } from "./robin-session.service";
+import { weatherAnswerText } from "./weather-answer";
 
 type RobinMood = "sleeping" | "waking" | "curious" | "happy" | "affectionate";
 
@@ -43,6 +44,12 @@ export class RobinComponent {
   readonly heartGlowing = signal(false);
   readonly look = signal<"left" | "right" | null>(null);
   readonly speech = signal("Pssst … Robin schläft noch.");
+  private readonly outputSpeech = signal<string | null>(null);
+
+  readonly displayedSpeech = computed(
+    () => this.outputSpeech() ?? this.speech(),
+  );
+
   readonly state = computed(() => MOOD_LABELS[this.mood()]);
   readonly transformation = signal<"none" | "octopus" | "raincoat">("none");
 
@@ -76,6 +83,36 @@ export class RobinComponent {
         this.coreRevision = null;
         this.greet();
       }
+    });
+
+    effect((onCleanup) => {
+      const output = this.session.output();
+
+      this.outputSpeech.set(
+        output ? weatherAnswerText(output.weatherAnswer) : null,
+      );
+
+      if (!output) return;
+
+      let cancelled = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
+      const acknowledge = async (): Promise<void> => {
+        if (cancelled || this.destroyed) return;
+
+        const accepted = await this.session.acknowledgeOutput(output.sequence);
+
+        if (!accepted && !cancelled && !this.destroyed) {
+          timer = setTimeout(() => void acknowledge(), 2000);
+        }
+      };
+
+      timer = setTimeout(() => void acknowledge(), 8000);
+
+      onCleanup(() => {
+        cancelled = true;
+        clearTimeout(timer);
+      });
     });
     destroyRef.onDestroy(() => {
       this.destroyed = true;

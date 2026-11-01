@@ -4,24 +4,6 @@ using PinkRobin.Api.Weather;
 
 namespace PinkRobin.Api.Sessions;
 
-public sealed record CreateSessionRequest(bool ReducedMotion = false);
-public sealed record RobinCommand(long Sequence, string Event);
-public sealed record SessionState(
-    string Mode,
-    string Mood,
-    string Expression,
-    bool HeadContact,
-    ulong TimeMs,
-    ulong Revision,
-    long Sequence,
-    string Transformation);
-
-public sealed record CreatedSession(string Token, SessionState State);
-public sealed class SessionFailure(int status, string message) : Exception(message)
-{
-    public int Status { get; } = status;
-}
-
 // Tokens are bearer credentials, held only in browser memory. All native access and
 // timestamps are serialized here; no native handle is shared between sessions.
 public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock) : IDisposable
@@ -66,6 +48,59 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
 
     public SessionState Read(string token) => Execute(token, null);
     public SessionState Send(string token, RobinCommand command) => Execute(token, command);
+
+    public SessionOutput? ReadOutput(string token)
+    {
+        lock (sync)
+        {
+            // Session prüfen und ihre Core-Zeit aktualisieren.
+            Execute(token, null);
+
+            var output = sessions[token].Core.GetNextOutput();
+
+            if (output is null)
+            {
+                return null;
+            }
+
+            return new SessionOutput(
+                output.Sequence.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture),
+                "weatherAnswer",
+                output.Kind.ToString().ToLowerInvariant());
+        }
+    }
+
+    public void AcknowledgeOutput(string token, string sequence)
+    {
+        lock (sync)
+        {
+            Execute(token, null);
+
+            if (!ulong.TryParse(
+                    sequence,
+                    System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var parsedSequence) ||
+                parsedSequence == 0)
+            {
+                throw new SessionFailure(
+                    400,
+                    "Invalid output sequence");
+            }
+
+            try
+            {
+                sessions[token].Core.AcknowledgeOutput(parsedSequence);
+            }
+            catch (ArgumentException)
+            {
+                throw new SessionFailure(
+                    400,
+                    "Output sequence cannot be acknowledged");
+            }
+        }
+    }
 
     private static CoreWeatherForecast? ToCoreWeather(
         WeatherSnapshot weather,
@@ -136,11 +171,17 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
         lock (sync)
         {
             SweepLocked();
-            if (!sessions.TryGetValue(token, out var session)) throw new SessionFailure(404, "Session expired or unknown");
+
+            if (!sessions.TryGetValue(token, out var session))
+            {
+                throw new SessionFailure(404, "Session expired or unknown");
+            }
+
             var elapsed = clock.GetElapsedTime(session.Started);
             session.LastSeen = elapsed;
             var now = (ulong)elapsed.TotalMilliseconds + session.Offset;
-            // A lost connection must not leave Robin being stroked indefinitely.
+
+            // Eine verlorene Verbindung darf Streicheln nicht dauerhaft festhalten.
             if (session.Core.GetSnapshot().HeadContact &&
                 elapsed - session.LastContact > TimeSpan.FromSeconds(2))
             {
@@ -154,12 +195,20 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
 
             if (command is not null)
             {
-                if (command.Sequence == session.Sequence && command.Event == session.LastEvent)
-                    return State(session); // Retry: return current state without replaying the event.
-                if (command.Sequence != session.Sequence + 1)
-                    throw new SessionFailure(409, "Unexpected command sequence");
-                var input = command.Event switch
+                if (command.Sequence == session.Sequence &&
+                    command.Event == session.LastEvent)
                 {
+                    return State(session);
+                }
+
+                if (command.Sequence != session.Sequence + 1)
+                {
+                    throw new SessionFailure(409, "Unexpected command sequence");
+                }
+
+                RobinEvent? input = command.Event switch
+                {
+                    "weatherAsked" => null,
                     "restart" => RobinEvent.Restart,
                     "heartTouched" => RobinEvent.HeartTouched,
                     "headStarted" => RobinEvent.HeadStarted,
@@ -167,26 +216,55 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                     "interactionCancelled" => RobinEvent.InteractionCancelled,
                     _ => throw new SessionFailure(400, "Unknown Robin event")
                 };
+
                 var second = (long)elapsed.TotalSeconds;
-                if (second != session.CommandSecond) { session.CommandSecond = second; session.Commands = 0; }
-                if (++session.Commands > 30) throw new SessionFailure(429, "Too many commands");
-                session.Core.Dispatch(
-                    input,
-                    CoreInputSource.Backend,
-                    now);
+
+                if (second != session.CommandSecond)
+                {
+                    session.CommandSecond = second;
+                    session.Commands = 0;
+                }
+
+                if (++session.Commands > 30)
+                {
+                    throw new SessionFailure(429, "Too many commands");
+                }
+
+                if (input is RobinEvent interaction)
+                {
+                    session.Core.Dispatch(
+                        interaction,
+                        CoreInputSource.Web,
+                        now);
+                }
+                else
+                {
+                    try
+                    {
+                        session.Core.RequestWeatherAnswer(now);
+                    }
+                    catch (CoreOutputQueueFullException)
+                    {
+                        throw new SessionFailure(
+                            503,
+                            "Core output queue is full");
+                    }
+                }
+
                 if (input == RobinEvent.Restart && session.Reduced)
                 {
                     session.Offset += 7100;
                     session.Core.AdvanceTo(now + 7100);
                 }
+
                 session.Sequence = command.Sequence;
                 session.LastEvent = command.Event;
             }
+
             session.LastContact = elapsed;
             return State(session);
         }
     }
-
     private static SessionState State(Session session)
     {
         var s = session.Core.GetSnapshot();

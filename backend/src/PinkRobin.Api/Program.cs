@@ -108,6 +108,36 @@ app.MapGet("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
     WithSession(context, token => Results.Ok(sessions.Read(token))));
 app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command, RobinSessions sessions) =>
     WithSession(context, token => Results.Ok(sessions.Send(token, command))));
+
+app.MapGet(
+    "/api/v1/session/outputs/next",
+    (HttpContext context, RobinSessions sessions) =>
+        WithSession(context, token =>
+        {
+            var output = sessions.ReadOutput(token);
+
+            if (output is null)
+            {
+                return Results.NoContent();
+            }
+
+            return Results.Ok(output);
+        }));
+
+app.MapPost(
+    "/api/v1/session/outputs/ack",
+    (HttpContext context,
+            AcknowledgeOutputRequest request,
+            RobinSessions sessions) =>
+        WithSession(context, token =>
+        {
+            sessions.AcknowledgeOutput(
+                token,
+                request.Sequence);
+
+            return Results.NoContent();
+        }));
+
 app.MapDelete("/api/v1/session", (HttpContext context, RobinSessions sessions) =>
     WithSession(context, token => { sessions.Remove(token); return Results.NoContent(); }));
 

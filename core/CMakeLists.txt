@@ -12,6 +12,8 @@ add_library(pinkrobin_behavior STATIC
     src/world_model.cpp
     src/weather_behavior.cpp
     src/behavior_controller.cpp
+    src/output_queue.cpp
+    src/core_outputs.cpp
 )
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)
@@ -52,6 +54,9 @@ if(BUILD_TESTING)
     add_executable(action_tests tests/action_tests.cpp)
     target_link_libraries(action_tests PRIVATE pinkrobin_behavior)
     add_test(NAME action COMMAND action_tests)
+    add_executable(output_tests tests/output_tests.cpp)
+    target_link_libraries(output_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME output COMMAND output_tests)
 endif()
 if(ROBIN_BUILD_EXAMPLES)
     add_executable(robin_demo examples/demo.cpp)
