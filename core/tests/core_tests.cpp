@@ -159,6 +159,7 @@ void test_behavior_controller_availability() {
 }
 
 void test_behavior_controller_weather_cooldown() {
+    const PlatformCapabilities capabilities{ true, true };
     BehaviorController controller;
     RobinState state;
     state.mode = Mode::awake;
@@ -167,28 +168,28 @@ void test_behavior_controller_weather_cooldown() {
         TransformationAction{ Transformation::raincoat }
     };
 
-    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 8000));
+    CHECK(controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 8000));
 
     // Eine reine Abfrage verbraucht keine Freigabe.
-    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 8001));
+    CHECK(controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 8001));
 
     controller.mark_weather_reaction_started(8000);
 
     // Rückwärtszeit darf den Cooldown nicht umgehen.
-    CHECK(!controller.can_start_weather_reaction(proposal, state, ActionResource::none, 7999));
+    CHECK(!controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 7999));
 
     // Eine Millisekunde vor Ablauf der 30 Minuten.
-    CHECK(!controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1807999));
+    CHECK(!controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 1807999));
 
     // Genau am Ende ist ein neuer Start erlaubt.
-    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1808000));
+    CHECK(controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 1808000));
 
     // Ein abgelaufener Cooldown macht einen beschäftigten Robin nicht frei.
     state.head_contact = true;
-    CHECK(!controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1808000));
+    CHECK(!controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 1808000));
 
     state.head_contact = false;
-    CHECK(controller.can_start_weather_reaction(proposal, state, ActionResource::none, 1808000));
+    CHECK(controller.can_start_weather_reaction(capabilities, proposal, state, ActionResource::none, 1808000));
 }
 
 } // namespace

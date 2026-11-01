@@ -27,5 +27,10 @@ sealed class ManualClock : TimeProvider
 sealed class TestGateway : IRobinCoreGateway
 {
     public PinkRobin.Api.Contracts.CoreConnectionStatus GetConnectionStatus() => new(true, "native-cabi-v1");
-    public NativeRobinCore CreateInstance(ulong nowMs = 0) => new(nowMs);
+    public NativeRobinCore CreateInstance(
+        ulong nowMs = 0,
+        CorePlatformCapabilities capabilities = default)
+    {
+        return new NativeRobinCore(nowMs, capabilities);
+    }
 }

@@ -96,7 +96,7 @@ void test_forecast_replacement() {
 }
 
 void test_automatic_reaction_and_cooldown() {
-    Core automatic_weather;
+    Core automatic_weather{ 0, PlatformCapabilities{ false, true } };
 
     // Robin zuerst vollständig aufwecken.
     CHECK(automatic_weather.advance_to(8000) == Result::ok);
@@ -141,7 +141,7 @@ void test_automatic_reaction_and_cooldown() {
 }
 
 void test_busy_retry() {
-    Core waiting_weather;
+    Core waiting_weather{ 0, PlatformCapabilities{ false, true } };
 
     CHECK(waiting_weather.advance_to(8000) == Result::ok);
 
@@ -182,7 +182,7 @@ void test_busy_retry() {
 }
 
 void test_expiry_while_waiting() {
-    Core expired_weather;
+    Core expired_weather{ 0, PlatformCapabilities{ false, true } };
 
     CHECK(expired_weather.advance_to(8000) == Result::ok);
     CHECK(expired_weather.dispatch(
@@ -212,7 +212,7 @@ void test_expiry_while_waiting() {
 }
 
 void test_changed_forecast_cancels_reaction() {
-    Core changed_weather;
+    Core changed_weather{ 0, PlatformCapabilities{ false, true } };
 
     CHECK(changed_weather.advance_to(8000) == Result::ok);
     CHECK(changed_weather.dispatch(
@@ -247,7 +247,7 @@ void test_changed_forecast_cancels_reaction() {
 }
 
 void test_raincoat() {
-    Core raincoat_weather;
+    Core raincoat_weather{ 0, PlatformCapabilities{ false, true } };
 
     CHECK(raincoat_weather.advance_to(8000) == Result::ok);
 

@@ -159,7 +159,7 @@ namespace {
     }
 
     void test_core_weather_answer_and_acknowledgement() {
-        Core core;
+        Core core{ 0, PlatformCapabilities{ true, true } };
 
         CHECK(!core.next_output().has_value());
 
@@ -196,7 +196,7 @@ namespace {
     }
 
     void test_weather_answer_while_busy_and_on_cooldown() {
-        Core core;
+        Core core{ 0, PlatformCapabilities{ true, true } };
 
         CHECK(core.advance_to(8000) == Result::ok);
 
@@ -262,7 +262,7 @@ namespace {
             AnswerCase{ 10.0, 59.0, WeatherAnswerKind::rain },
             AnswerCase{ 10.0, 60.0, WeatherAnswerKind::storm }
             }) {
-            Core core;
+            Core core{ 0, PlatformCapabilities{ true, true } };
 
             const Message forecast{
                 MessageMetadata{ InputSource::companion },

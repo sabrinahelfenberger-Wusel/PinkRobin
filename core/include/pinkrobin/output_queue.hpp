@@ -12,7 +12,8 @@ namespace pinkrobin {
         accepted = 0,
         full = 1,
         sequence_exhausted = 2,
-        invalid_argument = 3
+        invalid_argument = 3,
+        unsupported = 4
     };
 
     class OutputQueue final {

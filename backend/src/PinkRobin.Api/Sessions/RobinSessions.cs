@@ -26,6 +26,10 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     private static readonly TimeSpan IdleLimit = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan AgeLimit = TimeSpan.FromMinutes(30);
 
+    private static readonly CorePlatformCapabilities WebCapabilities = new(
+        TextOutput: true,
+        OutfitDisplay: true);
+
     public CreatedSession Create(bool reduced)
     {
         lock (sync)
@@ -33,7 +37,13 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             SweepLocked();
             if (!gateway.GetConnectionStatus().Connected) throw new SessionFailure(503, "Core unavailable");
             if (sessions.Count >= 128) throw new SessionFailure(503, "Session capacity reached");
-            var session = new Session(gateway.CreateInstance(), clock.GetTimestamp(), reduced);
+            
+            var session = new Session(
+                gateway.CreateInstance(
+                    capabilities: WebCapabilities),
+                clock.GetTimestamp(),
+                reduced);
+
             try
             {
                 if (reduced) session.Offset = 7100;

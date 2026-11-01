@@ -12,6 +12,7 @@ namespace pinkrobin {
     }
 
     bool BehaviorController::can_start_weather_reaction(
+        const PlatformCapabilities& capabilities, 
         const ActionProposal& proposal,
         const RobinState& state,
         ActionResource occupied,
@@ -21,7 +22,7 @@ namespace pinkrobin {
             return false;
         }
 
-        if (!can_start_action(proposal, state, occupied)) {
+        if (!can_start_action(capabilities, proposal, state, occupied)) {
             return false;
         }
 
@@ -45,9 +46,14 @@ namespace pinkrobin {
     }
 
     bool BehaviorController::can_start_action(
+        const PlatformCapabilities& capabilities, 
         const ActionProposal& proposal,
         const RobinState& state,
         ActionResource occupied) const noexcept {
+
+        if (!supports_action(capabilities, proposal)) {
+            return false;
+        }
 
         if (resources_conflict(
             proposal.required_resources(),

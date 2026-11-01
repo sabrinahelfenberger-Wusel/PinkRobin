@@ -33,15 +33,33 @@ public sealed class NativeRobinCore : IDisposable
     private readonly object sync = new();
     private bool disposed;
 
-    public NativeRobinCore(ulong nowMs = 0)
+    public NativeRobinCore(
+        ulong nowMs = 0,
+        CorePlatformCapabilities capabilities = default)
     {
         if (NativeMethods.AbiVersion() != 1)
-            throw new NotSupportedException("Unsupported PinkRobin Core ABI (expected 1).");
-        handle = NativeMethods.Create(nowMs);
+        {
+            throw new NotSupportedException(
+                "Unsupported PinkRobin Core ABI (expected 1).");
+        }
+
+        var nativeCapabilities = new NativePlatformCapabilities
+        {
+            TextOutput = capabilities.TextOutput ? 1u : 0u,
+            OutfitDisplay = capabilities.OutfitDisplay ? 1u : 0u
+        };
+
+        handle = NativeMethods.CreateWithCapabilities(
+            nowMs,
+            in nativeCapabilities,
+            (uint)Marshal.SizeOf<NativePlatformCapabilities>());
+
         if (handle.IsInvalid)
         {
             handle.Dispose();
-            throw new InvalidOperationException("PinkRobin Core allocation failed.");
+
+            throw new InvalidOperationException(
+                "PinkRobin Core allocation failed.");
         }
     }
 
@@ -268,6 +286,12 @@ public sealed class NativeRobinCore : IDisposable
         if (result == 4)
             throw new CoreMessageQueueFullException();
 
+        if (result == 7)
+        {
+            throw new NotSupportedException(
+                "The platform does not support this Core action.");
+        }
+
         if (result != 0)
             throw new InvalidOperationException(
                 $"Unknown Core result: {result}.");
@@ -308,6 +332,13 @@ internal struct NativeOutput
     public ulong Sequence;
     public uint WeatherAnswerKind;
     public uint Reserved;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativePlatformCapabilities
+{
+    public uint TextOutput;
+    public uint OutfitDisplay;
 }
 
 internal sealed class CoreHandle : SafeHandleZeroOrMinusOneIsInvalid
@@ -400,6 +431,15 @@ internal static class NativeMethods
     internal static extern uint AcknowledgeOutput(
         CoreHandle handle,
         ulong sequence);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_create_with_capabilities",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern CoreHandle CreateWithCapabilities(
+        ulong nowMs,
+        in NativePlatformCapabilities capabilities,
+        uint capabilitiesSize);
 
     [DllImport(Library, EntryPoint = "robin_core_start_transformation", CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint StartTransformation(CoreHandle handle, uint transformation, ulong nowMs);

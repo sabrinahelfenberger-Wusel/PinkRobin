@@ -13,6 +13,14 @@ namespace pinkrobin {
     }
 
     OutputEnqueueResult Core::request_weather_answer() noexcept {
+        const ActionProposal proposal{
+            WeatherAnswerAction{}
+        };
+
+        if (!supports_action(capabilities_, proposal)) {
+            return OutputEnqueueResult::unsupported;
+        }
+        
         auto kind = WeatherAnswerKind::unknown;
 
         const auto forecast = weather();

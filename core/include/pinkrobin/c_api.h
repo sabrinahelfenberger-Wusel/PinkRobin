@@ -57,6 +57,8 @@ typedef struct robin_core_handle robin_core_handle;
 #define ROBIN_WEATHER_ANSWER_RAIN 2u
 #define ROBIN_WEATHER_ANSWER_STORM 3u
 
+#define ROBIN_UNSUPPORTED 7u
+
 typedef struct robin_snapshot_v1 {
     uint32_t abi_version;
     uint32_t mode;
@@ -85,9 +87,19 @@ typedef struct robin_output_v1 {
     uint32_t reserved;
 } robin_output_v1;
 
+typedef struct robin_platform_capabilities_v1 {
+    uint32_t text_output;
+    uint32_t outfit_display;
+} robin_platform_capabilities_v1;
+
 ROBIN_API uint32_t ROBIN_CALL robin_core_abi_version(void);
 /* NULL means allocation failed. Never share a handle across sessions. */
 ROBIN_API robin_core_handle* ROBIN_CALL robin_core_create(uint64_t now_ms);
+ROBIN_API robin_core_handle* ROBIN_CALL
+robin_core_create_with_capabilities(
+    uint64_t now_ms,
+    const robin_platform_capabilities_v1* capabilities,
+    uint32_t capabilities_size);
 ROBIN_API void ROBIN_CALL robin_core_destroy(robin_core_handle* handle);
 ROBIN_API uint32_t ROBIN_CALL robin_core_advance(robin_core_handle* handle, uint64_t now_ms);
 ROBIN_API uint32_t ROBIN_CALL robin_core_dispatch(robin_core_handle* handle, uint32_t event, uint64_t now_ms);

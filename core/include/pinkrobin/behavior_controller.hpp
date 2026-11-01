@@ -13,6 +13,7 @@ namespace pinkrobin {
             const RobinState& state) const noexcept;
 
         bool can_start_weather_reaction(
+            const PlatformCapabilities& capabilities,
             const ActionProposal& proposal,
             const RobinState& state,
             ActionResource occupied,
@@ -22,6 +23,7 @@ namespace pinkrobin {
             std::uint64_t now_ms) noexcept;
 
         bool can_start_action(
+            const PlatformCapabilities& capabilities,
             const ActionProposal& proposal,
             const RobinState& state,
             ActionResource occupied) const noexcept;

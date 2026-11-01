@@ -10,9 +10,16 @@
 #include "pinkrobin/weather_behavior.hpp"
 #include "pinkrobin/behavior_controller.hpp"
 #include "pinkrobin/output_queue.hpp"
+#include "pinkrobin/platform_capabilities.hpp"
 
 namespace pinkrobin {
-    enum class Result : std::uint32_t { ok = 0, invalid_argument = 1, time_reversed = 2, busy = 3 };
+    enum class Result : std::uint32_t {
+        ok = 0,
+        invalid_argument = 1,
+        time_reversed = 2,
+        busy = 3,
+        unsupported = 7
+    };
 
     struct Snapshot {
         Mode mode;
@@ -28,7 +35,10 @@ namespace pinkrobin {
     // Adapters serialize access and supply monotonic milliseconds from one clock.
     class Core final {
     public:
-        explicit Core(std::uint64_t now_ms = 0) noexcept;
+        explicit Core(
+            std::uint64_t now_ms = 0,
+            PlatformCapabilities capabilities = {}) noexcept;
+
         Result advance_to(std::uint64_t now_ms) noexcept;
         Result dispatch(Event event, std::uint64_t now_ms) noexcept;
         Result start_transformation(Transformation transformation, std::uint64_t now_ms) noexcept;
@@ -96,6 +106,7 @@ namespace pinkrobin {
         std::uint64_t last_message_received_at_ms_{ 0 };
         Result advance_state_to(std::uint64_t now_ms) noexcept;
 
+        PlatformCapabilities capabilities_;
         WorldModel world_;
         RobinState state_;
         WeatherBehavior weather_behavior_;
