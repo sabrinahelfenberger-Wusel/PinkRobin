@@ -45,15 +45,108 @@
           >Virtual Robin entdecken</a
         >
       </div>
-      <aside class="specimen" aria-label="Pink Robin Projektkarte">
-        <div class="specimen-top">
-          <span>PINK ROBIN</span><span>PROJEKT 001</span>
-        </div>
-        <div class="monogram" aria-hidden="true">R.</div>
-        <div class="specimen-bottom">
-          <strong>Neugier beginnt hier.</strong>
-          <p>Wahrnehmen. Reagieren. Gemeinsam wachsen.</p>
-        </div>
+      <aside class="robin-preview" aria-label="Robin kennenlernen">
+        <p class="preview-speech">
+          Hallo, ich bin Robin.<br />
+          Möchtest du mich kennenlernen? ♡
+        </p>
+
+        <a
+          class="preview-link"
+          routerLink="/virtual-robin"
+          aria-label="Zur interaktiven Robin-Demo"
+        >
+          <svg
+            viewBox="0 0 360 390"
+            class="preview-robot"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <defs>
+              <linearGradient id="preview-shell" x2="1" y2="1">
+                <stop stop-color="#fff8ee" />
+                <stop offset="1" stop-color="#cfbcaf" />
+              </linearGradient>
+              <radialGradient id="preview-heart">
+                <stop stop-color="#fff4fb" />
+                <stop offset="1" stop-color="#ff5c9a" />
+              </radialGradient>
+            </defs>
+
+            <ellipse
+              cx="180"
+              cy="365"
+              rx="105"
+              ry="12"
+              fill="#000"
+              opacity=".25"
+            />
+
+            <g fill="url(#preview-shell)" stroke="#b9a89e" stroke-width="2">
+              <rect x="43" y="92" width="35" height="90" rx="17" />
+              <rect x="282" y="92" width="35" height="90" rx="17" />
+              <rect x="67" y="42" width="226" height="206" rx="58" />
+              <rect x="105" y="264" width="150" height="91" rx="35" />
+              <rect x="79" y="277" width="32" height="66" rx="16" />
+              <rect x="249" y="277" width="32" height="66" rx="16" />
+            </g>
+
+            <rect
+              x="83"
+              y="59"
+              width="194"
+              height="171"
+              rx="44"
+              fill="#101114"
+            />
+            <path
+              d="M103 79 Q180 65 254 79"
+              stroke="#fff"
+              stroke-width="7"
+              stroke-linecap="round"
+              opacity=".08"
+              fill="none"
+            />
+
+            <g fill="#fff4f7">
+              <ellipse cx="137" cy="139" rx="27" ry="37" />
+              <ellipse cx="223" cy="139" rx="27" ry="37" />
+            </g>
+            <g fill="#08090c">
+              <ellipse cx="141" cy="144" rx="19" ry="28" />
+              <ellipse cx="219" cy="144" rx="19" ry="28" />
+            </g>
+            <g fill="white">
+              <ellipse cx="148" cy="124" rx="8" ry="10" />
+              <ellipse cx="212" cy="124" rx="8" ry="10" />
+            </g>
+
+            <path
+              d="M166 181 Q180 204 194 181"
+              fill="none"
+              stroke="#ff5c9a"
+              stroke-width="5"
+              stroke-linecap="round"
+            />
+
+            <g fill="#ff8fbc">
+              <circle cx="115" cy="180" r="4" />
+              <circle cx="245" cy="180" r="4" />
+            </g>
+
+            <path
+              d="M180 334 C150 314 145 302 155 293
+        C165 284 177 291 180 300
+        C184 291 196 284 206 293
+        C217 304 205 319 180 334Z"
+              fill="url(#preview-heart)"
+              stroke="#ffe4f0"
+              stroke-width="2"
+            />
+          </svg>
+
+          <span class="preview-invitation">Lerne mich kennen ↗</span>
+        </a>
       </aside>
     </section>
     <section id="idee" class="section" aria-labelledby="idea-title">
@@ -127,7 +220,25 @@
           Ein gemeinsamer Kern.<br />Mehrere Ausdrucksformen.
         </h2>
       </div>
-
+      <ol class="architecture-flow" aria-label="So entsteht Robins Reaktion">
+        <li>
+          <span class="flow-icon" aria-hidden="true">♡</span>
+          <strong>Du berührst Robin</strong>
+          <span>Angular erfasst die Eingabe.</span>
+        </li>
+        <li>
+          <span class="flow-icon" aria-hidden="true">↔</span>
+          <strong>Die Nachricht kommt an</strong>
+          <span>Das Backend verbindet deine Sitzung mit dem Core.</span>
+        </li>
+        <li>
+          <span class="flow-icon" aria-hidden="true">✦</span>
+          <strong>Robin reagiert</strong>
+          <span
+            >Der Core entscheidet. Die Oberfläche zeigt seine Reaktion.</span
+          >
+        </li>
+      </ol>
       <div class="cards">
         <article class="card">
           <span class="number">01 / ANGULAR</span>
