@@ -9,16 +9,34 @@ const compiled = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, experimentalDecorators: true },
 }).outputText;
 
+const answerCompiled = ts.transpileModule(
+    fs.readFileSync('src/app/weather-answer.ts', 'utf8'),
+    {
+        compilerOptions: {
+            module: ts.ModuleKind.CommonJS,
+            target: ts.ScriptTarget.ES2022,
+        },
+    },
+).outputText;
+
+const answerContext = { exports: {} };
+vm.runInNewContext(answerCompiled, answerContext);
+
 function fixture(reduce = false) {
   let clock = 0, nextId = 0, destroy, render, listener;
   const timers = new Map();
   const effects = [], sent = [];
-  let coreState = null, connection = 'local';
+    let coreState = null, connection = 'local';
+    let pendingOutput = null;
+    const acknowledgements = [];
     const session = {
         connection: () => connection,
         state: () => coreState,
-        output: () => null,
-        acknowledgeOutput: async () => true,
+        output: () => pendingOutput,
+        acknowledgeOutput: async sequence => {
+            acknowledgements.push(sequence);
+            return true;
+        },
         connect: async () => { },
         send: event => sent.push(event),
     };  const media = {
@@ -58,7 +76,13 @@ function fixture(reduce = false) {
     },
   };
   const context = {
-    exports: {}, require: name => name === '@angular/core' ? angular : { RobinSessionService: {} },
+      exports: {},
+      require: name =>
+          name === '@angular/core'
+              ? angular
+              : name === './weather-answer'
+                  ? answerContext.exports
+                  : { RobinSessionService: {} },
     window: { matchMedia: () => media }, document: { hidden: false },
     setTimeout: (fn, delay) => { const id = ++nextId; timers.set(id, { fn, due: clock + delay }); return id; },
     clearTimeout: id => timers.delete(id),
@@ -67,7 +91,15 @@ function fixture(reduce = false) {
   const robin = new context.exports.RobinComponent();
   render();
   return {
-    robin, timers, sent,
+      robin, timers, sent,
+
+      acknowledgements,
+
+      output(value) {
+          pendingOutput = value;
+          effects[1]();
+      },
+
     core(state) { coreState = state; connection = state ? 'connected' : 'local'; effects.forEach(fn => fn()); },
     tick(ms) {
       const end = clock + ms;
@@ -308,4 +340,60 @@ for (const [transformation, comment] of [
 
 console.log(
     'Weather comments, interaction priority and return to normal passed.',
+);
+
+const answer = fixture(true);
+
+answer.core({
+    mode: 'awake',
+    mood: 'curious',
+    expression: 'curious',
+    headContact: false,
+    transformation: 'none',
+    revision: 1,
+});
+
+const normalSpeech = answer.robin.speech();
+
+answer.output({
+    sequence: '1',
+    kind: 'weatherAnswer',
+    weatherAnswer: 'rain',
+});
+
+assert.equal(
+    answer.robin.displayedSpeech(),
+    'Die Prognose meldet Regen. Vergiss deinen Regenschutz nicht! ♡',
+);
+
+// Vor Ablauf der acht Sekunden wird nichts bestätigt.
+answer.tick(7999);
+assert.deepEqual(answer.acknowledgements, []);
+
+answer.tick(1);
+assert.deepEqual(answer.acknowledgements, ['1']);
+
+// Erfolgreiche Bestätigung leert im echten Service das Signal.
+answer.output(null);
+
+assert.equal(
+    answer.robin.displayedSpeech(),
+    normalSpeech,
+);
+
+// Zerstören der Komponente entfernt einen wartenden Antwort-Timer.
+answer.output({
+    sequence: '2',
+    kind: 'weatherAnswer',
+    weatherAnswer: 'dry',
+});
+
+answer.destroy();
+answer.tick(10000);
+
+assert.deepEqual(answer.acknowledgements, ['1']);
+assert.equal(answer.timers.size, 0);
+
+console.log(
+    'Weather answer display, eight-second acknowledgement and cleanup passed.',
 );
