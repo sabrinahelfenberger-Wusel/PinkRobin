@@ -2,7 +2,6 @@ import { HttpClient } from "@angular/common/http";
 import { DestroyRef, Injectable, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { firstValueFrom, timeout } from "rxjs";
-import { RobinTransformation } from "./weather";
 import { CoreOutput, parseCoreOutput } from "./core-output";
 
 export type RobinEvent =
@@ -167,7 +166,7 @@ export class RobinSessionService {
 
       return true;
     } catch {
-      // Ausgabe behalten: Die Best‰tigung darf wiederholt werden.
+      // Ausgabe behalten: Die Best√§tigung darf wiederholt werden.
       return false;
     } finally {
       this.outputAckBusy = false;

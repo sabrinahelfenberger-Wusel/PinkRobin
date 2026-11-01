@@ -36,35 +36,35 @@ function fixture() {
     const destroyToken = {};
 
     const angular = {
-        Injectable: () => target => target,
+        Injectable: () => (target) => target,
         DestroyRef: destroyToken,
 
-        inject: token =>
+        inject: (token) =>
             token === clientToken
                 ? {
-                    request: (method, url, options) => {
-                        const subject = new rx.Subject();
+                      request: (method, url, options) => {
+                          const subject = new rx.Subject();
 
-                        requests.push({
-                            method,
-                            url,
-                            options,
-                            subject,
-                        });
+                          requests.push({
+                              method,
+                              url,
+                              options,
+                              subject,
+                          });
 
-                        return subject;
-                    },
-                }
+                          return subject;
+                      },
+                  }
                 : {
-                    onDestroy: fn => {
-                        onDestroy = fn;
-                    },
-                },
+                      onDestroy: (fn) => {
+                          onDestroy = fn;
+                      },
+                  },
 
-        signal: value => {
+        signal: (value) => {
             const read = () => value;
 
-            read.set = next => {
+            read.set = (next) => {
                 value = next;
             };
 
@@ -81,27 +81,26 @@ function fixture() {
             releases.push(args);
         },
 
-        setTimeout: fn => {
+        setTimeout: (fn) => {
             const id = ++nextTimer;
             timers.set(id, fn);
             return id;
         },
 
-        clearTimeout: id => timers.delete(id),
+        clearTimeout: (id) => timers.delete(id),
 
-        require: name =>
+        require: (name) =>
             name === './core-output'
                 ? outputContext.exports
                 : name === '@angular/core'
-                    ? angular
-                    : name === '@angular/common/http'
-                        ? { HttpClient: clientToken }
-                        : name === '@angular/core/rxjs-interop'
-                            ? {
-                                takeUntilDestroyed: () =>
-                                    rx.takeUntil(destroyed),
-                            }
-                            : rx,
+                  ? angular
+                  : name === '@angular/common/http'
+                    ? { HttpClient: clientToken }
+                    : name === '@angular/core/rxjs-interop'
+                      ? {
+                            takeUntilDestroyed: () => rx.takeUntil(destroyed),
+                        }
+                      : rx,
     };
 
     vm.runInNewContext(compiled, context);
@@ -137,14 +136,9 @@ function fixture() {
     };
 }
 
-const flush = () =>
-    new Promise(resolve => setImmediate(resolve));
+const flush = () => new Promise((resolve) => setImmediate(resolve));
 
-const state = (
-    sequence = 0,
-    revision = 0,
-    headContact = false,
-) => ({
+const state = (sequence = 0, revision = 0, headContact = false) => ({
     mode: 'awake',
     mood: headContact ? 'happy' : 'curious',
     expression: headContact ? 'happy' : 'curious',
@@ -180,19 +174,13 @@ const state = (
     f.reply(1, state(1, 1, true));
     await flush();
 
-    assert.equal(
-        f.requests[2].url,
-        'api/v1/session/outputs/next',
-    );
+    assert.equal(f.requests[2].url, 'api/v1/session/outputs/next');
 
     f.reply(2, null);
     await flush();
     f.tick();
 
-    assert.equal(
-        f.requests[3].options.body.event,
-        'headEnded',
-    );
+    assert.equal(f.requests[3].options.body.event, 'headEnded');
     assert.equal(f.requests[3].options.body.sequence, 2);
 
     f.reply(3, state(2, 2));
@@ -270,13 +258,9 @@ const state = (
     broken.service.send('restart');
     assert.equal(broken.requests.length, 2);
 
-    assert.throws(() =>
-        broken.parse({ ...state(), mode: 'made-up' }),
-    );
+    assert.throws(() => broken.parse({ ...state(), mode: 'made-up' }));
 
-    assert.throws(() =>
-        broken.parse({ ...state(), timeMs: -1 }),
-    );
+    assert.throws(() => broken.parse({ ...state(), timeMs: -1 }));
 
     broken.destroy();
 
@@ -291,10 +275,7 @@ const state = (
 
     delivery.service.send('weatherAsked');
 
-    assert.equal(
-        delivery.requests[1].options.body.event,
-        'weatherAsked',
-    );
+    assert.equal(delivery.requests[1].options.body.event, 'weatherAsked');
 
     delivery.reply(1, state(1));
     await flush();
@@ -312,10 +293,7 @@ const state = (
     // Eine fehlgeschlagene Bestätigung behält die Ausgabe.
     const failedAck = delivery.service.acknowledgeOutput('1');
 
-    assert.equal(
-        delivery.requests[3].url,
-        'api/v1/session/outputs/ack',
-    );
+    assert.equal(delivery.requests[3].url, 'api/v1/session/outputs/ack');
     assert.equal(delivery.requests[3].options.body.sequence, '1');
 
     delivery.requests[3].subject.error(new Error('offline'));
@@ -336,7 +314,7 @@ const state = (
     console.log(
         'Session ordering, early release, validation, fallback and destroy passed.',
     );
-})().catch(error => {
+})().catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });
