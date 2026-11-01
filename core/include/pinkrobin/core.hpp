@@ -9,6 +9,7 @@
 #include "pinkrobin/robin_state.hpp"
 #include "pinkrobin/weather_behavior.hpp"
 #include "pinkrobin/behavior_controller.hpp"
+#include "pinkrobin/output_queue.hpp"
 
 namespace pinkrobin {
     enum class Result : std::uint32_t { ok = 0, invalid_argument = 1, time_reversed = 2, busy = 3 };
@@ -41,6 +42,11 @@ namespace pinkrobin {
         const WorldModel& world() const noexcept;
         const RobinState& state() const noexcept;
 
+        std::optional<Output> next_output() const noexcept;
+
+        bool acknowledge_output(std::uint64_t sequence) noexcept;
+        OutputEnqueueResult request_weather_answer() noexcept;
+        
     private:
         void curious() noexcept;
         bool heart_pending_{false};
@@ -94,5 +100,6 @@ namespace pinkrobin {
         RobinState state_;
         WeatherBehavior weather_behavior_;
         BehaviorController behavior_controller_;
+        OutputQueue outputs_;
     };
 }
