@@ -5,8 +5,15 @@
 
 struct robin_core_handle {
     pinkrobin::Core core;
-    explicit robin_core_handle(uint64_t now) noexcept : core(now) {}
+
+    explicit robin_core_handle(
+        uint64_t now,
+        pinkrobin::PlatformCapabilities capabilities = {}) noexcept
+        : core(now, capabilities) {}
 };
+static_assert(
+    sizeof(robin_platform_capabilities_v1) == 8,
+    "Platform capabilities v1 must occupy 8 bytes");
 
 static_assert(sizeof(robin_weather_v1) == 48, "Weather v1 must occupy 48 bytes");
 static_assert(offsetof(robin_weather_v1, valid_from_ms) == 32, "Weather v1 validity offset mismatch"); 
@@ -58,6 +65,28 @@ extern "C" {
     uint32_t ROBIN_CALL robin_core_abi_version(void) { return ROBIN_ABI_VERSION; }
     robin_core_handle* ROBIN_CALL robin_core_create(uint64_t now_ms) {
         return new (std::nothrow) robin_core_handle(now_ms);
+    }
+    robin_core_handle* ROBIN_CALL
+        robin_core_create_with_capabilities(
+            uint64_t now_ms,
+            const robin_platform_capabilities_v1* capabilities,
+            uint32_t capabilities_size) {
+
+        if (!capabilities ||
+            capabilities_size != sizeof(robin_platform_capabilities_v1) ||
+            capabilities->text_output > 1u ||
+            capabilities->outfit_display > 1u) {
+            return nullptr;
+        }
+
+        const pinkrobin::PlatformCapabilities supported{
+            capabilities->text_output == 1u,
+            capabilities->outfit_display == 1u
+        };
+
+        return new (std::nothrow) robin_core_handle(
+            now_ms,
+            supported);
     }
 
     void ROBIN_CALL robin_core_destroy(robin_core_handle* handle) { delete handle; }
@@ -301,6 +330,9 @@ extern "C" {
 
         case pinkrobin::OutputEnqueueResult::invalid_argument:
             return ROBIN_INVALID_ARGUMENT;
+
+        case pinkrobin::OutputEnqueueResult::unsupported:
+            return ROBIN_UNSUPPORTED;
         }
 
         return ROBIN_INVALID_ARGUMENT;

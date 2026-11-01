@@ -3,10 +3,13 @@
 
 namespace pinkrobin {
 
-    Core::Core(std::uint64_t now_ms) noexcept
+    Core::Core(
+        std::uint64_t now_ms,
+        PlatformCapabilities capabilities) noexcept
         : now_(now_ms),
         greeting_started_(now_ms),
-        interaction_started_(now_ms) {}
+        interaction_started_(now_ms),
+        capabilities_(capabilities) {}
 
     Result Core::advance_state_to(std::uint64_t now_ms) noexcept {
         if (now_ms < now_) {
@@ -114,6 +117,14 @@ namespace pinkrobin {
         if (transformation != Transformation::octopus &&
             transformation != Transformation::raincoat) {
             return Result::invalid_argument;
+        }
+
+        const ActionProposal proposal{
+            TransformationAction{ transformation }
+        };
+
+        if (!supports_action(capabilities_, proposal)) {
+            return Result::unsupported;
         }
 
         const auto result = advance_to(now_ms);

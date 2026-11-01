@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <variant>
 #include "pinkrobin/robin_state.hpp"
+#include "pinkrobin/platform_capabilities.hpp"
 
 namespace pinkrobin {
 
@@ -69,4 +70,19 @@ namespace pinkrobin {
                 payload);
         }
     };
+
+    inline bool supports_action(
+        const PlatformCapabilities& capabilities,
+        const ActionProposal& proposal) noexcept {
+
+        switch (proposal.kind()) {
+        case ActionKind::transformation:
+            return capabilities.outfit_display;
+
+        case ActionKind::weather_answer:
+            return capabilities.text_output;
+        }
+
+        return false;
+    }
 }
