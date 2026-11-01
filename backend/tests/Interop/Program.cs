@@ -145,6 +145,41 @@ using (var fullOutputCore = new NativeRobinCore())
 Console.WriteLine(
     "Core output capacity and recovery passed.");
 
+using (var rainyOutputCore = new NativeRobinCore())
+{
+    rainyOutputCore.PostWeather(
+        new CoreWeatherForecast(
+            TemperatureC: 8.5,
+            PrecipitationMm: 2.0,
+            WindSpeedKmh: 10.0,
+            WindGustKmh: 20.0,
+            ValidFromMs: 0,
+            ValidUntilMs: 1000),
+        CoreInputSource.Backend,
+        100);
+
+    rainyOutputCore.RequestWeatherAnswer(100);
+
+    var rainOutput = rainyOutputCore.GetNextOutput();
+
+    Require(
+        rainOutput is not null &&
+        rainOutput.Kind == CoreWeatherAnswerKind.Rain,
+        "Weather answer uses current world knowledge");
+
+    rainyOutputCore.AcknowledgeOutput(rainOutput!.Sequence);
+
+    // An der Gültigkeitsgrenze ist das Wetterwissen abgelaufen.
+    rainyOutputCore.RequestWeatherAnswer(1000);
+
+    var expiredOutput = rainyOutputCore.GetNextOutput();
+
+    Require(
+        expiredOutput is not null &&
+        expiredOutput.Kind == CoreWeatherAnswerKind.Unknown,
+        "Expired weather produces an unknown answer");
+}
+
 using (limited)
 {
     for (var i = 0; i < 128; i++) limited.Create(false);
