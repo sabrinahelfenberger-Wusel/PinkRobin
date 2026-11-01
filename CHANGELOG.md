@@ -1,5 +1,26 @@
 # Änderungsprotokoll
 
+## 0.1.3 – Robin im Portfolio
+
+### Neu
+
+- Projektseite auf den Funktionsstand von Robin 0.1.2 aktualisiert.
+- Statische Robin-Vorschau mit Sprechblase und direktem Demo-Link.
+- Ablaufgrafik für das Zusammenspiel von Angular, Backend und Core.
+- Ausblick auf geplante Texteingabe, 3D-Darstellung und Roboterhardware.
+- Navigation zu Technik und Ausblick ergänzt.
+
+### Gestaltung
+
+- Rosa Lichtschein und dezente Hover-Bewegung für die Robin-Vorschau.
+- Darstellung für schmale Bildschirme angepasst.
+- Reduzierte Bewegung berücksichtigt und alte Projektkarten-Stile entfernt.
+
+### Versionen
+
+- Web: 0.1.3
+- Core und Backend: unverändert 0.1.2
+
 ## 0.1.2 – Wetterantworten und Core-Struktur
 
 ### Neu
