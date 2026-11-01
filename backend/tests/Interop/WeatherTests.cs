@@ -45,7 +45,10 @@ internal static class WeatherTests
 
     public static void Transformation()
     {
-        using (var core = new NativeRobinCore())
+        using (var core = new NativeRobinCore(
+                   capabilities: new CorePlatformCapabilities(
+                       TextOutput: false,
+                       OutfitDisplay: true)))
         {
             core.AdvanceTo(8000);
 
