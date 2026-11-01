@@ -3,13 +3,16 @@ import { DestroyRef, Injectable, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { firstValueFrom, timeout } from "rxjs";
 import { RobinTransformation } from "./weather";
+import { CoreOutput, parseCoreOutput } from "./core-output";
 
 export type RobinEvent =
   | "restart"
   | "heartTouched"
   | "headStarted"
   | "headEnded"
-  | "interactionCancelled";
+  | "interactionCancelled"
+  | "weatherAsked";
+
 export interface CoreState {
   mode: "sleeping" | "waking" | "awake";
   mood: "curious" | "happy" | "affectionate";
@@ -40,6 +43,7 @@ export function parseCoreState(value: unknown): CoreState {
 @Injectable()
 export class RobinSessionService {
   readonly state = signal<CoreState | null>(null);
+  readonly output = signal<CoreOutput | null>(null);
   readonly connection = signal<"checking" | "connected" | "local">("checking");
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -51,6 +55,7 @@ export class RobinSessionService {
   private busy = false;
   private creating = false;
   private weatherBusy = false;
+  private outputAckBusy = false;
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -132,6 +137,59 @@ export class RobinSessionService {
     }
   }
 
+  async acknowledgeOutput(sequence: string): Promise<boolean> {
+    const token = this.token;
+
+    if (
+      !token ||
+      this.destroyed ||
+      this.outputAckBusy ||
+      this.output()?.sequence !== sequence
+    ) {
+      return false;
+    }
+
+    this.outputAckBusy = true;
+
+    try {
+      await this.request<void>(
+        "POST",
+        "api/v1/session/outputs/ack",
+        { sequence },
+        token,
+      );
+
+      if (this.destroyed || this.token !== token) return false;
+
+      if (this.output()?.sequence === sequence) {
+        this.output.set(null);
+      }
+
+      return true;
+    } catch {
+      // Ausgabe behalten: Die Bestätigung darf wiederholt werden.
+      return false;
+    } finally {
+      this.outputAckBusy = false;
+    }
+  }
+
+  private async readOutput(token: string): Promise<void> {
+    // Eine noch nicht verarbeitete Ausgabe bleibt erhalten.
+    if (this.output() !== null) return;
+
+    const response = await this.request<unknown>(
+      "GET",
+      "api/v1/session/outputs/next",
+      undefined,
+      token,
+    );
+
+    if (this.destroyed || this.token !== token) return;
+
+    this.output.set(parseCoreOutput(response));
+  }
+
   private async pump(): Promise<void> {
     if (!this.token || this.destroyed || this.busy) return;
     this.busy = true;
@@ -145,8 +203,10 @@ export class RobinSessionService {
         command,
         token,
       );
-      if (!this.destroyed && this.token === token)
+      if (!this.destroyed && this.token === token) {
         this.state.set(parseCoreState(state));
+        await this.readOutput(token);
+      }
     } catch {
       // No automatic replay/reconnect: an uncertain command must not affect a new session.
       if (!this.destroyed && this.token === token) this.fail();
@@ -184,6 +244,7 @@ export class RobinSessionService {
   private close(): void {
     clearTimeout(this.timer);
     this.queue = [];
+    this.output.set(null);
     if (this.token) this.release(this.token);
     this.token = null;
   }
