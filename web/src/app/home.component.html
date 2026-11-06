@@ -2,10 +2,8 @@
   <header>
     <a class="brand" routerLink="/">pink<span>robin.</span></a>
     <nav aria-label="Hauptnavigation">
-      <a routerLink="/" fragment="idee">Die Idee</a>
       <a routerLink="/virtual-robin">Virtual Robin</a>
-      <a routerLink="/" fragment="technik">Technik</a>
-      <a routerLink="/" fragment="ausblick">Ausblick</a>
+      <a routerLink="/projekt">Projekt entdecken</a>
       <a
         class="github-link"
         href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin"
@@ -32,18 +30,21 @@
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div>
-        <p class="eyebrow">Ein Roboterprojekt von WanderWusel</p>
+        <p class="eyebrow">Ein Projekt von Sabrina Helfenberger</p>
         <h1 id="hero-title">
           Ein kleiner Roboter.<br />Eine <em>grosse Idee.</em>
         </h1>
         <p class="intro">
-          Pink Robin soll seine Umgebung wahrnehmen, neugierig reagieren und
-          eine eigene Persönlichkeit entwickeln. Hier beginnt sein Weg vom
-          ersten virtuellen Verhalten zum echten Roboter.
+          Ein neugieriger kleiner Begleiter, der Begegnungen anregen soll. Lerne
+          Robin in der interaktiven Demo kennen oder entdecke die Technik hinter
+          seinem Verhalten.
         </p>
         <a class="button" routerLink="/virtual-robin"
           >Virtual Robin entdecken</a
         >
+        <a class="secondary-button" routerLink="/projekt">
+          Projekt entdecken ↗
+        </a>
       </div>
       <aside class="robin-preview" aria-label="Robin kennenlernen">
         <p class="preview-speech">
@@ -148,151 +149,6 @@
           <span class="preview-invitation">Lerne mich kennen ↗</span>
         </a>
       </aside>
-    </section>
-    <section id="idee" class="section" aria-labelledby="idea-title">
-      <div class="section-head">
-        <p class="eyebrow">Die Idee</p>
-        <h2 id="idea-title">Persönlichkeit braucht mehr als ein Display.</h2>
-      </div>
-      <div class="cards">
-        <article class="card">
-          <span class="number">01 / WAHRNEHMUNG</span>
-          <h3>Die Welt bemerken</h3>
-          <p>
-            Berührung, Nähe und weitere Wahrnehmungen sollen Robin helfen, auf
-            seine Umgebung einzugehen.
-          </p>
-        </article>
-        <article class="card">
-          <span class="number">02 / VERHALTEN</span>
-          <h3>Nachvollziehbar reagieren</h3>
-          <p>
-            Aus Ereignissen werden passende Reaktionen. Zustände und
-            Entscheidungen sollen verständlich bleiben.
-          </p>
-        </article>
-        <article class="card">
-          <span class="number">03 / VERTRAUEN</span>
-          <h3>Mit klaren Grenzen</h3>
-          <p>
-            Datenschutz, bewusste Freigaben und wesentliche Funktionen ohne
-            Internet gehören zu den Grundprinzipien.
-          </p>
-        </article>
-      </div>
-    </section>
-    <section id="virtual-robin" class="section" aria-labelledby="virtual-title">
-      <div class="section-head">
-        <p class="eyebrow">Heute erlebbar</p>
-        <h2 id="virtual-title">Robin reagiert.<br />Probier es selbst aus.</h2>
-      </div>
-
-      <div class="development">
-        <div>
-          <span class="badge">Funktionsstand v0.1.2</span>
-          <h3>Ein kleiner Anfang mit Persönlichkeit</h3>
-          <p>
-            Robin wacht auf, freut sich über eine Herzberührung und geniesst es,
-            am Kopf gestreichelt zu werden. Er reagiert auf Wetterprognosen und
-            beantwortet die Wetterfrage über einen Button. Seine Entscheidungen
-            entstehen bereits im gemeinsamen C++-Core.
-          </p>
-          <a
-            class="button"
-            routerLink="/virtual-robin"
-            style="margin-top: 22px"
-          >
-            Robin kennenlernen
-          </a>
-        </div>
-
-        <ol class="steps">
-          <li>Berühre Robins Herz oder streichle seinen Kopf.</li>
-          <li>Lade die Wetterprognose für eine Schweizer PLZ.</li>
-          <li>Frage Robin über den Button nach dem Wetter.</li>
-        </ol>
-      </div>
-    </section>
-    <section id="technik" class="section" aria-labelledby="technology-title">
-      <div class="section-head">
-        <p class="eyebrow">Hinter den Reaktionen</p>
-        <h2 id="technology-title">
-          Ein gemeinsamer Kern.<br />Mehrere Ausdrucksformen.
-        </h2>
-      </div>
-      <ol class="architecture-flow" aria-label="So entsteht Robins Reaktion">
-        <li>
-          <span class="flow-icon" aria-hidden="true">♡</span>
-          <strong>Du berührst Robin</strong>
-          <span>Angular erfasst die Eingabe.</span>
-        </li>
-        <li>
-          <span class="flow-icon" aria-hidden="true">↔</span>
-          <strong>Die Nachricht kommt an</strong>
-          <span>Das Backend verbindet deine Sitzung mit dem Core.</span>
-        </li>
-        <li>
-          <span class="flow-icon" aria-hidden="true">✦</span>
-          <strong>Robin reagiert</strong>
-          <span
-            >Der Core entscheidet. Die Oberfläche zeigt seine Reaktion.</span
-          >
-        </li>
-      </ol>
-      <div class="cards">
-        <article class="card">
-          <span class="number">01 / ANGULAR</span>
-          <h3>Robin erleben</h3>
-          <p>
-            Die Weboberfläche nimmt Berührungen und Fragen entgegen. Sie stellt
-            Robins Gesicht, seine Verwandlungen und seine Antworten dar.
-          </p>
-        </article>
-
-        <article class="card">
-          <span class="number">02 / ASP.NET CORE</span>
-          <h3>Informationen verbinden</h3>
-          <p>
-            Das Backend verwaltet getrennte Sitzungen, lädt Wetterprognosen von
-            MeteoSchweiz und vermittelt zwischen Browser und nativem Core.
-          </p>
-        </article>
-
-        <article class="card">
-          <span class="number">03 / C++</span>
-          <h3>Verhalten entscheiden</h3>
-          <p>
-            Der Core verarbeitet Ereignisse, hält Wetterwissen und Robins
-            Zustand und erzeugt passende Reaktionen. Er arbeitet ohne eigenen
-            Netzwerkzugriff und erhält seine Zeit vom jeweiligen Adapter.
-          </p>
-        </article>
-      </div>
-    </section>
-    <section id="ausblick" class="section" aria-labelledby="outlook-title">
-      <div class="section-head">
-        <p class="eyebrow">Wohin Robin wachsen soll</p>
-        <h2 id="outlook-title">Vom Browser<br />in den Alltag.</h2>
-      </div>
-
-      <div class="development">
-        <div>
-          <span class="badge">Geplant</span>
-          <h3>Ein Begleiter, der Begegnungen anregt</h3>
-          <p>
-            Robin soll neugierig auf seine Umgebung reagieren und dazu
-            ermutigen, die Welt zu entdecken und mit Menschen in Kontakt zu
-            kommen. Die virtuelle Version hilft, sein Verhalten Schritt für
-            Schritt zu entwickeln.
-          </p>
-        </div>
-
-        <ol class="steps">
-          <li>Wenige Texteingaben zuverlässig verstehen.</li>
-          <li>Robin als 3D-Figur und auf dem iPad erlebbar machen.</li>
-          <li>Den gemeinsamen Core auf echter Roboterhardware erproben.</li>
-        </ol>
-      </div>
     </section>
   </main>
   <footer>
