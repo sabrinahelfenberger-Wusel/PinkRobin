@@ -47,4 +47,10 @@ export class RobinPageComponent {
       // Keine automatische Wiederholung bei einem unklaren Netzwerkfehler.
     }
   }
+
+  sendMessage(input: HTMLInputElement): void {
+    if (this.session.sendText(input.value)) {
+      input.value = "";
+    }
+  }
 }

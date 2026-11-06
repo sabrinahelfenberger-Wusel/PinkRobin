@@ -13,13 +13,34 @@
     <button id="restart" (click)="robin.greet()" type="button">
       Robin nochmal begrüssen <span aria-hidden="true">↗</span>
     </button>
-    <button
-      type="button"
-      [disabled]="session.connection() !== 'connected'"
-      (click)="session.send('weatherAsked')"
+    <form
+      class="conversation-form"
+      (submit)="$event.preventDefault(); sendMessage(messageInput)"
     >
-      Robin, wie wird das Wetter?
-    </button>
+      <label for="robin-message">Sprich mit Robin</label>
+
+      <div class="conversation-input">
+        <input
+          #messageInput
+          id="robin-message"
+          name="message"
+          type="text"
+          maxlength="160"
+          placeholder="Zum Beispiel: Wie wird das Wetter?"
+          autocomplete="off"
+          [disabled]="session.connection() !== 'connected'"
+          aria-describedby="robin-message-error"
+        />
+
+        <button type="submit" [disabled]="session.connection() !== 'connected'">
+          Senden
+        </button>
+      </div>
+
+      <p id="robin-message-error" role="status">
+        {{ session.textError() }}
+      </p>
+    </form>
     <p class="note">Noch ganz am Anfang. Schon voller Persönlichkeit.</p>
     <p class="note" role="status">
       @switch (robin.session.connection()) {

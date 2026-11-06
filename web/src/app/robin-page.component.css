@@ -290,3 +290,39 @@ pr-robin {
 .weather-location button { margin: 0; padding: .7rem 1rem; font-size: inherit; }
 .weather-panel p { margin: .6rem 0; }
 .weather-panel small { opacity: .8; }
+
+.conversation-form {
+    margin: 24px 0;
+}
+
+    .conversation-form label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 650;
+    }
+
+.conversation-input {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+    .conversation-input input {
+        flex: 1 1 220px;
+        min-width: 0;
+        padding: 14px 16px;
+        border: 1px solid #77717a;
+        border-radius: 10px;
+        background: #211e24;
+        color: #f7f5f8;
+        font: inherit;
+    }
+
+        .conversation-input input:focus-visible {
+            outline: 3px solid #ff5c9a;
+            outline-offset: 3px;
+        }
+
+.conversation-form [role="status"] {
+    min-height: 1.5em;
+}

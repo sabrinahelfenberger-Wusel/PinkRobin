@@ -1,16 +1,24 @@
 export type WeatherAnswerKind = "unknown" | "dry" | "rain" | "storm";
 
-export interface CoreOutput {
-  sequence: string;
-  kind: "weatherAnswer";
-  weatherAnswer: WeatherAnswerKind;
-}
+export type ConversationReplyKind =
+  "unknownInput" | "askPostalCode" | "invalidPostalCode" | "weatherUnavailable";
+
+export type CoreOutput =
+  | {
+      sequence: string;
+      kind: "weatherAnswer";
+      weatherAnswer: WeatherAnswerKind;
+    }
+  | {
+      sequence: string;
+      kind: "conversationReply";
+      conversationReply: ConversationReplyKind;
+    };
 
 export function parseCoreOutput(value: unknown): CoreOutput | null {
-  // HTTP 204 liefert keinen Inhalt.
   if (value === null) return null;
 
-  if (typeof value !== "object" || !value) {
+  if (!value || typeof value !== "object") {
     throw new Error("Invalid Core output");
   }
 
@@ -20,18 +28,39 @@ export function parseCoreOutput(value: unknown): CoreOutput | null {
   if (
     typeof sequence !== "string" ||
     !/^[1-9][0-9]{0,19}$/.test(sequence) ||
-    (sequence.length === 20 && sequence > "18446744073709551615") ||
-    output["kind"] !== "weatherAnswer" ||
-    !["unknown", "dry", "rain", "storm"].includes(
-      output["weatherAnswer"] as string,
-    )
+    (sequence.length === 20 && sequence > "18446744073709551615")
   ) {
-    throw new Error("Invalid Core output");
+    throw new Error("Invalid Core output sequence");
   }
 
-  return {
-    sequence,
-    kind: "weatherAnswer",
-    weatherAnswer: output["weatherAnswer"] as WeatherAnswerKind,
-  };
+  if (
+    output["kind"] === "weatherAnswer" &&
+    typeof output["weatherAnswer"] === "string" &&
+    ["unknown", "dry", "rain", "storm"].includes(output["weatherAnswer"])
+  ) {
+    return {
+      sequence,
+      kind: "weatherAnswer",
+      weatherAnswer: output["weatherAnswer"] as WeatherAnswerKind,
+    };
+  }
+
+  if (
+    output["kind"] === "conversationReply" &&
+    typeof output["conversationReply"] === "string" &&
+    [
+      "unknownInput",
+      "askPostalCode",
+      "invalidPostalCode",
+      "weatherUnavailable",
+    ].includes(output["conversationReply"])
+  ) {
+    return {
+      sequence,
+      kind: "conversationReply",
+      conversationReply: output["conversationReply"] as ConversationReplyKind,
+    };
+  }
+
+  throw new Error("Unsupported Core output");
 }

@@ -75,6 +75,7 @@ function fixture() {
     const context = {
         exports: {},
         URL,
+        TextEncoder,
         document: { baseURI: 'http://localhost/' },
 
         fetch: async (...args) => {
@@ -310,6 +311,53 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     assert.equal(delivery.service.output(), null);
 
     delivery.destroy();
+
+    const textSession = fixture();
+    const textConnecting = textSession.service.connect(false);
+
+    textSession.reply(0, {
+        token: 'd'.repeat(64),
+        state: state(),
+    });
+    await textConnecting;
+
+    assert.equal(textSession.service.sendText('   '), false);
+    assert.equal(textSession.service.sendText('ä'.repeat(81)), false);
+
+    // Abgewiesene Eingaben senden keinen Befehl.
+    assert.equal(textSession.requests.length, 1);
+
+    assert.equal(
+        textSession.service.sendText('Wie wird das Wetter?'),
+        true,
+    );
+
+    assert.equal(textSession.requests[1].options.body.sequence, 1);
+    assert.equal(
+        textSession.requests[1].options.body.event,
+        'textReceived',
+    );
+    assert.equal(
+        textSession.requests[1].options.body.text,
+        'Wie wird das Wetter?',
+    );
+
+    textSession.reply(1, state(1));
+    await flush();
+
+    textSession.reply(2, {
+        sequence: '1',
+        kind: 'conversationReply',
+        conversationReply: 'askPostalCode',
+    });
+    await flush();
+
+    assert.equal(
+        textSession.service.output().conversationReply,
+        'askPostalCode',
+    );
+
+    textSession.destroy();
 
     console.log(
         'Session ordering, early release, validation, fallback and destroy passed.',
