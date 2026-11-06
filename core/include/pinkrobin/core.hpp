@@ -11,6 +11,8 @@
 #include "pinkrobin/behavior_controller.hpp"
 #include "pinkrobin/output_queue.hpp"
 #include "pinkrobin/platform_capabilities.hpp"
+#include "pinkrobin/conversation_state.hpp"
+#include "pinkrobin/text_intent.hpp"
 
 namespace pinkrobin {
     enum class Result : std::uint32_t {
@@ -18,6 +20,7 @@ namespace pinkrobin {
         invalid_argument = 1,
         time_reversed = 2,
         busy = 3,
+        sequence_exhausted = 6,
         unsupported = 7
     };
 
@@ -56,6 +59,8 @@ namespace pinkrobin {
 
         bool acknowledge_output(std::uint64_t sequence) noexcept;
         OutputEnqueueResult request_weather_answer() noexcept;
+
+        const ConversationState& conversation() const noexcept;
         
     private:
         void curious() noexcept;
@@ -80,26 +85,32 @@ namespace pinkrobin {
 
         std::uint64_t transformation_started_{ 0 };
 
-        struct PendingInteraction {
+        using InputPayload = std::variant<
+            InteractionReceived,
+            TextReceived,
+            WeatherFetchResult
+        >;
+
+        struct PendingInput {
             MessageMetadata metadata;
-            InteractionReceived interaction;
+            InputPayload payload;
             std::uint64_t received_at_ms;
         };
 
-        static constexpr std::size_t interaction_capacity = 8;
+        static constexpr std::size_t input_capacity = 8;
 
-        std::array<PendingInteraction, interaction_capacity>
-            pending_interactions_{};
+        std::array<PendingInput, input_capacity>
+            pending_inputs_{};
 
-        std::size_t interaction_head_{ 0 };
-        std::size_t interaction_count_{ 0 };
+        std::size_t input_head_{ 0 };
+        std::size_t input_count_{ 0 };
 
-        MessageAcceptance enqueue_interaction(
+        MessageAcceptance enqueue_input(
             const MessageMetadata& metadata,
-            const InteractionReceived& interaction,
+            const InputPayload& payload,
             std::uint64_t received_at_ms) noexcept;
 
-        std::optional<PendingInteraction> dequeue_interaction(
+        std::optional<PendingInput> dequeue_input(
             std::uint64_t now_ms) noexcept;
 
         void apply_interaction(Event event) noexcept;
@@ -109,8 +120,29 @@ namespace pinkrobin {
         PlatformCapabilities capabilities_;
         WorldModel world_;
         RobinState state_;
+        ConversationState conversation_;
+
+        struct PendingWeatherRequest {
+            std::uint64_t request_id;
+            std::array<char, 4> postal_code;
+        };
+
+        // Explizit gewählter Wetterort für diese Core-Instanz.
+        // Bleibt bei Gesprächsende und abgelaufener Prognose erhalten.
+        std::optional<std::array<char, 4>>
+            selected_weather_postal_code_;
+
+        std::optional<PendingWeatherRequest> pending_weather_request_;
+        std::uint64_t last_weather_request_id_{ 0 };
+
         WeatherBehavior weather_behavior_;
         BehaviorController behavior_controller_;
         OutputQueue outputs_;
+
+        OutputEnqueueResult process_text(
+            const TextReceived& input) noexcept;
+
+        OutputEnqueueResult process_weather_result(
+            const WeatherFetchResult& result) noexcept;
     };
 }

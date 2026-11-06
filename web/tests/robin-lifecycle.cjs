@@ -13,19 +13,6 @@ const compiled = ts.transpileModule(source, {
     },
 }).outputText;
 
-const answerCompiled = ts.transpileModule(
-    fs.readFileSync('src/app/weather-answer.ts', 'utf8'),
-    {
-        compilerOptions: {
-            module: ts.ModuleKind.CommonJS,
-            target: ts.ScriptTarget.ES2022,
-        },
-    },
-).outputText;
-
-const answerContext = { exports: {} };
-vm.runInNewContext(answerCompiled, answerContext);
-
 function fixture(reduce = false) {
     let clock = 0,
         nextId = 0,
@@ -116,8 +103,6 @@ function fixture(reduce = false) {
                 ? angular
                 : name === '../../package.json'
                     ? { default: JSON.parse(fs.readFileSync('package.json', 'utf8')) }
-                    : name === './weather-answer'
-                        ? answerContext.exports
                         : { RobinSessionService: {} },
         window: { matchMedia: () => media },
         document: { hidden: false },
@@ -460,11 +445,12 @@ answer.output({
     sequence: '1',
     kind: 'weatherAnswer',
     weatherAnswer: 'rain',
+    text: 'Diese Antwort kommt direkt aus dem Core. ♡',
 });
 
 assert.equal(
     answer.robin.displayedSpeech(),
-    'Die Prognose meldet Regen. Vergiss deinen Regenschutz nicht! ♡',
+    'Diese Antwort kommt direkt aus dem Core. ♡',
 );
 
 // Vor Ablauf der acht Sekunden wird nichts bestätigt.
@@ -484,6 +470,7 @@ answer.output({
     sequence: '2',
     kind: 'weatherAnswer',
     weatherAnswer: 'dry',
+    text: 'Zweite Antwort aus dem Core.',
 });
 
 answer.destroy();

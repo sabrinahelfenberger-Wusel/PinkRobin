@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
+using System.Text;
 
 namespace PinkRobin.Api.Core;
 
@@ -32,6 +33,9 @@ public sealed class NativeRobinCore : IDisposable
     private readonly CoreHandle handle;
     private readonly object sync = new();
     private bool disposed;
+    private static readonly UTF8Encoding StrictUtf8 = new(
+        encoderShouldEmitUTF8Identifier: false,
+        throwOnInvalidBytes: true);
 
     public NativeRobinCore(
         ulong nowMs = 0,
@@ -193,18 +197,17 @@ public sealed class NativeRobinCore : IDisposable
         }
     }
 
-    public CoreWeatherAnswerOutput? GetNextOutput()
+    public CoreOutput? GetNextOutput()
     {
         lock (sync)
         {
             ObjectDisposedException.ThrowIf(disposed, this);
 
-            var result = NativeMethods.GetNextOutput(
+            var result = NativeMethods.GetNextOutputV2(
                 handle,
                 out var output,
-                (uint)Marshal.SizeOf<NativeOutput>());
+                (uint)Marshal.SizeOf<NativeOutputV2>());
 
-            // Ein leerer Ausgabepuffer ist kein Fehler.
             if (result == 5)
             {
                 return null;
@@ -213,18 +216,106 @@ public sealed class NativeRobinCore : IDisposable
             Check(result);
 
             if (output.AbiVersion != 1 ||
-                output.Kind != 1 ||
                 output.Sequence == 0 ||
-                output.WeatherAnswerKind > (uint)CoreWeatherAnswerKind.Storm ||
                 output.Reserved != 0)
             {
                 throw new InvalidOperationException(
                     "Invalid native Core output.");
             }
 
-            return new CoreWeatherAnswerOutput(
-                output.Sequence,
-                (CoreWeatherAnswerKind)output.WeatherAnswerKind);
+            if (output.Text is null ||
+                output.TextLength > output.Text.Length)
+            {
+                throw new InvalidOperationException(
+                    "Invalid native Core output text length.");
+            }
+
+            string text;
+
+            try
+            {
+                text = new System.Text.UTF8Encoding(false, true)
+                    .GetString(
+                        output.Text,
+                        0,
+                        checked((int)output.TextLength));
+            }
+            catch (System.Text.DecoderFallbackException exception)
+            {
+                throw new InvalidOperationException(
+                    "Invalid UTF-8 in native Core output.",
+                    exception);
+            }
+
+            if ((output.Kind == 1 || output.Kind == 2) &&
+                string.IsNullOrWhiteSpace(text))
+            {
+                throw new InvalidOperationException(
+                    "Native Core answer text is empty.");
+            }
+
+            if (output.Kind == 3 && output.TextLength != 0)
+            {
+                throw new InvalidOperationException(
+                    "Native weather request must not contain display text.");
+            }
+
+            switch (output.Kind)
+            {
+                case 1:
+                    if (output.WeatherAnswerKind >
+                        (uint)CoreWeatherAnswerKind.Storm)
+                    {
+                        throw new InvalidOperationException(
+                            "Invalid native weather answer.");
+                    }
+
+                    return new CoreWeatherAnswerOutput(
+                        output.Sequence,
+                        (CoreWeatherAnswerKind)output.WeatherAnswerKind,
+                        text);
+
+                case 2:
+                    if (output.ConversationReplyKind >
+                        (uint)CoreConversationReplyKind.Gratitude)
+                    {
+                        throw new InvalidOperationException(
+                            "Invalid native conversation reply.");
+                    }
+
+                    return new CoreConversationReplyOutput(
+                        output.Sequence,
+                        (CoreConversationReplyKind)output.ConversationReplyKind,
+                        text);
+
+                case 3:
+                    var digits = new[]
+                    {
+                    output.PostalCode0,
+                    output.PostalCode1,
+                    output.PostalCode2,
+                    output.PostalCode3
+                };
+
+                    if (output.RequestId == 0 ||
+                        digits.Any(value => value < '0' || value > '9'))
+                    {
+                        throw new InvalidOperationException(
+                            "Invalid native weather request.");
+                    }
+
+                    var postalCode = new string(
+                        digits.Select(value => (char)value).ToArray());
+
+                    return new CoreWeatherFetchRequestedOutput(
+                        output.Sequence,
+                        output.RequestId,
+                        postalCode);
+
+                default:
+                    throw new NotSupportedException(
+                        "Unknown native Core output kind.");
+            }
         }
     }
 
@@ -306,6 +397,80 @@ public sealed class NativeRobinCore : IDisposable
             handle.Dispose();
         }
     }
+
+    public void ReceiveText(
+        string text,
+        CoreInputSource source,
+        ulong nowMs)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            var byteCount = StrictUtf8.GetByteCount(text);
+
+            if (byteCount == 0 || byteCount > 160)
+            {
+                throw new ArgumentException(
+                    "Text must contain between 1 and 160 UTF-8 bytes.",
+                    nameof(text));
+            }
+
+            var bytes = StrictUtf8.GetBytes(text);
+
+            Check(NativeMethods.ReceiveText(
+                handle,
+                bytes,
+                (uint)bytes.Length,
+                (uint)source,
+                nowMs));
+        }
+    }
+
+    public void ReceiveWeatherResult(
+        ulong requestId,
+        CoreWeatherForecast? forecast,
+        CoreInputSource source,
+        ulong nowMs)
+    {
+        lock (sync)
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+
+            if (forecast is null)
+            {
+                Check(NativeMethods.ReceiveWeatherFailure(
+                    handle,
+                    requestId,
+                    IntPtr.Zero,
+                    0,
+                    (uint)source,
+                    nowMs));
+
+                return;
+            }
+
+            var weather = new NativeWeather
+            {
+                TemperatureC = forecast.TemperatureC,
+                PrecipitationMm = forecast.PrecipitationMm,
+                WindSpeedKmh = forecast.WindSpeedKmh,
+                WindGustKmh = forecast.WindGustKmh,
+                ValidFromMs = forecast.ValidFromMs,
+                ValidUntilMs = forecast.ValidUntilMs
+            };
+
+            Check(NativeMethods.ReceiveWeatherResult(
+                handle,
+                requestId,
+                in weather,
+                (uint)Marshal.SizeOf<NativeWeather>(),
+                (uint)source,
+                nowMs));
+        }
+    }
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -332,6 +497,31 @@ internal struct NativeOutput
     public ulong Sequence;
     public uint WeatherAnswerKind;
     public uint Reserved;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeOutputV2
+{
+    public uint AbiVersion;
+    public uint Kind;
+    public ulong Sequence;
+
+    public uint WeatherAnswerKind;
+    public uint ConversationReplyKind;
+
+    public ulong RequestId;
+
+    public byte PostalCode0;
+    public byte PostalCode1;
+    public byte PostalCode2;
+    public byte PostalCode3;
+
+    public uint Reserved;
+
+    public uint TextLength;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 512)]
+    public byte[] Text;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -426,6 +616,26 @@ internal static class NativeMethods
         out NativeOutput output,
         uint outputSize);
 
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_get_next_output_v2",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint GetNextOutputV2(
+        CoreHandle handle,
+        out NativeOutputV2 output,
+        uint outputSize);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_text",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveText(
+        CoreHandle handle,
+        [In] byte[] utf8,
+        uint textSize,
+        uint source,
+        ulong nowMs);
+
     [DllImport(Library, EntryPoint = "robin_core_acknowledge_output",
         CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint AcknowledgeOutput(
@@ -440,6 +650,30 @@ internal static class NativeMethods
         ulong nowMs,
         in NativePlatformCapabilities capabilities,
         uint capabilitiesSize);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_weather_result",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveWeatherResult(
+        CoreHandle handle,
+        ulong requestId,
+        in NativeWeather weather,
+        uint weatherSize,
+        uint source,
+        ulong nowMs);
+
+    [DllImport(
+        Library,
+        EntryPoint = "robin_core_receive_weather_result",
+        CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint ReceiveWeatherFailure(
+        CoreHandle handle,
+        ulong requestId,
+        IntPtr weather,
+        uint weatherSize,
+        uint source,
+        ulong nowMs);
 
     [DllImport(Library, EntryPoint = "robin_core_start_transformation", CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint StartTransformation(CoreHandle handle, uint transformation, ulong nowMs);

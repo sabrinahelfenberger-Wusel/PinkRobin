@@ -297,18 +297,63 @@ void test_weather_behavior_proposals() {
     CHECK(behavior.propose(world) == Transformation::octopus);
 }
 
+void test_weather_location() {
+    Core core;
+
+    const WeatherForecast forecast{
+        8.5, 2.0, 10.0, 20.0,
+        0, 60000
+    };
+
+    const WeatherLocation selected{
+        WeatherLocationKind::selected_location,
+        { '9', '0', '0', '0' }
+    };
+
+    CHECK(core.post_weather(
+        WeatherUpdated{ forecast, selected }) == Result::ok);
+
+    const WeatherLocation invalid{
+        WeatherLocationKind::selected_location,
+        { '9', 'a', '0', '0' }
+    };
+
+    CHECK(core.post_weather(
+        WeatherUpdated{ forecast, invalid }) ==
+        Result::invalid_argument);
+
+    const Message invalid_message{
+        MessageMetadata{ InputSource::web },
+        WeatherUpdated{ forecast, invalid }
+    };
+
+    CHECK(core.receive(invalid_message, 100) ==
+        MessageAcceptance::invalid_argument);
+
+    CHECK(core.advance_to(100) == Result::ok);
+
+    const auto observation = core.world().weather();
+
+    CHECK(observation.has_value());
+    CHECK(observation->location.kind ==
+        WeatherLocationKind::selected_location);
+    CHECK(observation->location.postal_code ==
+        selected.postal_code);
+}
+
 } // namespace
 
 int main() {
     return test_support::run_tests({
-        {"weather: forecast_validity", test_forecast_validity},
-        {"weather: forecast_validation", test_forecast_validation},
-        {"weather: forecast_replacement", test_forecast_replacement},
-        {"weather: automatic_reaction_and_cooldown", test_automatic_reaction_and_cooldown},
-        {"weather: busy_retry", test_busy_retry},
-        {"weather: expiry_while_waiting", test_expiry_while_waiting},
-        {"weather: changed_forecast_cancels_reaction", test_changed_forecast_cancels_reaction},
-        {"weather: raincoat", test_raincoat},
-        {"weather: behavior_proposals", test_weather_behavior_proposals},
+        { "weather: forecast_validity", test_forecast_validity },
+        { "weather: forecast_validation", test_forecast_validation },
+        { "weather: forecast_replacement", test_forecast_replacement },
+        { "weather: automatic_reaction_and_cooldown", test_automatic_reaction_and_cooldown },
+        { "weather: busy_retry", test_busy_retry },
+        { "weather: expiry_while_waiting", test_expiry_while_waiting },
+        { "weather: changed_forecast_cancels_reaction", test_changed_forecast_cancels_reaction },
+        { "weather: raincoat", test_raincoat },
+        { "weather: behavior_proposals", test_weather_behavior_proposals },
+        { "weather: location", test_weather_location },
     });
 }

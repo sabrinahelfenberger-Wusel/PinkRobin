@@ -2,7 +2,10 @@
 
 #include <cstdint>
 #include <variant>
+#include <optional>
 #include "pinkrobin/weather.hpp"
+#include "pinkrobin/text_input.hpp"
+
 
 namespace pinkrobin {
 
@@ -26,7 +29,8 @@ namespace pinkrobin {
         replaced = 1,
         invalid_argument = 2,
         time_reversed = 3,
-        full = 4
+        full = 4,
+        unsupported = 5
     };
 
     struct MessageMetadata {
@@ -39,11 +43,19 @@ namespace pinkrobin {
 
     struct WeatherUpdated {
         WeatherForecast forecast;
+        WeatherLocation location{};
+    };
+
+    struct WeatherFetchResult {
+        std::uint64_t request_id;
+        std::optional<WeatherForecast> forecast;
     };
 
     using MessagePayload = std::variant<
         InteractionReceived,
-        WeatherUpdated
+        WeatherUpdated,
+        TextReceived,
+        WeatherFetchResult
     >;
     
     struct Message {

@@ -27,6 +27,10 @@ namespace pinkrobin {
     Result Core::post_weather(
         const WeatherUpdated& message) noexcept {
 
+        if (!is_valid_weather_location(message.location)) {
+            return Result::invalid_argument;
+        }
+
         const auto result =
             validate_weather(message.forecast, now_);
 
