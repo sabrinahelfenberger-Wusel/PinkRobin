@@ -12,6 +12,7 @@
 #include "pinkrobin/output_queue.hpp"
 #include "pinkrobin/platform_capabilities.hpp"
 #include "pinkrobin/conversation_state.hpp"
+#include "pinkrobin/text_intent.hpp"
 
 namespace pinkrobin {
     enum class Result : std::uint32_t {
@@ -19,6 +20,7 @@ namespace pinkrobin {
         invalid_argument = 1,
         time_reversed = 2,
         busy = 3,
+        sequence_exhausted = 6,
         unsupported = 7
     };
 
@@ -118,8 +120,20 @@ namespace pinkrobin {
         WorldModel world_;
         RobinState state_;
         ConversationState conversation_;
+
+        struct PendingWeatherRequest {
+            std::uint64_t request_id;
+            std::array<char, 4> postal_code;
+        };
+
+        std::optional<PendingWeatherRequest> pending_weather_request_;
+        std::uint64_t last_weather_request_id_{ 0 };
+
         WeatherBehavior weather_behavior_;
         BehaviorController behavior_controller_;
         OutputQueue outputs_;
+
+        OutputEnqueueResult process_text(
+            const TextReceived& input) noexcept;
     };
 }

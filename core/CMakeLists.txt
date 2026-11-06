@@ -16,6 +16,7 @@ add_library(pinkrobin_behavior STATIC
     src/core_outputs.cpp
     src/text_input.cpp
     src/text_intent.cpp
+    src/core_conversation.cpp
 )
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)

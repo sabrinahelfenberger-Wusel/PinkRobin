@@ -27,7 +27,8 @@ namespace pinkrobin {
         replaced = 1,
         invalid_argument = 2,
         time_reversed = 3,
-        full = 4
+        full = 4,
+        unsupported = 5
     };
 
     struct MessageMetadata {

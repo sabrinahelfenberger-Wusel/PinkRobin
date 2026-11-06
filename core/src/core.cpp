@@ -13,11 +13,11 @@ namespace pinkrobin {
 
     Result Core::advance_state_to(std::uint64_t now_ms) noexcept {
         if (now_ms < now_) {
-            conversation_.expire(now_);
             return Result::time_reversed;
         }
 
         now_ = now_ms;
+        conversation_.expire(now_);
 
         // Vorgemerkte Wetterprognose verarbeiten.
         if (pending_weather_ && pending_weather_received_at_ms_ <= now_) {
@@ -85,28 +85,52 @@ namespace pinkrobin {
         }
 
         while (input_count_ > 0) {
-            const auto event_time =
-                pending_inputs_[input_head_].received_at_ms;
+            const auto& pending = pending_inputs_[input_head_];
 
-            if (event_time > now_ms) {
+            if (pending.received_at_ms > now_ms) {
                 break;
             }
 
-            const auto result = advance_state_to(event_time);
+            const auto processing_time =
+                pending.received_at_ms < now_
+                ? now_
+                : pending.received_at_ms;
+
+            const auto result = advance_state_to(processing_time);
 
             if (result != Result::ok) {
                 return result;
             }
 
-            const auto pending = dequeue_input(event_time);
+            if (const auto* text =
+                std::get_if<TextReceived>(&pending.payload)) {
 
-            if (pending) {
-                if (const auto* interaction =
-                    std::get_if<InteractionReceived>(&pending->payload)) {
+                const auto output_result = process_text(*text);
 
-                    apply_interaction(interaction->event);
+                if (output_result == OutputEnqueueResult::full) {
+                    break;
+                }
+
+                if (output_result == OutputEnqueueResult::unsupported) {
+                    return Result::unsupported;
+                }
+
+                if (output_result ==
+                    OutputEnqueueResult::sequence_exhausted) {
+                    return Result::sequence_exhausted;
+                }
+
+                if (output_result != OutputEnqueueResult::accepted) {
+                    return Result::invalid_argument;
                 }
             }
+            else if (const auto* interaction =
+                std::get_if<InteractionReceived>(&pending.payload)) {
+
+                apply_interaction(interaction->event);
+            }
+
+            dequeue_input(processing_time);
         }
 
         return advance_state_to(now_ms);

@@ -40,6 +40,9 @@ uint32_t acceptance_to_api_result(
 
     case pinkrobin::MessageAcceptance::full:
         return ROBIN_QUEUE_FULL;
+
+    case pinkrobin::MessageAcceptance::unsupported:
+        return ROBIN_UNSUPPORTED;
     }
 
     return ROBIN_INVALID_ARGUMENT;

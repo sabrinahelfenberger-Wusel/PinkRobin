@@ -36,6 +36,29 @@ namespace pinkrobin {
             return acceptance;
         }
 
+        if (const auto* text =
+            std::get_if<TextReceived>(&message.payload)) {
+
+            if (!is_valid_text_input(*text)) {
+                return MessageAcceptance::invalid_argument;
+            }
+
+            if (!capabilities_.text_output) {
+                return MessageAcceptance::unsupported;
+            }
+
+            const auto acceptance = enqueue_input(
+                message.metadata,
+                *text,
+                now_ms);
+
+            if (acceptance == MessageAcceptance::accepted) {
+                last_message_received_at_ms_ = now_ms;
+            }
+
+            return acceptance;
+        }
+
         if (const auto* weather =
             std::get_if<WeatherUpdated>(&message.payload)) {
 
