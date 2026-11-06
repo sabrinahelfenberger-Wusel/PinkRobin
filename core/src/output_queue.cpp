@@ -1,4 +1,5 @@
 #include "pinkrobin/output_queue.hpp"
+#include "pinkrobin/output_text.hpp"
 #include <limits>
 
 namespace pinkrobin {
@@ -60,9 +61,16 @@ namespace pinkrobin {
         const auto position = (head_ + count_) % capacity;
         const auto sequence = last_sequence_ + 1;
 
+        OutputText text{};
+
+        if (!make_output_text(payload, text)) {
+            return OutputEnqueueResult::invalid_argument;
+        }
+
         outputs_[position] = Output{
             sequence,
-            payload
+            payload,
+            text
         };
 
         last_sequence_ = sequence;

@@ -8,11 +8,13 @@ export type CoreOutput =
       sequence: string;
       kind: "weatherAnswer";
       weatherAnswer: WeatherAnswerKind;
+      text: string;
     }
   | {
       sequence: string;
       kind: "conversationReply";
       conversationReply: ConversationReplyKind;
+      text: string;
     };
 
 export function parseCoreOutput(value: unknown): CoreOutput | null {
@@ -33,6 +35,16 @@ export function parseCoreOutput(value: unknown): CoreOutput | null {
     throw new Error("Invalid Core output sequence");
   }
 
+  const text = output["text"];
+
+  if (
+    typeof text !== "string" ||
+    text.trim().length === 0 ||
+    new TextEncoder().encode(text).length > 512
+  ) {
+    throw new Error("Invalid Core output text");
+  }
+
   if (
     output["kind"] === "weatherAnswer" &&
     typeof output["weatherAnswer"] === "string" &&
@@ -42,6 +54,7 @@ export function parseCoreOutput(value: unknown): CoreOutput | null {
       sequence,
       kind: "weatherAnswer",
       weatherAnswer: output["weatherAnswer"] as WeatherAnswerKind,
+      text,
     };
   }
 
@@ -59,6 +72,7 @@ export function parseCoreOutput(value: unknown): CoreOutput | null {
       sequence,
       kind: "conversationReply",
       conversationReply: output["conversationReply"] as ConversationReplyKind,
+      text,
     };
   }
 

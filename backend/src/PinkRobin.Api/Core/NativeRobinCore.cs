@@ -223,6 +223,43 @@ public sealed class NativeRobinCore : IDisposable
                     "Invalid native Core output.");
             }
 
+            if (output.Text is null ||
+                output.TextLength > output.Text.Length)
+            {
+                throw new InvalidOperationException(
+                    "Invalid native Core output text length.");
+            }
+
+            string text;
+
+            try
+            {
+                text = new System.Text.UTF8Encoding(false, true)
+                    .GetString(
+                        output.Text,
+                        0,
+                        checked((int)output.TextLength));
+            }
+            catch (System.Text.DecoderFallbackException exception)
+            {
+                throw new InvalidOperationException(
+                    "Invalid UTF-8 in native Core output.",
+                    exception);
+            }
+
+            if ((output.Kind == 1 || output.Kind == 2) &&
+                string.IsNullOrWhiteSpace(text))
+            {
+                throw new InvalidOperationException(
+                    "Native Core answer text is empty.");
+            }
+
+            if (output.Kind == 3 && output.TextLength != 0)
+            {
+                throw new InvalidOperationException(
+                    "Native weather request must not contain display text.");
+            }
+
             switch (output.Kind)
             {
                 case 1:
@@ -235,7 +272,8 @@ public sealed class NativeRobinCore : IDisposable
 
                     return new CoreWeatherAnswerOutput(
                         output.Sequence,
-                        (CoreWeatherAnswerKind)output.WeatherAnswerKind);
+                        (CoreWeatherAnswerKind)output.WeatherAnswerKind,
+                        text);
 
                 case 2:
                     if (output.ConversationReplyKind >
@@ -247,7 +285,8 @@ public sealed class NativeRobinCore : IDisposable
 
                     return new CoreConversationReplyOutput(
                         output.Sequence,
-                        (CoreConversationReplyKind)output.ConversationReplyKind);
+                        (CoreConversationReplyKind)output.ConversationReplyKind,
+                        text);
 
                 case 3:
                     var digits = new[]
@@ -478,6 +517,11 @@ internal struct NativeOutputV2
     public byte PostalCode3;
 
     public uint Reserved;
+
+    public uint TextLength;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 512)]
+    public byte[] Text;
 }
 
 [StructLayout(LayoutKind.Sequential)]

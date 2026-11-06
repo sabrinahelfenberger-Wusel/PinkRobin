@@ -82,7 +82,8 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                 CoreWeatherAnswerOutput answer => new SessionOutput(
                     sequence,
                     "weatherAnswer",
-                    WeatherAnswer: answer.Kind.ToString().ToLowerInvariant()),
+                    WeatherAnswer: answer.Kind.ToString().ToLowerInvariant(),
+                    Text: answer.Text),
 
                 CoreConversationReplyOutput reply => new SessionOutput(
                     sequence,
@@ -113,6 +114,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             };
         }
     }
+
     public void AcknowledgeOutput(string token, string sequence)
     {
         lock (sync)

@@ -39,9 +39,17 @@ namespace pinkrobin {
         WeatherFetchRequested
     >;
 
+    // Länge in UTF-8-Bytes, ohne abschließendes Nullzeichen.
+    struct OutputText {
+        static constexpr std::uint32_t capacity = 512;
+
+        std::array<char, capacity> utf8{};
+        std::uint32_t length{ 0 };
+    };
+
     struct Output {
         std::uint64_t sequence;
         OutputPayload payload;
+        OutputText text{};
     };
-
 }

@@ -25,8 +25,8 @@ static_assert(sizeof(robin_output_v1) == 24, "Output v1 must occupy 24 bytes");
 static_assert(offsetof(robin_output_v1, sequence) == 8,"Output v1 sequence offset mismatch");
 
 static_assert(
-    sizeof(robin_output_v2) == 40,
-    "Output v2 must occupy 40 bytes");
+    sizeof(robin_output_v2) == 560,
+    "Output v2 must occupy 560 bytes");
 
 static_assert(
     offsetof(robin_output_v2, sequence) == 8,
@@ -35,6 +35,14 @@ static_assert(
 static_assert(
     offsetof(robin_output_v2, request_id) == 24,
     "Output v2 request offset mismatch");
+
+static_assert(
+    offsetof(robin_output_v2, text_length) == 40,
+    "Output v2 text length offset mismatch");
+
+static_assert(
+    offsetof(robin_output_v2, text) == 44,
+    "Output v2 text offset mismatch");
 
 uint32_t acceptance_to_api_result(
     pinkrobin::MessageAcceptance acceptance) noexcept {
@@ -354,6 +362,21 @@ extern "C" {
         }
         else {
             return ROBIN_UNSUPPORTED;
+        }
+
+        static_assert(
+            ROBIN_OUTPUT_TEXT_CAPACITY ==
+            pinkrobin::OutputText::capacity,
+            "Output text capacities must match");
+
+        if (next->text.length > ROBIN_OUTPUT_TEXT_CAPACITY) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        value.text_length = next->text.length;
+
+        for (std::uint32_t i = 0; i < value.text_length; ++i) {
+            value.text[i] = next->text.utf8[i];
         }
 
         *output = value;

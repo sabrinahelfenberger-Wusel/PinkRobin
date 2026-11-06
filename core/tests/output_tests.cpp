@@ -1,3 +1,4 @@
+#include <string_view>
 #include "pinkrobin/output_queue.hpp"
 #include "test_support.hpp"
 #include "pinkrobin/core.hpp"
@@ -31,6 +32,17 @@ namespace {
             std::get<WeatherAnswer>(second_read->payload).kind
             == WeatherAnswerKind::rain
         );
+        const std::string_view expected =
+            u8"Die Prognose meldet Regen. "
+            u8"Vergiss deinen Regenschutz nicht! ♡";
+
+        CHECK(first_read->text.length == expected.size());
+        CHECK(std::string_view(
+            first_read->text.utf8.data(),
+            first_read->text.length) == expected);
+
+        CHECK(second_read->text.length == first_read->text.length);
+        CHECK(second_read->text.utf8 == first_read->text.utf8);
     }
 
     void test_acknowledgement_and_retry() {
@@ -328,6 +340,15 @@ namespace {
         CHECK(std::get<ConversationReply>(reply->payload).kind ==
             ConversationReplyKind::ask_postal_code);
 
+        const std::string_view expected =
+            u8"Für welchen Ort möchtest du das Wetter wissen? "
+            u8"Nenne mir bitte eine vierstellige Schweizer PLZ. ♡";
+
+        CHECK(reply->text.length == expected.size());
+        CHECK(std::string_view(
+            reply->text.utf8.data(),
+            reply->text.length) == expected);
+
         CHECK(queue.acknowledge(1));
 
         CHECK(queue.enqueue(WeatherFetchRequested{
@@ -346,6 +367,9 @@ namespace {
         CHECK(fetch.request_id == 1);
         CHECK(fetch.postal_code[0] == '9');
         CHECK(fetch.postal_code[3] == '0');
+
+        CHECK(request->text.length == 0);
+        CHECK(request->text.utf8 == OutputText{}.utf8);
     }
 
     void test_invalid_conversation_outputs() {

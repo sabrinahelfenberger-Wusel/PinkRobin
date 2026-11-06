@@ -20,7 +20,10 @@ const compiledOutput = ts.transpileModule(
     { compilerOptions },
 ).outputText;
 
-const outputContext = { exports: {} };
+const outputContext = {
+    exports: {},
+    TextEncoder,
+};
 vm.runInNewContext(compiledOutput, outputContext);
 
 function fixture() {
@@ -285,11 +288,17 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
         sequence: '1',
         kind: 'weatherAnswer',
         weatherAnswer: 'rain',
+        text: 'Die Prognose meldet Regen. Vergiss deinen Regenschutz nicht! ♡',
     });
     await flush();
 
     assert.equal(delivery.service.output().sequence, '1');
     assert.equal(delivery.service.output().weatherAnswer, 'rain');
+
+    assert.equal(
+        delivery.service.output().text,
+        'Die Prognose meldet Regen. Vergiss deinen Regenschutz nicht! ♡',
+    );
 
     // Eine fehlgeschlagene Bestätigung behält die Ausgabe.
     const failedAck = delivery.service.acknowledgeOutput('1');
@@ -349,6 +358,7 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
         sequence: '1',
         kind: 'conversationReply',
         conversationReply: 'askPostalCode',
+        text: 'Für welchen Ort möchtest du das Wetter wissen?',
     });
     await flush();
 

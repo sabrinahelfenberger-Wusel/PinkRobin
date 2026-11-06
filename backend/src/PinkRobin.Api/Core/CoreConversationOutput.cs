@@ -12,7 +12,8 @@ public abstract record CoreOutput(ulong Sequence);
 
 public sealed record CoreConversationReplyOutput(
     ulong Sequence,
-    CoreConversationReplyKind Kind)
+    CoreConversationReplyKind Kind,
+    string Text)
     : CoreOutput(Sequence);
 
 public sealed record CoreWeatherFetchRequestedOutput(

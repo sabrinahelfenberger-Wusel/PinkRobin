@@ -351,8 +351,9 @@ int main(void) {
 
     CHECK(conversation_core != NULL);
 
-    CHECK(sizeof(robin_output_v2) == 40);
-    CHECK(offsetof(robin_output_v2, request_id) == 24);
+    CHECK(sizeof(robin_output_v2) == 560);
+    CHECK(offsetof(robin_output_v2, text_length) == 40);
+    CHECK(offsetof(robin_output_v2, text) == 44);
 
     const char weather_question[] = "Wie wird das Wetter?";
 

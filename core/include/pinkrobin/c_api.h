@@ -53,6 +53,7 @@ typedef struct robin_core_handle robin_core_handle;
 #define ROBIN_OUTPUT_WEATHER_ANSWER 1u
 #define ROBIN_OUTPUT_CONVERSATION_REPLY 2u
 #define ROBIN_OUTPUT_WEATHER_FETCH_REQUESTED 3u
+#define ROBIN_OUTPUT_TEXT_CAPACITY 512u
 
 #define ROBIN_REPLY_UNKNOWN_INPUT 0u
 #define ROBIN_REPLY_ASK_POSTAL_CODE 1u
@@ -105,6 +106,9 @@ typedef struct robin_output_v2 {
     uint64_t request_id;
     char postal_code[4];
     uint32_t reserved;
+
+    uint32_t text_length;
+    char text[ROBIN_OUTPUT_TEXT_CAPACITY];
 } robin_output_v2;
 
 typedef struct robin_platform_capabilities_v1 {

@@ -5,6 +5,7 @@ public sealed record RobinCommand(
     long Sequence,
     string Event,
     string? Text = null);
+
 public sealed record SessionState(
     string Mode,
     string Mood,
@@ -16,6 +17,7 @@ public sealed record SessionState(
     string Transformation);
 
 public sealed record CreatedSession(string Token, SessionState State);
+
 public sealed class SessionFailure(int status, string message) : Exception(message)
 {
     public int Status { get; } = status;
@@ -27,6 +29,7 @@ public sealed record SessionOutput(
     string? WeatherAnswer = null,
     string? ConversationReply = null,
     string? RequestId = null,
-    string? PostalCode = null);
+    string? PostalCode = null,
+    string? Text = null);
 
 public sealed record AcknowledgeOutputRequest(string Sequence);
