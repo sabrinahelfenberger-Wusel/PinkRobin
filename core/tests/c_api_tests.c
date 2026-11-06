@@ -339,6 +339,115 @@ int main(void) {
 
     robin_core_destroy(unsupported_core);
 
+    const robin_platform_capabilities_v1 conversation_capabilities = {
+    1u, 0u
+    };
+
+    robin_core_handle* conversation_core =
+        robin_core_create_with_capabilities(
+            0,
+            &conversation_capabilities,
+            sizeof(conversation_capabilities));
+
+    CHECK(conversation_core != NULL);
+
+    CHECK(sizeof(robin_output_v2) == 40);
+    CHECK(offsetof(robin_output_v2, request_id) == 24);
+
+    const char weather_question[] = "Wie wird das Wetter?";
+
+    CHECK(robin_core_receive_text(
+        conversation_core,
+        weather_question,
+        (uint32_t)(sizeof(weather_question) - 1),
+        ROBIN_INPUT_SOURCE_WEB,
+        100) == ROBIN_OK);
+
+    robin_output_v2 conversation_output = { 0 };
+
+    CHECK(robin_core_get_next_output_v2(
+        conversation_core,
+        &conversation_output,
+        sizeof(conversation_output)) == ROBIN_OK);
+
+    CHECK(conversation_output.abi_version == ROBIN_ABI_VERSION);
+    CHECK(conversation_output.kind == ROBIN_OUTPUT_CONVERSATION_REPLY);
+    CHECK(conversation_output.conversation_reply_kind ==
+        ROBIN_REPLY_ASK_POSTAL_CODE);
+    CHECK(conversation_output.sequence == 1);
+    CHECK(conversation_output.reserved == 0);
+
+    CHECK(robin_core_acknowledge_output(
+        conversation_core,
+        conversation_output.sequence) == ROBIN_OK);
+
+    const char postal_code[] = "9000";
+
+    CHECK(robin_core_receive_text(
+        conversation_core,
+        postal_code,
+        (uint32_t)(sizeof(postal_code) - 1),
+        ROBIN_INPUT_SOURCE_WEB,
+        200) == ROBIN_OK);
+
+    CHECK(robin_core_get_next_output_v2(
+        conversation_core,
+        &conversation_output,
+        sizeof(conversation_output)) == ROBIN_OK);
+
+    CHECK(conversation_output.kind ==
+        ROBIN_OUTPUT_WEATHER_FETCH_REQUESTED);
+    CHECK(conversation_output.sequence == 2);
+    CHECK(conversation_output.request_id == 1);
+
+    CHECK(conversation_output.postal_code[0] == '9');
+    CHECK(conversation_output.postal_code[1] == '0');
+    CHECK(conversation_output.postal_code[2] == '0');
+    CHECK(conversation_output.postal_code[3] == '0');
+
+    const uint64_t fetch_request_id =
+        conversation_output.request_id;
+
+    CHECK(robin_core_acknowledge_output(
+        conversation_core,
+        conversation_output.sequence) == ROBIN_OK);
+
+    const robin_weather_v1 conversation_weather = {
+        8.5, 2.0, 10.0, 20.0,
+        300, 60000
+    };
+
+    CHECK(robin_core_receive_weather_result(
+        conversation_core,
+        fetch_request_id,
+        &conversation_weather,
+        sizeof(conversation_weather),
+        ROBIN_INPUT_SOURCE_BACKEND,
+        300) == ROBIN_OK);
+
+    CHECK(robin_core_get_next_output_v2(
+        conversation_core,
+        &conversation_output,
+        sizeof(conversation_output)) == ROBIN_OK);
+
+    CHECK(conversation_output.kind == ROBIN_OUTPUT_WEATHER_ANSWER);
+    CHECK(conversation_output.weather_answer_kind ==
+        ROBIN_WEATHER_ANSWER_RAIN);
+    CHECK(conversation_output.sequence == 3);
+
+    CHECK(robin_core_acknowledge_output(
+        conversation_core,
+        conversation_output.sequence) == ROBIN_OK);
+
+    CHECK(robin_core_get_next_output_v2(
+        conversation_core,
+        &conversation_output,
+        sizeof(conversation_output)) == ROBIN_NO_OUTPUT);
+
+    CHECK(conversation_output.sequence == 0);
+
+    robin_core_destroy(conversation_core);
+
     puts("Pure C consumer, ABI layout, ownership and errors passed.");
     return 0;
 }

@@ -24,6 +24,18 @@ static_assert(offsetof(robin_snapshot_v1, time_ms) == 24, "ABI v1 clock offset m
 static_assert(sizeof(robin_output_v1) == 24, "Output v1 must occupy 24 bytes");
 static_assert(offsetof(robin_output_v1, sequence) == 8,"Output v1 sequence offset mismatch");
 
+static_assert(
+    sizeof(robin_output_v2) == 40,
+    "Output v2 must occupy 40 bytes");
+
+static_assert(
+    offsetof(robin_output_v2, sequence) == 8,
+    "Output v2 sequence offset mismatch");
+
+static_assert(
+    offsetof(robin_output_v2, request_id) == 24,
+    "Output v2 request offset mismatch");
+
 uint32_t acceptance_to_api_result(
     pinkrobin::MessageAcceptance acceptance) noexcept {
 
@@ -294,6 +306,60 @@ extern "C" {
         return ROBIN_OK;
     }
 
+    uint32_t ROBIN_CALL robin_core_get_next_output_v2(
+        const robin_core_handle* handle,
+        robin_output_v2* output,
+        uint32_t output_size) {
+
+        if (!handle || !output ||
+            output_size != sizeof(robin_output_v2)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        robin_output_v2 value{};
+        value.abi_version = ROBIN_ABI_VERSION;
+
+        const auto next = handle->core.next_output();
+
+        if (!next) {
+            *output = value;
+            return ROBIN_NO_OUTPUT;
+        }
+
+        value.sequence = next->sequence;
+
+        if (const auto* answer =
+            std::get_if<pinkrobin::WeatherAnswer>(&next->payload)) {
+
+            value.kind = ROBIN_OUTPUT_WEATHER_ANSWER;
+            value.weather_answer_kind =
+                static_cast<uint32_t>(answer->kind);
+        }
+        else if (const auto* reply =
+            std::get_if<pinkrobin::ConversationReply>(&next->payload)) {
+
+            value.kind = ROBIN_OUTPUT_CONVERSATION_REPLY;
+            value.conversation_reply_kind =
+                static_cast<uint32_t>(reply->kind);
+        }
+        else if (const auto* request =
+            std::get_if<pinkrobin::WeatherFetchRequested>(&next->payload)) {
+
+            value.kind = ROBIN_OUTPUT_WEATHER_FETCH_REQUESTED;
+            value.request_id = request->request_id;
+
+            for (std::size_t i = 0; i < 4; ++i) {
+                value.postal_code[i] = request->postal_code[i];
+            }
+        }
+        else {
+            return ROBIN_UNSUPPORTED;
+        }
+
+        *output = value;
+        return ROBIN_OK;
+    }
+
     uint32_t ROBIN_CALL robin_core_acknowledge_output(
         robin_core_handle* handle,
         uint64_t sequence) {
@@ -339,5 +405,84 @@ extern "C" {
         }
 
         return ROBIN_INVALID_ARGUMENT;
+    }
+
+    uint32_t ROBIN_CALL robin_core_receive_text(
+        robin_core_handle* handle,
+        const char* utf8,
+        uint32_t text_size,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle || !utf8 ||
+            text_size == 0 ||
+            text_size > pinkrobin::text_input_capacity) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        pinkrobin::TextReceived text{};
+        text.length = text_size;
+
+        for (std::size_t i = 0; i < text.length; ++i) {
+            text.utf8[i] = utf8[i];
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            text
+        };
+
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
+    }
+
+    uint32_t ROBIN_CALL robin_core_receive_weather_result(
+        robin_core_handle* handle,
+        uint64_t request_id,
+        const robin_weather_v1* weather,
+        uint32_t weather_size,
+        uint32_t source,
+        uint64_t now_ms) {
+
+        if (!handle || request_id == 0) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        if ((weather && weather_size != sizeof(robin_weather_v1)) ||
+            (!weather && weather_size != 0)) {
+            return ROBIN_INVALID_ARGUMENT;
+        }
+
+        pinkrobin::WeatherFetchResult result{
+            request_id,
+            std::nullopt
+        };
+
+        if (weather) {
+            result.forecast = pinkrobin::WeatherForecast{
+                weather->temperature_c,
+                weather->precipitation_mm,
+                weather->wind_speed_kmh,
+                weather->wind_gust_kmh,
+                weather->valid_from_ms,
+                weather->valid_until_ms
+            };
+        }
+
+        const pinkrobin::Message message{
+            pinkrobin::MessageMetadata{
+                static_cast<pinkrobin::InputSource>(source)
+            },
+            result
+        };
+
+        return receive_and_advance(
+            handle->core,
+            message,
+            now_ms);
     }
 }
