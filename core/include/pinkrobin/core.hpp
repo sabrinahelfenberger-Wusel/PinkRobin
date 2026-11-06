@@ -127,6 +127,11 @@ namespace pinkrobin {
             std::array<char, 4> postal_code;
         };
 
+        // Explizit gewählter Wetterort für diese Core-Instanz.
+        // Bleibt bei Gesprächsende und abgelaufener Prognose erhalten.
+        std::optional<std::array<char, 4>>
+            selected_weather_postal_code_;
+
         std::optional<PendingWeatherRequest> pending_weather_request_;
         std::uint64_t last_weather_request_id_{ 0 };
 

@@ -162,6 +162,35 @@ namespace {
 
         CHECK(core.conversation().expected_reply ==
             ExpectedReply::none);
+
+        CHECK(core.acknowledge_output(
+            repeated_answer->sequence));
+
+        // Prognose und Gespräch sind abgelaufen.
+        CHECK(core.advance_to(120400) == Result::ok);
+        CHECK(!core.world().weather().has_value());
+        CHECK(core.conversation().topic ==
+            ConversationTopic::none);
+
+        // Der ausdrücklich gewählte Ort bleibt erhalten.
+        CHECK(core.receive(
+            text_message("Wie wird das Wetter?"),
+            120500) == MessageAcceptance::accepted);
+
+        CHECK(core.advance_to(120500) == Result::ok);
+
+        const auto refresh = core.next_output();
+        CHECK(refresh.has_value());
+        CHECK(std::holds_alternative<WeatherFetchRequested>(
+            refresh->payload));
+
+        const auto& refresh_request =
+            std::get<WeatherFetchRequested>(refresh->payload);
+
+        CHECK(refresh_request.request_id == fetch.request_id + 1);
+        CHECK(refresh_request.postal_code == fetch.postal_code);
+        CHECK(core.conversation().expected_reply ==
+            ExpectedReply::none);
     }
 
     void test_invalid_postal_code_and_context_expiry() {

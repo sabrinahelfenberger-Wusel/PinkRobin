@@ -43,28 +43,70 @@ namespace pinkrobin {
         if (intent.kind == TextIntentKind::weather_question) {
             const auto observation = world_.weather();
 
-            const bool has_selected_location =
+            const bool has_current_selected_weather =
+                selected_weather_postal_code_ &&
                 observation &&
                 observation->location.kind ==
-                WeatherLocationKind::selected_location;
+                WeatherLocationKind::selected_location &&
+                observation->location.postal_code ==
+                *selected_weather_postal_code_;
 
-            const auto result = has_selected_location
-                ? request_weather_answer()
-                : outputs_.enqueue(ConversationReply{
-                    ConversationReplyKind::ask_postal_code
+            if (has_current_selected_weather) {
+                const auto result = request_weather_answer();
+
+                if (result == OutputEnqueueResult::accepted) {
+                    conversation_.topic = ConversationTopic::weather;
+                    conversation_.expected_reply = ExpectedReply::none;
+                    conversation_.last_input_at_ms = now_;
+                }
+
+                return result;
+            }
+
+            if (selected_weather_postal_code_) {
+                if (last_weather_request_id_ ==
+                    std::numeric_limits<std::uint64_t>::max()) {
+                    return OutputEnqueueResult::sequence_exhausted;
+                }
+
+                const auto request_id = last_weather_request_id_ + 1;
+
+                const auto result = outputs_.enqueue(
+                    WeatherFetchRequested{
+                        request_id,
+                        *selected_weather_postal_code_
                     });
+
+                if (result == OutputEnqueueResult::accepted) {
+                    last_weather_request_id_ = request_id;
+
+                    pending_weather_request_ = PendingWeatherRequest{
+                        request_id,
+                        *selected_weather_postal_code_
+                    };
+
+                    conversation_.topic = ConversationTopic::weather;
+                    conversation_.expected_reply = ExpectedReply::none;
+                    conversation_.last_input_at_ms = now_;
+                }
+
+                return result;
+            }
+
+            const auto result = outputs_.enqueue(
+                ConversationReply{
+                    ConversationReplyKind::ask_postal_code
+                });
 
             if (result == OutputEnqueueResult::accepted) {
                 conversation_.topic = ConversationTopic::weather;
-                conversation_.expected_reply = has_selected_location
-                    ? ExpectedReply::none
-                    : ExpectedReply::swiss_postal_code;
+                conversation_.expected_reply =
+                    ExpectedReply::swiss_postal_code;
                 conversation_.last_input_at_ms = now_;
             }
 
             return result;
         }
-
         if (intent.kind == TextIntentKind::swiss_postal_code) {
             if (last_weather_request_id_ ==
                 std::numeric_limits<std::uint64_t>::max()) {
@@ -81,6 +123,8 @@ namespace pinkrobin {
 
             if (result == OutputEnqueueResult::accepted) {
                 last_weather_request_id_ = request_id;
+
+                selected_weather_postal_code_ = intent.postal_code;
 
                 pending_weather_request_ = PendingWeatherRequest{
                     request_id,
