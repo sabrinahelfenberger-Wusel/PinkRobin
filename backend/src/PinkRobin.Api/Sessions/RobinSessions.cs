@@ -63,7 +63,6 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     {
         lock (sync)
         {
-            // Session prüfen und ihre Core-Zeit aktualisieren.
             Execute(token, null);
 
             var output = sessions[token].Core.GetNextOutput();
@@ -73,14 +72,45 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                 return null;
             }
 
-            return new SessionOutput(
-                output.Sequence.ToString(
-                    System.Globalization.CultureInfo.InvariantCulture),
-                "weatherAnswer",
-                output.Kind.ToString().ToLowerInvariant());
+            var sequence = output.Sequence.ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+
+            return output switch
+            {
+                CoreWeatherAnswerOutput answer => new SessionOutput(
+                    sequence,
+                    "weatherAnswer",
+                    WeatherAnswer: answer.Kind.ToString().ToLowerInvariant()),
+
+                CoreConversationReplyOutput reply => new SessionOutput(
+                    sequence,
+                    "conversationReply",
+                    ConversationReply: reply.Kind switch
+                    {
+                        CoreConversationReplyKind.UnknownInput =>
+                            "unknownInput",
+                        CoreConversationReplyKind.AskPostalCode =>
+                            "askPostalCode",
+                        CoreConversationReplyKind.InvalidPostalCode =>
+                            "invalidPostalCode",
+                        CoreConversationReplyKind.WeatherUnavailable =>
+                            "weatherUnavailable",
+                        _ => throw new InvalidOperationException(
+                            "Unknown conversation reply.")
+                    }),
+
+                CoreWeatherFetchRequestedOutput request => new SessionOutput(
+                    sequence,
+                    "weatherFetchRequested",
+                    RequestId: request.RequestId.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    PostalCode: request.PostalCode),
+
+                _ => throw new InvalidOperationException(
+                    "Unknown Core output.")
+            };
         }
     }
-
     public void AcknowledgeOutput(string token, string sequence)
     {
         lock (sync)

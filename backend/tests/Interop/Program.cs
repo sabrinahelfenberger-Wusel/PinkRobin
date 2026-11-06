@@ -10,5 +10,6 @@ OutputTests.CapacityAndRecovery();
 OutputTests.WeatherValidity();
 OutputTests.SessionDelivery();
 OutputTests.UnsupportedActions();
+ConversationTests.WeatherLocationConversation();
 
 Console.WriteLine("All interop tests passed.");

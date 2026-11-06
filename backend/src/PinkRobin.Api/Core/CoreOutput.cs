@@ -10,4 +10,5 @@ public enum CoreWeatherAnswerKind : uint
 
 public sealed record CoreWeatherAnswerOutput(
     ulong Sequence,
-    CoreWeatherAnswerKind Kind);
+    CoreWeatherAnswerKind Kind)
+    : CoreOutput(Sequence);

@@ -21,6 +21,9 @@ public sealed class SessionFailure(int status, string message) : Exception(messa
 public sealed record SessionOutput(
     string Sequence,
     string Kind,
-    string WeatherAnswer);
+    string? WeatherAnswer = null,
+    string? ConversationReply = null,
+    string? RequestId = null,
+    string? PostalCode = null);
 
 public sealed record AcknowledgeOutputRequest(string Sequence);
