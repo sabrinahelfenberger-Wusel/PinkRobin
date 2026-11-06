@@ -83,26 +83,31 @@ namespace pinkrobin {
 
         std::uint64_t transformation_started_{ 0 };
 
-        struct PendingInteraction {
+        using InputPayload = std::variant<
+            InteractionReceived,
+            TextReceived
+        >;
+
+        struct PendingInput {
             MessageMetadata metadata;
-            InteractionReceived interaction;
+            InputPayload payload;
             std::uint64_t received_at_ms;
         };
 
-        static constexpr std::size_t interaction_capacity = 8;
+        static constexpr std::size_t input_capacity = 8;
 
-        std::array<PendingInteraction, interaction_capacity>
-            pending_interactions_{};
+        std::array<PendingInput, input_capacity>
+            pending_inputs_{};
 
-        std::size_t interaction_head_{ 0 };
-        std::size_t interaction_count_{ 0 };
+        std::size_t input_head_{ 0 };
+        std::size_t input_count_{ 0 };
 
-        MessageAcceptance enqueue_interaction(
+        MessageAcceptance enqueue_input(
             const MessageMetadata& metadata,
-            const InteractionReceived& interaction,
+            const InputPayload& payload,
             std::uint64_t received_at_ms) noexcept;
 
-        std::optional<PendingInteraction> dequeue_interaction(
+        std::optional<PendingInput> dequeue_input(
             std::uint64_t now_ms) noexcept;
 
         void apply_interaction(Event event) noexcept;

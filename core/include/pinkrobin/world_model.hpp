@@ -10,6 +10,7 @@ namespace pinkrobin {
         WeatherForecast forecast;
         InputSource source;
         std::uint64_t received_at_ms;
+        WeatherLocation location{};
     };
 
     class WorldModel final {

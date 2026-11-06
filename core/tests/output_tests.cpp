@@ -313,24 +313,78 @@ namespace {
             );
         }
     }
+
+    void test_conversation_outputs() {
+        OutputQueue queue;
+
+        CHECK(queue.enqueue(ConversationReply{
+            ConversationReplyKind::ask_postal_code
+            }) == OutputEnqueueResult::accepted);
+
+        const auto reply = queue.front();
+
+        CHECK(reply.has_value());
+        CHECK(reply->sequence == 1);
+        CHECK(std::get<ConversationReply>(reply->payload).kind ==
+            ConversationReplyKind::ask_postal_code);
+
+        CHECK(queue.acknowledge(1));
+
+        CHECK(queue.enqueue(WeatherFetchRequested{
+            1,
+            { '9', '0', '0', '0' }
+            }) == OutputEnqueueResult::accepted);
+
+        const auto request = queue.front();
+
+        CHECK(request.has_value());
+        CHECK(request->sequence == 2);
+
+        const auto& fetch =
+            std::get<WeatherFetchRequested>(request->payload);
+
+        CHECK(fetch.request_id == 1);
+        CHECK(fetch.postal_code[0] == '9');
+        CHECK(fetch.postal_code[3] == '0');
+    }
+
+    void test_invalid_conversation_outputs() {
+        OutputQueue queue;
+
+        CHECK(queue.enqueue(ConversationReply{
+            static_cast<ConversationReplyKind>(999)
+            }) == OutputEnqueueResult::invalid_argument);
+
+        CHECK(queue.enqueue(WeatherFetchRequested{
+            0,
+            { '9', '0', '0', '0' }
+            }) == OutputEnqueueResult::invalid_argument);
+
+        CHECK(queue.enqueue(WeatherFetchRequested{
+            1,
+            { '9', 'a', '0', '0' }
+            }) == OutputEnqueueResult::invalid_argument);
+
+        CHECK(!queue.front().has_value());
+
+        CHECK(queue.enqueue(ConversationReply{
+            ConversationReplyKind::unknown_input
+            }) == OutputEnqueueResult::accepted);
+
+        CHECK(queue.front()->sequence == 1);
+    }
 }
 
 int main() {
     return test_support::run_tests({
-        { "output: enqueue_and_repeated_read",
-            test_enqueue_and_repeated_read },
-        { "output: acknowledgement_and_retry",
-            test_acknowledgement_and_retry },
-        { "output: capacity_and_slot_reuse",
-            test_capacity_and_slot_reuse },
-        { "output: invalid_output_preserves_sequence",
-            test_invalid_output_preserves_sequence },
-        { "output: core_weather_answer_and_acknowledgement",
-            test_core_weather_answer_and_acknowledgement },
-        { "output: weather_answer_while_busy_and_on_cooldown",
-            test_weather_answer_while_busy_and_on_cooldown },
-        { "output: weather_answer_kinds_and_expiry",
-            test_weather_answer_kinds_and_expiry },
-
+        { "output: enqueue_and_repeated_read", test_enqueue_and_repeated_read },
+        { "output: acknowledgement_and_retry", test_acknowledgement_and_retry },
+        { "output: capacity_and_slot_reuse", test_capacity_and_slot_reuse },
+        { "output: invalid_output_preserves_sequence", test_invalid_output_preserves_sequence },
+        { "output: core_weather_answer_and_acknowledgement", test_core_weather_answer_and_acknowledgement },
+        { "output: weather_answer_while_busy_and_on_cooldown", test_weather_answer_while_busy_and_on_cooldown },
+        { "output: weather_answer_kinds_and_expiry", test_weather_answer_kinds_and_expiry },
+        { "output: conversation", test_conversation_outputs },
+        { "output: invalid_conversation", test_invalid_conversation_outputs },
     });
 }

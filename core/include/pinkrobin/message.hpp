@@ -40,6 +40,7 @@ namespace pinkrobin {
 
     struct WeatherUpdated {
         WeatherForecast forecast;
+        WeatherLocation location{};
     };
 
     using MessagePayload = std::variant<

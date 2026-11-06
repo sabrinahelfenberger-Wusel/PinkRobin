@@ -24,7 +24,7 @@ namespace pinkrobin {
         if (const auto* interaction =
             std::get_if<InteractionReceived>(&message.payload)) {
 
-            const auto acceptance = enqueue_interaction(
+            const auto acceptance = enqueue_input(
                 message.metadata,
                 *interaction,
                 now_ms);
@@ -38,6 +38,10 @@ namespace pinkrobin {
 
         if (const auto* weather =
             std::get_if<WeatherUpdated>(&message.payload)) {
+
+            if (!is_valid_weather_location(weather->location)) {
+                return MessageAcceptance::invalid_argument;
+            }
 
             if (validate_weather(weather->forecast, now_ms)
                 != Result::ok) {
@@ -60,13 +64,27 @@ namespace pinkrobin {
         return MessageAcceptance::invalid_argument;
     }
 
-    MessageAcceptance Core::enqueue_interaction(
+    MessageAcceptance Core::enqueue_input(
         const MessageMetadata& metadata,
-        const InteractionReceived& interaction,
+        const InputPayload& payload,
         std::uint64_t received_at_ms) noexcept {
 
-        if (static_cast<std::uint32_t>(interaction.event) >
-            static_cast<std::uint32_t>(Event::interaction_cancelled)) {
+        if (const auto* interaction =
+            std::get_if<InteractionReceived>(&payload)) {
+
+            if (static_cast<std::uint32_t>(interaction->event) >
+                static_cast<std::uint32_t>(Event::interaction_cancelled)) {
+                return MessageAcceptance::invalid_argument;
+            }
+        }
+        else if (const auto* text =
+            std::get_if<TextReceived>(&payload)) {
+
+            if (!is_valid_text_input(*text)) {
+                return MessageAcceptance::invalid_argument;
+            }
+        }
+        else {
             return MessageAcceptance::invalid_argument;
         }
 
@@ -74,54 +92,52 @@ namespace pinkrobin {
             return MessageAcceptance::time_reversed;
         }
 
-        if (interaction_count_ > 0) {
+        if (input_count_ > 0) {
             const auto last_position =
-                (interaction_head_ + interaction_count_ - 1)
-                % interaction_capacity;
+                (input_head_ + input_count_ - 1) % input_capacity;
 
             if (received_at_ms <
-                pending_interactions_[last_position].received_at_ms) {
+                pending_inputs_[last_position].received_at_ms) {
                 return MessageAcceptance::time_reversed;
             }
         }
 
-        if (interaction_count_ == interaction_capacity) {
+        if (input_count_ == input_capacity) {
             return MessageAcceptance::full;
         }
 
         const auto position =
-            (interaction_head_ + interaction_count_)
-            % interaction_capacity;
+            (input_head_ + input_count_) % input_capacity;
 
-        pending_interactions_[position] = PendingInteraction{
+        pending_inputs_[position] = PendingInput{
             metadata,
-            interaction,
+            payload,
             received_at_ms
         };
 
-        ++interaction_count_;
+        ++input_count_;
 
         return MessageAcceptance::accepted;
     }
 
-    std::optional<Core::PendingInteraction>
-        Core::dequeue_interaction(std::uint64_t now_ms) noexcept {
+    std::optional<Core::PendingInput>
+        Core::dequeue_input(std::uint64_t now_ms) noexcept {
 
-        if (interaction_count_ == 0) {
+        if (input_count_ == 0) {
             return std::nullopt;
         }
 
-        if (pending_interactions_[interaction_head_].received_at_ms > now_ms) {
+        if (pending_inputs_[input_head_].received_at_ms > now_ms) {
             return std::nullopt;
         }
 
         const auto interaction =
-            pending_interactions_[interaction_head_];
+            pending_inputs_[input_head_];
 
-        interaction_head_ =
-            (interaction_head_ + 1) % interaction_capacity;
+        input_head_ =
+            (input_head_ + 1) % input_capacity;
 
-        --interaction_count_;
+        --input_count_;
 
         return interaction;
     }

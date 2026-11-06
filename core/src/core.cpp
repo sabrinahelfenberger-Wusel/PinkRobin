@@ -30,8 +30,9 @@ namespace pinkrobin {
                 world_.update_weather(WeatherObservation{
                     forecast,
                     pending_weather_source_,
-                    pending_weather_received_at_ms_
-                    });
+                    pending_weather_received_at_ms_,
+                    pending_weather_->location
+                });
 
                 pending_weather_.reset();
             }
@@ -83,9 +84,9 @@ namespace pinkrobin {
             return Result::time_reversed;
         }
 
-        while (interaction_count_ > 0) {
+        while (input_count_ > 0) {
             const auto event_time =
-                pending_interactions_[interaction_head_].received_at_ms;
+                pending_inputs_[input_head_].received_at_ms;
 
             if (event_time > now_ms) {
                 break;
@@ -97,10 +98,14 @@ namespace pinkrobin {
                 return result;
             }
 
-            const auto pending = dequeue_interaction(event_time);
+            const auto pending = dequeue_input(event_time);
 
             if (pending) {
-                apply_interaction(pending->interaction.event);
+                if (const auto* interaction =
+                    std::get_if<InteractionReceived>(&pending->payload)) {
+
+                    apply_interaction(interaction->event);
+                }
             }
         }
 
