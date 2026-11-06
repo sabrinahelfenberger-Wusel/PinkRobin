@@ -1,7 +1,10 @@
 namespace PinkRobin.Api.Sessions;
 
 public sealed record CreateSessionRequest(bool ReducedMotion = false);
-public sealed record RobinCommand(long Sequence, string Event);
+public sealed record RobinCommand(
+    long Sequence,
+    string Event,
+    string? Text = null);
 public sealed record SessionState(
     string Mode,
     string Mood,

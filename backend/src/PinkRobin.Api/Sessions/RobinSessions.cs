@@ -18,6 +18,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
         public ulong Offset;
         public long Sequence;
         public string? LastEvent;
+        public string? LastText;
         public int Commands;
         public long CommandSecond = -1;
     }
@@ -236,7 +237,8 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             if (command is not null)
             {
                 if (command.Sequence == session.Sequence &&
-                    command.Event == session.LastEvent)
+                    command.Event == session.LastEvent &&
+                    command.Text == session.LastText)
                 {
                     return State(session);
                 }
@@ -246,6 +248,20 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                     throw new SessionFailure(409, "Unexpected command sequence");
                 }
 
+                if (command.Event == "textReceived")
+                {
+                    if (command.Text is null)
+                    {
+                        throw new SessionFailure(400, "Text is required");
+                    }
+                }
+                else if (command.Text is not null)
+                {
+                    throw new SessionFailure(
+                        400,
+                        "Text is only allowed for textReceived");
+                }
+
                 RobinEvent? input = command.Event switch
                 {
                     "weatherAsked" => null,
@@ -253,6 +269,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                     "heartTouched" => RobinEvent.HeartTouched,
                     "headStarted" => RobinEvent.HeadStarted,
                     "headEnded" => RobinEvent.HeadEnded,
+                    "textReceived" => null,
                     "interactionCancelled" => RobinEvent.InteractionCancelled,
                     _ => throw new SessionFailure(400, "Unknown Robin event")
                 };
@@ -277,6 +294,26 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                         CoreInputSource.Web,
                         now);
                 }
+                else if (command.Event == "textReceived")
+                {
+                    try
+                    {
+                        session.Core.ReceiveText(
+                            command.Text!,
+                            CoreInputSource.Web,
+                            now);
+                    }
+                    catch (ArgumentException)
+                    {
+                        throw new SessionFailure(400, "Invalid text input");
+                    }
+                    catch (CoreMessageQueueFullException)
+                    {
+                        throw new SessionFailure(
+                            503,
+                            "Core input queue is full");
+                    }
+                }
                 else
                 {
                     try
@@ -299,6 +336,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
 
                 session.Sequence = command.Sequence;
                 session.LastEvent = command.Event;
+                session.LastText = command.Text;
             }
 
             session.LastContact = elapsed;

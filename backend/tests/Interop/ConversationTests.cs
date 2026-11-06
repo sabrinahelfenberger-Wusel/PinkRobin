@@ -69,4 +69,60 @@ internal static class ConversationTests
             core.GetNextOutput() is null,
             "Conversation outputs are acknowledged");
     }
+
+    public static void SessionTextCommands()
+    {
+        using var sessions = new PinkRobin.Api.Sessions.RobinSessions(
+            new TestGateway(),
+            new ManualClock());
+
+        var session = sessions.Create(false);
+
+        var question = new PinkRobin.Api.Sessions.RobinCommand(
+            1,
+            "textReceived",
+            "Wie wird das Wetter?");
+
+        sessions.Send(session.Token, question);
+        sessions.Send(session.Token, question);
+
+        // Gleiche Nummer mit anderem Text ist keine Wiederholung.
+        Throws<PinkRobin.Api.Sessions.SessionFailure>(() =>
+            sessions.Send(
+                session.Token,
+                question with { Text = "Hallo Robin" }));
+
+        var output = sessions.ReadOutput(session.Token);
+
+        Require(
+            output is
+            {
+                Sequence: "1",
+                Kind: "conversationReply",
+                ConversationReply: "askPostalCode"
+            },
+            "Session text produces a postal code question");
+
+        sessions.AcknowledgeOutput(
+            session.Token,
+            output!.Sequence);
+
+        Require(
+            sessions.ReadOutput(session.Token) is null,
+            "Repeated text command does not duplicate output");
+
+        // Eine ungültige Eingabe darf die Befehlsnummer nicht verbrauchen.
+        Throws<PinkRobin.Api.Sessions.SessionFailure>(() =>
+            sessions.Send(
+                session.Token,
+                new(2, "textReceived", "   ")));
+
+        var accepted = sessions.Send(
+            session.Token,
+            new(2, "textReceived", "9000"));
+
+        Require(
+            accepted.Sequence == 2,
+            "Valid text can reuse a rejected command sequence");
+    }
 }
