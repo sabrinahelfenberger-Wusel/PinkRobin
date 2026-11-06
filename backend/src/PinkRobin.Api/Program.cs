@@ -99,6 +99,32 @@ static IResult WithSession(HttpContext context, Func<string, IResult> action)
     try { return action(token); }
     catch (SessionFailure error) { return Results.Problem(statusCode: error.Status, title: error.Message); }
 }
+
+static async Task<IResult> WithSessionAsync(
+    HttpContext context,
+    Func<string, Task<IResult>> action)
+{
+    var token = context.Request.Headers["X-Robin-Session"].ToString();
+
+    if (token.Length != 64 || !token.All(Uri.IsHexDigit))
+    {
+        return Results.Problem(
+            statusCode: 401,
+            title: "Session token required");
+    }
+
+    try
+    {
+        return await action(token);
+    }
+    catch (SessionFailure error)
+    {
+        return Results.Problem(
+            statusCode: error.Status,
+            title: error.Message);
+    }
+}
+
 app.MapPost("/api/v1/sessions", IResult (CreateSessionRequest request, RobinSessions sessions) =>
 {
     try { return Results.Json(sessions.Create(request.ReducedMotion), statusCode: 201); }
@@ -111,10 +137,18 @@ app.MapPost("/api/v1/session/events", (HttpContext context, RobinCommand command
 
 app.MapGet(
     "/api/v1/session/outputs/next",
-    (HttpContext context, RobinSessions sessions) =>
-        WithSession(context, token =>
+    async Task<IResult> (
+        HttpContext context,
+        RobinSessions sessions,
+        IWeatherSource weather,
+        CancellationToken ct) =>
+    {
+        return await WithSessionAsync(context, async token =>
         {
-            var output = sessions.ReadOutput(token);
+            var output = await sessions.ReadOutputAsync(
+                token,
+                weather,
+                ct);
 
             if (output is null)
             {
@@ -122,7 +156,8 @@ app.MapGet(
             }
 
             return Results.Ok(output);
-        }));
+        });
+    });
 
 app.MapPost(
     "/api/v1/session/outputs/ack",

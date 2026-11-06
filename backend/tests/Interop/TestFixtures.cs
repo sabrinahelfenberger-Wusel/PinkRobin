@@ -24,6 +24,7 @@ sealed class ManualClock : TimeProvider
         ticks = checked(ticks + ms);
     }
 }
+
 sealed class TestGateway : IRobinCoreGateway
 {
     public PinkRobin.Api.Contracts.CoreConnectionStatus GetConnectionStatus() => new(true, "native-cabi-v1");
@@ -32,5 +33,27 @@ sealed class TestGateway : IRobinCoreGateway
         CorePlatformCapabilities capabilities = default)
     {
         return new NativeRobinCore(nowMs, capabilities);
+    }
+}
+
+internal sealed class ControlledWeatherSource
+    : PinkRobin.Api.Weather.IWeatherSource
+{
+    public int Calls { get; private set; }
+    public string? PostalCode { get; private set; }
+
+    public TaskCompletionSource<PinkRobin.Api.Weather.WeatherSnapshot>
+        Completion
+    { get; } = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Task<PinkRobin.Api.Weather.WeatherSnapshot> GetAsync(
+        string? postalCode,
+        CancellationToken cancellationToken)
+    {
+        ++Calls;
+        PostalCode = postalCode;
+
+        return Completion.Task.WaitAsync(cancellationToken);
     }
 }

@@ -21,6 +21,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
         public string? LastText;
         public int Commands;
         public long CommandSecond = -1;
+        public SessionWeatherFetch? WeatherFetch;
     }
     private readonly object sync = new();
     private readonly Dictionary<string, Session> sessions = new(StringComparer.Ordinal);
@@ -204,6 +205,170 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             session.Core.PostWeather(forecast, CoreInputSource.Web, currentState.TimeMs);
 
             return true;
+        }
+    }
+
+    private static SessionWeatherFetch? TakeWeatherFetch(Session session)
+    {
+        if (session.WeatherFetch is not null)
+        {
+            return session.WeatherFetch;
+        }
+
+        if (session.Core.GetNextOutput()
+            is not CoreWeatherFetchRequestedOutput request)
+        {
+            return null;
+        }
+
+        var work = new SessionWeatherFetch(request);
+
+        // Erst lokal übernehmen, danach den Core-Puffer freigeben.
+        session.WeatherFetch = work;
+
+        try
+        {
+            session.Core.AcknowledgeOutput(request.Sequence);
+        }
+        catch
+        {
+            session.WeatherFetch = null;
+            throw;
+        }
+
+        return work;
+    }
+
+    private bool TryDeliverWeatherFetch(
+        Session session,
+        ulong nowMs)
+    {
+        var work = session.WeatherFetch;
+
+        if (work is null || !work.Completed)
+        {
+            return false;
+        }
+
+        CoreWeatherForecast? forecast = null;
+
+        if (work.Forecast is not null &&
+            work.Forecast.PostalCode == work.Request.PostalCode)
+        {
+            forecast = ToCoreWeather(
+                work.Forecast,
+                clock.GetUtcNow(),
+                nowMs);
+        }
+
+        try
+        {
+            session.Core.ReceiveWeatherResult(
+                work.Request.RequestId,
+                forecast,
+                CoreInputSource.Backend,
+                nowMs);
+        }
+        catch (CoreMessageQueueFullException)
+        {
+            // Das Ergebnis bleibt für den nächsten Versuch erhalten.
+            return false;
+        }
+
+        session.WeatherFetch = null;
+        return true;
+    }
+
+    private SessionOutput? ReadVisibleOutput(string token)
+    {
+        var output = ReadOutput(token);
+
+        return output?.Kind == "weatherFetchRequested"
+            ? null
+            : output;
+    }
+
+    public async Task<SessionOutput?> ReadOutputAsync(
+        string token,
+        IWeatherSource weather,
+        CancellationToken ct)
+    {
+        Session session;
+        SessionWeatherFetch work;
+
+        lock (sync)
+        {
+            var state = Execute(token, null);
+            session = sessions[token];
+
+            var pending = TakeWeatherFetch(session);
+
+            if (pending is null)
+            {
+                return ReadVisibleOutput(token);
+            }
+
+            work = pending;
+
+            if (work.Completed)
+            {
+                TryDeliverWeatherFetch(session, state.TimeMs);
+                return ReadVisibleOutput(token);
+            }
+
+            if (work.Running)
+            {
+                return ReadVisibleOutput(token);
+            }
+
+            work.Running = true;
+        }
+
+        WeatherSnapshot? forecast;
+
+        try
+        {
+            try
+            {
+                forecast = await weather.GetAsync(
+                    work.Request.PostalCode,
+                    ct);
+            }
+            catch (WeatherUnavailableException)
+            {
+                forecast = null;
+            }
+        }
+        catch
+        {
+            lock (sync)
+            {
+                work.Running = false;
+            }
+
+            throw;
+        }
+
+        lock (sync)
+        {
+            work.Running = false;
+
+            if (!sessions.TryGetValue(token, out var current) ||
+                !ReferenceEquals(current, session))
+            {
+                throw new SessionFailure(
+                    404,
+                    "Session expired or unknown");
+            }
+
+            work.Forecast = forecast;
+            work.Completed = true;
+
+            var state = Execute(token, null);
+
+            TryDeliverWeatherFetch(session, state.TimeMs);
+
+            return ReadVisibleOutput(token);
         }
     }
 

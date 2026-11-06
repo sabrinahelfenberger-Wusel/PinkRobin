@@ -1,5 +1,6 @@
 using PinkRobin.Api.Core;
 using static TestSupport;
+using PinkRobin.Api.Weather;
 
 internal static class ConversationTests
 {
@@ -124,5 +125,117 @@ internal static class ConversationTests
         Require(
             accepted.Sequence == 2,
             "Valid text can reuse a rejected command sequence");
+    }
+
+    public static async Task SessionWeatherFetch()
+    {
+        var clock = new ManualClock();
+        var weather = new ControlledWeatherSource();
+
+        using var sessions = new PinkRobin.Api.Sessions.RobinSessions(
+            new TestGateway(),
+            clock);
+
+        var session = sessions.Create(false);
+
+        sessions.Send(
+            session.Token,
+            new(1, "textReceived", "Wie wird das Wetter?"));
+
+        var question = sessions.ReadOutput(session.Token);
+        Require(question is not null, "Postal code question exists");
+
+        sessions.AcknowledgeOutput(session.Token, question!.Sequence);
+
+        sessions.Send(
+            session.Token,
+            new(2, "textReceived", "9000"));
+
+        var pending = sessions.ReadOutputAsync(
+            session.Token,
+            weather,
+            CancellationToken.None);
+
+        Require(weather.Calls == 1, "Weather fetch starts once");
+        Require(weather.PostalCode == "9000", "Requested postal code is used");
+
+        var concurrent = await sessions.ReadOutputAsync(
+            session.Token,
+            weather,
+            CancellationToken.None);
+
+        Require(concurrent is null, "Internal fetch stays out of UI output");
+        Require(weather.Calls == 1, "Concurrent poll does not duplicate fetch");
+
+        var now = clock.GetUtcNow();
+
+        weather.Completion.SetResult(new WeatherSnapshot(
+            Source: "Test",
+            PostalCode: "9000",
+            PointId: "900000",
+            ForecastRunAt: now,
+            RetrievedAt: now,
+            ValidFrom: now,
+            ValidTo: now.AddMinutes(10),
+            TemperatureC: 8.5,
+            PrecipitationMm: 2.0,
+            WindSpeedKmh: 10.0,
+            WindGustKmh: 20.0));
+
+        var answer = await pending;
+
+        Require(
+            answer is { Kind: "weatherAnswer", WeatherAnswer: "rain" },
+            "Backend fetch returns the Core weather answer");
+    }
+
+    public static async Task SessionWeatherFailure()
+    {
+        var weather = new ControlledWeatherSource();
+
+        using var sessions = new PinkRobin.Api.Sessions.RobinSessions(
+            new TestGateway(),
+            new ManualClock());
+
+        var session = sessions.Create(false);
+
+        sessions.Send(
+            session.Token,
+            new(1, "textReceived", "Wie wird das Wetter?"));
+
+        var question = sessions.ReadOutput(session.Token);
+        Require(question is not null, "Postal code question exists");
+
+        sessions.AcknowledgeOutput(session.Token, question!.Sequence);
+
+        sessions.Send(
+            session.Token,
+            new(2, "textReceived", "9000"));
+
+        var pending = sessions.ReadOutputAsync(
+            session.Token,
+            weather,
+            CancellationToken.None);
+
+        weather.Completion.SetException(
+            new WeatherUnavailableException("Test weather unavailable"));
+
+        var reply = await pending;
+
+        Require(
+            reply is
+            {
+                Kind: "conversationReply",
+                ConversationReply: "weatherUnavailable"
+            },
+            "Weather failure produces a conversation reply");
+
+        var repeated = await sessions.ReadOutputAsync(
+            session.Token,
+            weather,
+            CancellationToken.None);
+
+        Require(repeated == reply, "Failure reply remains until acknowledged");
+        Require(weather.Calls == 1, "Reading the reply does not fetch again");
     }
 }
