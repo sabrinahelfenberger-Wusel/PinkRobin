@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project(PinkRobinCore VERSION 0.1.4 LANGUAGES C CXX)
 include(CTest)
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
 option(ROBIN_BUILD_EXAMPLES "Build the deterministic console demo" ON)
 option(ROBIN_ENABLE_SANITIZERS "Enable address/undefined behavior checks" OFF)
 

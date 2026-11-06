@@ -19,6 +19,27 @@ namespace pinkrobin {
             input,
             conversation_.expected_reply);
 
+        if (intent.kind == TextIntentKind::attention ||
+            intent.kind == TextIntentKind::greeting ||
+            intent.kind == TextIntentKind::gratitude) {
+
+            const auto reply_kind =
+                intent.kind == TextIntentKind::attention
+                ? ConversationReplyKind::attention
+                : intent.kind == TextIntentKind::greeting
+                ? ConversationReplyKind::greeting
+                : ConversationReplyKind::gratitude;
+
+            const auto result = outputs_.enqueue(
+                ConversationReply{ reply_kind });
+
+            if (result == OutputEnqueueResult::accepted) {
+                conversation_.last_input_at_ms = now_;
+            }
+
+            return result;
+        }
+
         if (intent.kind == TextIntentKind::weather_question) {
             const auto observation = world_.weather();
 

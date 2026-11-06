@@ -98,9 +98,16 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                             "invalidPostalCode",
                         CoreConversationReplyKind.WeatherUnavailable =>
                             "weatherUnavailable",
+                        CoreConversationReplyKind.Attention =>
+                            "attention",
+                        CoreConversationReplyKind.Greeting =>
+                            "greeting",
+                        CoreConversationReplyKind.Gratitude =>
+                            "gratitude",
                         _ => throw new InvalidOperationException(
                             "Unknown conversation reply.")
-                    }),
+                    },
+                    Text: reply.Text),
 
                 CoreWeatherFetchRequestedOutput request => new SessionOutput(
                     sequence,

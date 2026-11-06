@@ -277,7 +277,7 @@ public sealed class NativeRobinCore : IDisposable
 
                 case 2:
                     if (output.ConversationReplyKind >
-                        (uint)CoreConversationReplyKind.WeatherUnavailable)
+                        (uint)CoreConversationReplyKind.Gratitude)
                     {
                         throw new InvalidOperationException(
                             "Invalid native conversation reply.");

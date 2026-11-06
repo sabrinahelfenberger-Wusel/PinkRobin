@@ -359,6 +359,98 @@ namespace {
         CHECK(!core.world().weather().has_value());
         CHECK(core.conversation().topic == ConversationTopic::none);
     }
+
+    void test_small_talk_preserves_postal_question() {
+        struct ReplyCase {
+            std::string_view input;
+            ConversationReplyKind kind;
+            std::string_view text;
+        };
+
+        Core core{
+            0, PlatformCapabilities{ true, false }
+        };
+
+        CHECK(core.receive(
+            text_message("Wie wird das Wetter?"),
+            100) == MessageAcceptance::accepted);
+
+        CHECK(core.advance_to(100) == Result::ok);
+        CHECK(core.next_output().has_value());
+        CHECK(core.acknowledge_output(
+            core.next_output()->sequence));
+
+        std::uint64_t now = 200;
+
+        for (const auto& test : {
+            ReplyCase{
+                "ROBIN?",
+                ConversationReplyKind::attention,
+                u8"Ja? Ich bin hier! ♡"
+            },
+            ReplyCase{
+                "Hallo!",
+                ConversationReplyKind::greeting,
+                u8"Hallo! Schön, dass du da bist. ♡"
+            },
+            ReplyCase{
+                "hi",
+                ConversationReplyKind::greeting,
+                u8"Hallo! Schön, dass du da bist. ♡"
+            },
+            ReplyCase{
+                "Danke.",
+                ConversationReplyKind::gratitude,
+                u8"Gern geschehen! ♡"
+            }
+            }) {
+            CHECK(core.receive(
+                text_message(test.input),
+                now) == MessageAcceptance::accepted);
+
+            CHECK(core.advance_to(now) == Result::ok);
+
+            const auto reply = core.next_output();
+            CHECK(reply.has_value());
+
+            CHECK(std::get<ConversationReply>(
+                reply->payload).kind == test.kind);
+
+            CHECK(std::string_view(
+                reply->text.utf8.data(),
+                reply->text.length) == test.text);
+
+            CHECK(core.conversation().topic ==
+                ConversationTopic::weather);
+            CHECK(core.conversation().expected_reply ==
+                ExpectedReply::swiss_postal_code);
+            CHECK(core.conversation().last_input_at_ms == now);
+
+            CHECK(core.acknowledge_output(reply->sequence));
+            now += 100;
+        }
+
+        // Die PLZ wird weiterhin als Antwort auf die Ortsfrage erkannt.
+        CHECK(core.receive(
+            text_message("9000"),
+            now) == MessageAcceptance::accepted);
+
+        CHECK(core.advance_to(now) == Result::ok);
+
+        const auto request = core.next_output();
+        CHECK(request.has_value());
+        CHECK(std::holds_alternative<WeatherFetchRequested>(
+            request->payload));
+
+        const auto& fetch =
+            std::get<WeatherFetchRequested>(request->payload);
+
+        const std::array<char, 4> expected_postal_code{
+            '9', '0', '0', '0'
+        };
+
+        CHECK(fetch.postal_code == expected_postal_code);
+    }
 }
 
 int main() {
@@ -370,5 +462,6 @@ int main() {
         { "conversation: invalid_postal_code_and_expiry", test_invalid_postal_code_and_context_expiry },
         { "conversation: waits_for_output_capacity", test_text_waits_for_output_capacity },
         { "conversation: weather_fetch_failure", test_weather_fetch_failure },
+        { "conversation: small_talk_preserves_postal_question", test_small_talk_preserves_postal_question },
     });
 }

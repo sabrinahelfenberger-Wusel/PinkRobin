@@ -17,7 +17,10 @@ namespace pinkrobin {
         unknown_input = 0,
         ask_postal_code = 1,
         invalid_postal_code = 2,
-        weather_unavailable = 3
+        weather_unavailable = 3,
+        attention = 4,
+        greeting = 5,
+        gratitude = 6
     };
 
     struct ConversationReply {

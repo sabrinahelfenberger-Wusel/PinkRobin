@@ -11,7 +11,10 @@ namespace pinkrobin {
     enum class TextIntentKind : std::uint32_t {
         unknown = 0,
         weather_question = 1,
-        swiss_postal_code = 2
+        swiss_postal_code = 2,
+        attention = 3,
+        greeting = 4,
+        gratitude = 5
     };
 
     struct TextIntent {

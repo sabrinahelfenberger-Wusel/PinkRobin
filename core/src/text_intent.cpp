@@ -61,6 +61,27 @@ namespace pinkrobin {
             normalized.data(), length
         };
 
+        if (text == "robin") {
+            return {
+                TextIntentKind::attention,
+                {}
+            };
+        }
+
+        if (text == "hallo" || text == "hi") {
+            return {
+                TextIntentKind::greeting,
+                {}
+            };
+        }
+
+        if (text == "danke") {
+            return {
+                TextIntentKind::gratitude,
+                {}
+            };
+        }
+
         if (text == "wie ist das wetter" ||
             text == "wie wird das wetter") {
             return {

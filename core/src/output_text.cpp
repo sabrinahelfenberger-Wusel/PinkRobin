@@ -51,8 +51,17 @@ namespace pinkrobin {
                 return u8"Für diesen Ort konnte ich gerade keine gültige "
                     u8"Prognose laden. Möchtest du eine andere "
                     u8"Schweizer PLZ versuchen?";
-            }
 
+            case ConversationReplyKind::attention:
+                return u8"Ja? Ich bin hier! ♡";
+
+            case ConversationReplyKind::greeting:
+                return u8"Hallo! Schön, dass du da bist. ♡";
+
+            case ConversationReplyKind::gratitude:
+                return u8"Gern geschehen! ♡";
+
+            }
             return {};
         }
 

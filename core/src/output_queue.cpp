@@ -28,7 +28,7 @@ namespace pinkrobin {
 
             if (static_cast<std::uint32_t>(reply->kind) >
                 static_cast<std::uint32_t>(
-                    ConversationReplyKind::weather_unavailable)) {
+                    ConversationReplyKind::gratitude)) {
                 return OutputEnqueueResult::invalid_argument;
             }
         }

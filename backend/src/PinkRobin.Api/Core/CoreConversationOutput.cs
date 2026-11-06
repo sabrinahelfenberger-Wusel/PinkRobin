@@ -5,7 +5,10 @@ public enum CoreConversationReplyKind : uint
     UnknownInput = 0,
     AskPostalCode = 1,
     InvalidPostalCode = 2,
-    WeatherUnavailable = 3
+    WeatherUnavailable = 3,
+    Attention = 4,
+    Greeting = 5,
+    Gratitude = 6
 }
 
 public abstract record CoreOutput(ulong Sequence);

@@ -1,7 +1,13 @@
 export type WeatherAnswerKind = "unknown" | "dry" | "rain" | "storm";
 
 export type ConversationReplyKind =
-  "unknownInput" | "askPostalCode" | "invalidPostalCode" | "weatherUnavailable";
+  | "unknownInput"
+  | "askPostalCode"
+  | "invalidPostalCode"
+  | "weatherUnavailable"
+  | "attention"
+  | "greeting"
+  | "gratitude";
 
 export type CoreOutput =
   | {
@@ -66,6 +72,9 @@ export function parseCoreOutput(value: unknown): CoreOutput | null {
       "askPostalCode",
       "invalidPostalCode",
       "weatherUnavailable",
+      "attention",
+      "greeting",
+      "gratitude",
     ].includes(output["conversationReply"])
   ) {
     return {
