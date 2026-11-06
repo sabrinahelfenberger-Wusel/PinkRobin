@@ -1,5 +1,39 @@
 # Änderungsprotokoll
 
+## 0.1.6 – Textgespräche mit Robin
+
+### Neu
+
+- Textfeld ersetzt die separate Wetterbedienung.
+- Regelbasierte Erkennung von Wetterfragen, „Robin?“, Begrüssungen
+  und Dank ohne LLM.
+- Wetterdialog mit Rückfrage nach einer vierstelligen Schweizer PLZ.
+- Kurzer Gesprächskontext erhält offene Ortsfragen bei Unterbrechungen.
+- Gewählte PLZ bleibt über Gesprächs- und Prognoseablauf hinaus erhalten.
+- Erneute Wetterfragen laden bei Bedarf neue Daten für den gewählten Ort.
+
+### Schnittstellen
+
+- Begrenzte UTF-8-Texteingaben und typisierte Gesprächsantworten ergänzt.
+- Antworttexte werden zentral im Core erzeugt und über Backend
+  und Angular ausgegeben.
+- Wetterabrufe und Ergebnisse werden über Anfrage-IDs zugeordnet.
+- Sequenzierte Textbefehle mit Schutz vor doppelter Verarbeitung.
+- Standardwetter überschreibt den Gesprächsort nicht mehr.
+- Ausgabeformat v2 um begrenzten Antworttext erweitert.
+
+### Tests und Dokumentation
+
+- Tests für Texterkennung, Gesprächsfrist, Ortswahl, Wetterergebnisse
+  und Unterbrechungen ergänzt.
+- Anzeige und Bestätigung gelieferter Core-Texte geprüft.
+- Gesprächsablauf und Ausgabeschnittstellen dokumentiert.
+- UTF-8 für Editor und MSVC-Build festgelegt.
+
+### Versionen
+
+- Web, Backend und Core: 0.1.6
+
 ## 0.1.5 – Technisches Portfolio
 
 ### Neu
