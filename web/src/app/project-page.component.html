@@ -1,0 +1,246 @@
+<div class="project-page">
+  <header class="project-header">
+    <a class="brand" routerLink="/"> pink<span>robin.</span> </a>
+
+    <nav aria-label="Hauptnavigation">
+      <a routerLink="/">Startseite</a>
+      <a routerLink="/virtual-robin">Virtual Robin</a>
+      <a
+        href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        GitHub ↗
+        <span class="visually-hidden"> (öffnet einen neuen Tab)</span>
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="project-hero" aria-labelledby="project-title">
+      <p class="eyebrow">Das technische Projekt</p>
+
+      <h1 id="project-title">
+        Hinter dem Gesicht<br />
+        steckt <span>Verhalten.</span>
+      </h1>
+
+      <p class="project-intro">
+        PinkRobin verbindet einen portablen C++-Core mit einem
+        ASP.NET-Core-Backend und einer Angular-Oberfläche. Hier zeige ich, wie
+        aus einer Eingabe Robins Reaktion wird und welche Entscheidungen hinter
+        dem Aufbau stehen.
+      </p>
+
+      <a class="button" routerLink="/virtual-robin"> Robin selbst erleben ↗ </a>
+    </section>
+
+    <section class="project-section" aria-labelledby="architecture-title">
+      <div class="section-heading">
+        <p class="eyebrow">01 / Architektur</p>
+        <h2 id="architecture-title">Drei Teile.<br />Klare Aufgaben.</h2>
+      </div>
+
+      <ol class="system-flow" aria-label="Von der Eingabe zur Reaktion">
+        <li>
+          <span class="layer-number">01</span>
+          <h3>Angular</h3>
+          <p class="layer-role">Eingabe und Darstellung</p>
+          <p>
+            Erfasst Berührungen und die Wetterfrage. Zeigt Robins Gesicht,
+            Outfit und Antworten an.
+          </p>
+        </li>
+
+        <li>
+          <span class="layer-number">02</span>
+          <h3>ASP.NET Core</h3>
+          <p class="layer-role">Transport und Dienste</p>
+          <p>
+            Verwaltet getrennte Sitzungen, lädt Wetterprognosen und verbindet
+            den Browser über eine C-Schnittstelle mit dem Core.
+          </p>
+        </li>
+
+        <li>
+          <span class="layer-number">03</span>
+          <h3>C++-Core</h3>
+          <p class="layer-role">Zustand und Verhalten</p>
+          <p>
+            Verarbeitet Nachrichten, hält Wetterwissen und Robins Zustand. Prüft
+            Fähigkeiten und Freigaberegeln für seine Aktionen.
+          </p>
+        </li>
+      </ol>
+
+      <p class="architecture-return">
+        <span aria-hidden="true">↩</span>
+        Zustand und typisierte Ausgaben gelangen über das Backend zurück zur
+        Darstellung.
+      </p>
+
+      <aside class="architecture-note">
+        <h3>Ein Kern für verschiedene Plattformen</h3>
+        <p>
+          Der Core benötigt weder Browser noch Netzwerkzugriff oder eine eigene
+          Uhr. Adapter liefern Nachrichten, Zeit und unterstützte Fähigkeiten.
+          Das bildet die Grundlage für spätere iPad- und Hardwareversionen.
+        </p>
+      </aside>
+    </section>
+    <section class="project-section" aria-labelledby="weather-example-title">
+      <div class="section-heading">
+        <p class="eyebrow">02 / Ein konkreter Ablauf</p>
+        <h2 id="weather-example-title">„Robin, wie wird<br />das Wetter?“</h2>
+      </div>
+
+      <p class="section-intro">
+        Die Wetterfrage zeigt, wie gespeichertes Wissen, Entscheidung und
+        Darstellung zusammenspielen.
+      </p>
+
+      <ol class="example-steps">
+        <li>
+          <h3>Wetterwissen bereitstellen</h3>
+          <p>
+            Das Backend lädt eine Prognose für die gewählte Schweizer
+            Postleitzahl. Der Core übernimmt die Werte mit Herkunft und
+            zeitlicher Gültigkeit in sein WorldModel.
+          </p>
+        </li>
+
+        <li>
+          <h3>Die Frage übermitteln</h3>
+          <p>
+            Der Wetterfrage-Button sendet einen nummerierten Befehl. Das Backend
+            verhindert, dass eine Wiederholung des zuletzt angenommenen Befehls
+            eine zweite Antwort erzeugt.
+          </p>
+        </li>
+
+        <li>
+          <h3>Eine Antwort erzeugen</h3>
+          <p>
+            Bei unterstützter Textausgabe erzeugt der Core eine typisierte
+            Antwort: trocken, Regen, stürmische Prognose oder unbekannt.
+            Abgelaufenes Wissen wird nicht verwendet.
+          </p>
+        </li>
+
+        <li>
+          <h3>Anzeigen und bestätigen</h3>
+          <p>
+            Angular formuliert den deutschen Text und zeigt ihn acht Sekunden
+            an. Erst die Bestätigung entfernt die Ausgabe aus dem Core-Puffer.
+            Bei einem Bestätigungsfehler wird die Bestätigung erneut versucht.
+          </p>
+        </li>
+      </ol>
+
+      <aside class="architecture-note">
+        <h3>Zustand ist nicht dasselbe wie eine Ausgabe</h3>
+        <p>
+          Ein Outfit bleibt als Zustand abfragbar. Eine Antwort besitzt dagegen
+          eine eigene Sequenznummer und wartet auf Bestätigung. Wiederholtes
+          Lesen entfernt sie nicht. Der Puffer ist begrenzt und liegt im
+          Arbeitsspeicher; eine dauerhafte Zustellung über Neustarts hinweg ist
+          damit nicht garantiert.
+        </p>
+      </aside>
+    </section>
+    <section class="project-section" aria-labelledby="milestones-title">
+      <div class="section-heading">
+        <p class="eyebrow">03 / Entwicklung</p>
+        <h2 id="milestones-title">
+          Kleine Schritte.<br />Prüfbarer Fortschritt.
+        </h2>
+      </div>
+
+      <ol class="milestones">
+        <li>
+          <span class="release-label">v0.1.2</span>
+          <div>
+            <h3>Wetterantworten und Core-Struktur</h3>
+            <p>
+              Nachrichtenverarbeitung, WorldModel und RobinState getrennt.
+              Bestätigte Ausgaben bis zur Weboberfläche angebunden.
+            </p>
+          </div>
+        </li>
+
+        <li>
+          <span class="release-label">v0.1.3</span>
+          <div>
+            <h3>Robin im Portfolio</h3>
+            <p>
+              Projektseite mit Robin-Vorschau, Techniküberblick und direktem
+              Zugang zur interaktiven Demo erweitert.
+            </p>
+          </div>
+        </li>
+
+        <li>
+          <span class="release-label">v0.1.4</span>
+          <div>
+            <h3>Plattformfähigkeiten</h3>
+            <p>
+              Adapter melden Textausgabe und Outfit-Darstellung ausdrücklich.
+              Der Core führt nicht unterstützte Aktionen nicht aus.
+            </p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="architecture-note">
+        <h3>Qualität gehört zum Verhalten</h3>
+        <p>
+          Automatisierte Tests prüfen unter anderem Zeitgrenzen,
+          Nachrichtenreihenfolge, Puffergrenzen und Session-Trennung. GitHub
+          Actions prüft Core und native Backend-Anbindung auf Windows, Linux und
+          macOS sowie Web-Tests und Angular-Build.
+        </p>
+      </div>
+    </section>
+
+    <section class="project-section" aria-labelledby="resources-title">
+      <div class="section-heading">
+        <p class="eyebrow">04 / Zum Nachlesen</p>
+        <h2 id="resources-title">Der Aufbau bleibt offen.</h2>
+      </div>
+
+      <ul class="resource-links">
+        <li>
+          <a href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin">
+            Quellcode auf GitHub ↗
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/docs/architecture/Nachrichtenvertrag.md"
+          >
+            Nachrichtenvertrag und Verarbeitung ↗
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/docs/architecture/Ausgaben.md"
+          >
+            Ausgabeweg mit Ablaufgrafik ↗
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/docs/architecture/Plattformfaehigkeiten.md"
+          >
+            Plattformfähigkeiten und Grenzen ↗
+          </a>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="project-footer">
+    <span>Pink Robin · Ein Projekt von Sabrina Helfenberger</span>
+    <a routerLink="/">Zurück zur Startseite</a>
+  </footer>
+</div>
