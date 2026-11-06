@@ -169,6 +169,23 @@ internal static class ConversationTests
 
         var now = clock.GetUtcNow();
 
+        var standardForecast = new WeatherSnapshot(
+            Source: "Test",
+            PostalCode: "8001",
+            PointId: "800100",
+            ForecastRunAt: now,
+            RetrievedAt: now,
+            ValidFrom: now,
+            ValidTo: now.AddMinutes(10),
+            TemperatureC: 20.0,
+            PrecipitationMm: 0.0,
+            WindSpeedKmh: 5.0,
+            WindGustKmh: 10.0);
+
+        Require(
+            !sessions.UpdateWeather(session.Token, standardForecast),
+            "Standard weather is blocked while conversation fetch is running");
+
         weather.Completion.SetResult(new WeatherSnapshot(
             Source: "Test",
             PostalCode: "9000",
@@ -187,6 +204,24 @@ internal static class ConversationTests
         Require(
             answer is { Kind: "weatherAnswer", WeatherAnswer: "rain" },
             "Backend fetch returns the Core weather answer");
+
+        Require(
+            !sessions.UpdateWeather(session.Token, standardForecast),
+            "Standard weather remains blocked after conversation fetch");
+
+        sessions.AcknowledgeOutput(
+            session.Token,
+            answer!.Sequence);
+
+        sessions.Send(
+            session.Token,
+            new(3, "textReceived", "Wie ist das Wetter?"));
+
+        var repeated = sessions.ReadOutput(session.Token);
+
+        Require(
+            repeated is { Kind: "weatherAnswer", WeatherAnswer: "rain" },
+            "Selected location and rain forecast survive standard update");
     }
 
     public static async Task SessionWeatherFailure()

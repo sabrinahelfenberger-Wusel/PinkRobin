@@ -22,6 +22,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
         public int Commands;
         public long CommandSecond = -1;
         public SessionWeatherFetch? WeatherFetch;
+        public bool ConversationWeatherSelected;
     }
     private readonly object sync = new();
     private readonly Dictionary<string, Session> sessions = new(StringComparer.Ordinal);
@@ -201,6 +202,12 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
 
             var currentState = Execute(token, null);
 
+            // Der Gesprächsort hat Vorrang vor der Standardversorgung.
+            if (session.ConversationWeatherSelected)
+            {
+                return false;
+            }
+
             var forecast = ToCoreWeather(
                 weather,
                 clock.GetUtcNow(),
@@ -244,6 +251,8 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             session.WeatherFetch = null;
             throw;
         }
+
+        session.ConversationWeatherSelected = true;
 
         return work;
     }
