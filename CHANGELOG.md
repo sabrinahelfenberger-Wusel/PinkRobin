@@ -1,5 +1,25 @@
 # Änderungsprotokoll
 
+## 0.1.5 – Technisches Portfolio
+
+### Neu
+
+- Eigene Projektseite unter `/projekt` mit Architekturübersicht,
+  Wetterantwort-Beispiel, Meilensteinen und Dokumentationslinks.
+- Navigation zwischen Startseite, Virtual Robin und Projektportfolio.
+
+### Gestaltung
+
+- Startseite auf kurzes Intro, Robin-Vorschau und zwei Einstiege reduziert.
+- Technische Details auf die Projektseite verlagert.
+- Ungenutzte Startseiten-Stile entfernt.
+- Projekturheberschaft im Einstieg auf Sabrina Helfenberger korrigiert.
+
+### Versionen
+
+- Web: 0.1.5
+- Core und Backend: unverändert 0.1.4
+
 ## 0.1.4 – Plattformfähigkeiten
 
 ### Neu
