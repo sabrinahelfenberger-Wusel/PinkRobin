@@ -14,6 +14,8 @@ add_library(pinkrobin_behavior STATIC
     src/behavior_controller.cpp
     src/output_queue.cpp
     src/core_outputs.cpp
+    src/text_input.cpp
+    src/text_intent.cpp
 )
 target_include_directories(pinkrobin_behavior PUBLIC include)
 target_compile_features(pinkrobin_behavior PUBLIC cxx_std_17)
@@ -57,6 +59,12 @@ if(BUILD_TESTING)
     add_executable(output_tests tests/output_tests.cpp)
     target_link_libraries(output_tests PRIVATE pinkrobin_behavior)
     add_test(NAME output COMMAND output_tests)
+    add_executable(text_input_tests tests/text_input_tests.cpp)
+    target_link_libraries(text_input_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME text_input COMMAND text_input_tests)
+    add_executable(conversation_tests tests/conversation_tests.cpp)
+    target_link_libraries(conversation_tests PRIVATE pinkrobin_behavior)
+    add_test(NAME conversation COMMAND conversation_tests)
 endif()
 if(ROBIN_BUILD_EXAMPLES)
     add_executable(robin_demo examples/demo.cpp)

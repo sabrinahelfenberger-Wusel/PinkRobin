@@ -11,6 +11,7 @@
 #include "pinkrobin/behavior_controller.hpp"
 #include "pinkrobin/output_queue.hpp"
 #include "pinkrobin/platform_capabilities.hpp"
+#include "pinkrobin/conversation_state.hpp"
 
 namespace pinkrobin {
     enum class Result : std::uint32_t {
@@ -56,6 +57,8 @@ namespace pinkrobin {
 
         bool acknowledge_output(std::uint64_t sequence) noexcept;
         OutputEnqueueResult request_weather_answer() noexcept;
+
+        const ConversationState& conversation() const noexcept;
         
     private:
         void curious() noexcept;
@@ -109,6 +112,7 @@ namespace pinkrobin {
         PlatformCapabilities capabilities_;
         WorldModel world_;
         RobinState state_;
+        ConversationState conversation_;
         WeatherBehavior weather_behavior_;
         BehaviorController behavior_controller_;
         OutputQueue outputs_;

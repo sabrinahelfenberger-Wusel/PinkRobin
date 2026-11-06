@@ -13,6 +13,7 @@ namespace pinkrobin {
 
     Result Core::advance_state_to(std::uint64_t now_ms) noexcept {
         if (now_ms < now_) {
+            conversation_.expire(now_);
             return Result::time_reversed;
         }
 
@@ -164,4 +165,7 @@ namespace pinkrobin {
         return state_;
     }
 
+    const ConversationState& Core::conversation() const noexcept {
+        return conversation_;
+    }
 }
