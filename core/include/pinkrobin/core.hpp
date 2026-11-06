@@ -87,7 +87,8 @@ namespace pinkrobin {
 
         using InputPayload = std::variant<
             InteractionReceived,
-            TextReceived
+            TextReceived,
+            WeatherFetchResult
         >;
 
         struct PendingInput {
@@ -135,5 +136,8 @@ namespace pinkrobin {
 
         OutputEnqueueResult process_text(
             const TextReceived& input) noexcept;
+
+        OutputEnqueueResult process_weather_result(
+            const WeatherFetchResult& result) noexcept;
     };
 }

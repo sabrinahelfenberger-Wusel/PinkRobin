@@ -59,6 +59,21 @@ namespace pinkrobin {
             return acceptance;
         }
 
+        if (const auto* result =
+            std::get_if<WeatherFetchResult>(&message.payload)) {
+
+            const auto acceptance = enqueue_input(
+                message.metadata,
+                *result,
+                now_ms);
+
+            if (acceptance == MessageAcceptance::accepted) {
+                last_message_received_at_ms_ = now_ms;
+            }
+
+            return acceptance;
+        }
+
         if (const auto* weather =
             std::get_if<WeatherUpdated>(&message.payload)) {
 
@@ -104,6 +119,19 @@ namespace pinkrobin {
             std::get_if<TextReceived>(&payload)) {
 
             if (!is_valid_text_input(*text)) {
+                return MessageAcceptance::invalid_argument;
+            }
+        }
+        else if (const auto* result =
+            std::get_if<WeatherFetchResult>(&payload)) {
+
+            if (result->request_id == 0) {
+                return MessageAcceptance::invalid_argument;
+            }
+
+            if (result->forecast &&
+                validate_weather(*result->forecast, received_at_ms) !=
+                Result::ok) {
                 return MessageAcceptance::invalid_argument;
             }
         }

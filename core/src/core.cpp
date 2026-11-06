@@ -17,7 +17,9 @@ namespace pinkrobin {
         }
 
         now_ = now_ms;
-        conversation_.expire(now_);
+        if (conversation_.expire(now_)) {
+            pending_weather_request_.reset();
+        }
 
         // Vorgemerkte Wetterprognose verarbeiten.
         if (pending_weather_ && pending_weather_received_at_ms_ <= now_) {
@@ -102,32 +104,38 @@ namespace pinkrobin {
                 return result;
             }
 
+            auto output_result = OutputEnqueueResult::accepted;
+
             if (const auto* text =
                 std::get_if<TextReceived>(&pending.payload)) {
 
-                const auto output_result = process_text(*text);
+                output_result = process_text(*text);
+            }
+            else if (const auto* weather_result =
+                std::get_if<WeatherFetchResult>(&pending.payload)) {
 
-                if (output_result == OutputEnqueueResult::full) {
-                    break;
-                }
-
-                if (output_result == OutputEnqueueResult::unsupported) {
-                    return Result::unsupported;
-                }
-
-                if (output_result ==
-                    OutputEnqueueResult::sequence_exhausted) {
-                    return Result::sequence_exhausted;
-                }
-
-                if (output_result != OutputEnqueueResult::accepted) {
-                    return Result::invalid_argument;
-                }
+                output_result = process_weather_result(*weather_result);
             }
             else if (const auto* interaction =
                 std::get_if<InteractionReceived>(&pending.payload)) {
 
                 apply_interaction(interaction->event);
+            }
+
+            if (output_result == OutputEnqueueResult::full) {
+                break;
+            }
+
+            if (output_result == OutputEnqueueResult::unsupported) {
+                return Result::unsupported;
+            }
+
+            if (output_result == OutputEnqueueResult::sequence_exhausted) {
+                return Result::sequence_exhausted;
+            }
+
+            if (output_result != OutputEnqueueResult::accepted) {
+                return Result::invalid_argument;
             }
 
             dequeue_input(processing_time);

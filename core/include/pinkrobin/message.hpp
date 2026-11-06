@@ -2,8 +2,10 @@
 
 #include <cstdint>
 #include <variant>
+#include <optional>
 #include "pinkrobin/weather.hpp"
 #include "pinkrobin/text_input.hpp"
+
 
 namespace pinkrobin {
 
@@ -44,10 +46,16 @@ namespace pinkrobin {
         WeatherLocation location{};
     };
 
+    struct WeatherFetchResult {
+        std::uint64_t request_id;
+        std::optional<WeatherForecast> forecast;
+    };
+
     using MessagePayload = std::variant<
         InteractionReceived,
-        WeatherUpdated, 
-        TextReceived
+        WeatherUpdated,
+        TextReceived,
+        WeatherFetchResult
     >;
     
     struct Message {

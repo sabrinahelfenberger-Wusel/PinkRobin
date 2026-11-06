@@ -90,4 +90,65 @@ namespace pinkrobin {
         return result;
     }
 
+    OutputEnqueueResult Core::process_weather_result(
+        const WeatherFetchResult& result) noexcept {
+
+        // Alte oder bereits erledigte Anfragen erzeugen keine Ausgabe.
+        if (!pending_weather_request_ ||
+            pending_weather_request_->request_id != result.request_id) {
+            return OutputEnqueueResult::accepted;
+        }
+
+        const bool usable =
+            result.forecast &&
+            validate_weather(*result.forecast, now_) == Result::ok &&
+            result.forecast->valid_from_ms <= now_;
+
+        OutputPayload payload = ConversationReply{
+            ConversationReplyKind::weather_unavailable
+        };
+
+        if (usable) {
+            const auto& forecast = *result.forecast;
+
+            auto kind = WeatherAnswerKind::dry;
+
+            if (forecast.precipitation_mm >= 10.0 &&
+                forecast.wind_gust_kmh >= 60.0) {
+                kind = WeatherAnswerKind::storm;
+            }
+            else if (forecast.precipitation_mm > 0.0) {
+                kind = WeatherAnswerKind::rain;
+            }
+
+            payload = WeatherAnswer{ kind };
+        }
+
+        const auto acceptance = outputs_.enqueue(payload);
+
+        if (acceptance != OutputEnqueueResult::accepted) {
+            return acceptance;
+        }
+
+        if (usable) {
+            world_.update_weather(WeatherObservation{
+                *result.forecast,
+                InputSource::backend,
+                now_,
+                WeatherLocation{
+                    WeatherLocationKind::selected_location,
+                    pending_weather_request_->postal_code
+                }
+                });
+        }
+
+        pending_weather_request_.reset();
+
+        conversation_.expected_reply = usable
+            ? ExpectedReply::none
+            : ExpectedReply::swiss_postal_code;
+
+        return OutputEnqueueResult::accepted;
+    }
+
 }
