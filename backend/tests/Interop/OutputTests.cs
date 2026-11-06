@@ -20,9 +20,11 @@ internal static class OutputTests
             var firstOutput = outputCore.GetNextOutput();
 
             Require(
-                firstOutput is not null &&
-                firstOutput.Sequence == 1 &&
-                firstOutput.Kind == CoreWeatherAnswerKind.Unknown,
+                firstOutput is CoreWeatherAnswerOutput
+                {
+                    Sequence: 1,
+                    Kind: CoreWeatherAnswerKind.Unknown
+                },
                 "Weather answer without data is unknown");
 
             Require(
@@ -106,8 +108,10 @@ internal static class OutputTests
             var rainOutput = rainyOutputCore.GetNextOutput();
 
             Require(
-                rainOutput is not null &&
-                rainOutput.Kind == CoreWeatherAnswerKind.Rain,
+                rainOutput is CoreWeatherAnswerOutput
+                {
+                    Kind: CoreWeatherAnswerKind.Rain
+                },
                 "Weather answer uses current world knowledge");
 
             rainyOutputCore.AcknowledgeOutput(rainOutput!.Sequence);
@@ -118,8 +122,10 @@ internal static class OutputTests
             var expiredOutput = rainyOutputCore.GetNextOutput();
 
             Require(
-                expiredOutput is not null &&
-                expiredOutput.Kind == CoreWeatherAnswerKind.Unknown,
+                expiredOutput is CoreWeatherAnswerOutput
+                {
+                    Kind: CoreWeatherAnswerKind.Unknown
+                },
                 "Expired weather produces an unknown answer");
         }
     }

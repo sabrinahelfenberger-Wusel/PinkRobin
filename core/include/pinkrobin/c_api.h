@@ -51,6 +51,14 @@ typedef struct robin_core_handle robin_core_handle;
 #define ROBIN_SEQUENCE_EXHAUSTED 6u
 
 #define ROBIN_OUTPUT_WEATHER_ANSWER 1u
+#define ROBIN_OUTPUT_CONVERSATION_REPLY 2u
+#define ROBIN_OUTPUT_WEATHER_FETCH_REQUESTED 3u
+#define ROBIN_OUTPUT_TEXT_CAPACITY 512u
+
+#define ROBIN_REPLY_UNKNOWN_INPUT 0u
+#define ROBIN_REPLY_ASK_POSTAL_CODE 1u
+#define ROBIN_REPLY_INVALID_POSTAL_CODE 2u
+#define ROBIN_REPLY_WEATHER_UNAVAILABLE 3u
 
 #define ROBIN_WEATHER_ANSWER_UNKNOWN 0u
 #define ROBIN_WEATHER_ANSWER_DRY 1u
@@ -87,6 +95,22 @@ typedef struct robin_output_v1 {
     uint32_t reserved;
 } robin_output_v1;
 
+typedef struct robin_output_v2 {
+    uint32_t abi_version;
+    uint32_t kind;
+    uint64_t sequence;
+
+    uint32_t weather_answer_kind;
+    uint32_t conversation_reply_kind;
+
+    uint64_t request_id;
+    char postal_code[4];
+    uint32_t reserved;
+
+    uint32_t text_length;
+    char text[ROBIN_OUTPUT_TEXT_CAPACITY];
+} robin_output_v2;
+
 typedef struct robin_platform_capabilities_v1 {
     uint32_t text_output;
     uint32_t outfit_display;
@@ -107,6 +131,13 @@ ROBIN_API uint32_t ROBIN_CALL robin_core_dispatch(robin_core_handle* handle, uin
 ROBIN_API uint32_t ROBIN_CALL robin_core_receive_interaction(
     robin_core_handle* handle,
     uint32_t event,
+    uint32_t source,
+    uint64_t now_ms);
+
+ROBIN_API uint32_t ROBIN_CALL robin_core_receive_text(
+    robin_core_handle* handle,
+    const char* utf8,
+    uint32_t text_size,
     uint32_t source,
     uint64_t now_ms);
 
@@ -140,9 +171,22 @@ ROBIN_API uint32_t ROBIN_CALL robin_core_request_weather_answer(
     robin_core_handle* handle,
     uint64_t now_ms);
 
+ROBIN_API uint32_t ROBIN_CALL robin_core_receive_weather_result(
+    robin_core_handle* handle,
+    uint64_t request_id,
+    const robin_weather_v1* weather,
+    uint32_t weather_size,
+    uint32_t source,
+    uint64_t now_ms);
+
 ROBIN_API uint32_t ROBIN_CALL robin_core_get_next_output(
     const robin_core_handle* handle,
     robin_output_v1* output,
+    uint32_t output_size);
+
+ROBIN_API uint32_t ROBIN_CALL robin_core_get_next_output_v2(
+    const robin_core_handle* handle,
+    robin_output_v2* output,
     uint32_t output_size);
 
 ROBIN_API uint32_t ROBIN_CALL robin_core_acknowledge_output(

@@ -18,8 +18,11 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
         public ulong Offset;
         public long Sequence;
         public string? LastEvent;
+        public string? LastText;
         public int Commands;
         public long CommandSecond = -1;
+        public SessionWeatherFetch? WeatherFetch;
+        public bool ConversationWeatherSelected;
     }
     private readonly object sync = new();
     private readonly Dictionary<string, Session> sessions = new(StringComparer.Ordinal);
@@ -63,7 +66,6 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     {
         lock (sync)
         {
-            // Session prüfen und ihre Core-Zeit aktualisieren.
             Execute(token, null);
 
             var output = sessions[token].Core.GetNextOutput();
@@ -73,11 +75,51 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                 return null;
             }
 
-            return new SessionOutput(
-                output.Sequence.ToString(
-                    System.Globalization.CultureInfo.InvariantCulture),
-                "weatherAnswer",
-                output.Kind.ToString().ToLowerInvariant());
+            var sequence = output.Sequence.ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+
+            return output switch
+            {
+                CoreWeatherAnswerOutput answer => new SessionOutput(
+                    sequence,
+                    "weatherAnswer",
+                    WeatherAnswer: answer.Kind.ToString().ToLowerInvariant(),
+                    Text: answer.Text),
+
+                CoreConversationReplyOutput reply => new SessionOutput(
+                    sequence,
+                    "conversationReply",
+                    ConversationReply: reply.Kind switch
+                    {
+                        CoreConversationReplyKind.UnknownInput =>
+                            "unknownInput",
+                        CoreConversationReplyKind.AskPostalCode =>
+                            "askPostalCode",
+                        CoreConversationReplyKind.InvalidPostalCode =>
+                            "invalidPostalCode",
+                        CoreConversationReplyKind.WeatherUnavailable =>
+                            "weatherUnavailable",
+                        CoreConversationReplyKind.Attention =>
+                            "attention",
+                        CoreConversationReplyKind.Greeting =>
+                            "greeting",
+                        CoreConversationReplyKind.Gratitude =>
+                            "gratitude",
+                        _ => throw new InvalidOperationException(
+                            "Unknown conversation reply.")
+                    },
+                    Text: reply.Text),
+
+                CoreWeatherFetchRequestedOutput request => new SessionOutput(
+                    sequence,
+                    "weatherFetchRequested",
+                    RequestId: request.RequestId.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    PostalCode: request.PostalCode),
+
+                _ => throw new InvalidOperationException(
+                    "Unknown Core output.")
+            };
         }
     }
 
@@ -160,6 +202,12 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
 
             var currentState = Execute(token, null);
 
+            // Der Gesprächsort hat Vorrang vor der Standardversorgung.
+            if (session.ConversationWeatherSelected)
+            {
+                return false;
+            }
+
             var forecast = ToCoreWeather(
                 weather,
                 clock.GetUtcNow(),
@@ -173,6 +221,172 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             session.Core.PostWeather(forecast, CoreInputSource.Web, currentState.TimeMs);
 
             return true;
+        }
+    }
+
+    private static SessionWeatherFetch? TakeWeatherFetch(Session session)
+    {
+        if (session.WeatherFetch is not null)
+        {
+            return session.WeatherFetch;
+        }
+
+        if (session.Core.GetNextOutput()
+            is not CoreWeatherFetchRequestedOutput request)
+        {
+            return null;
+        }
+
+        var work = new SessionWeatherFetch(request);
+
+        // Erst lokal übernehmen, danach den Core-Puffer freigeben.
+        session.WeatherFetch = work;
+
+        try
+        {
+            session.Core.AcknowledgeOutput(request.Sequence);
+        }
+        catch
+        {
+            session.WeatherFetch = null;
+            throw;
+        }
+
+        session.ConversationWeatherSelected = true;
+
+        return work;
+    }
+
+    private bool TryDeliverWeatherFetch(
+        Session session,
+        ulong nowMs)
+    {
+        var work = session.WeatherFetch;
+
+        if (work is null || !work.Completed)
+        {
+            return false;
+        }
+
+        CoreWeatherForecast? forecast = null;
+
+        if (work.Forecast is not null &&
+            work.Forecast.PostalCode == work.Request.PostalCode)
+        {
+            forecast = ToCoreWeather(
+                work.Forecast,
+                clock.GetUtcNow(),
+                nowMs);
+        }
+
+        try
+        {
+            session.Core.ReceiveWeatherResult(
+                work.Request.RequestId,
+                forecast,
+                CoreInputSource.Backend,
+                nowMs);
+        }
+        catch (CoreMessageQueueFullException)
+        {
+            // Das Ergebnis bleibt für den nächsten Versuch erhalten.
+            return false;
+        }
+
+        session.WeatherFetch = null;
+        return true;
+    }
+
+    private SessionOutput? ReadVisibleOutput(string token)
+    {
+        var output = ReadOutput(token);
+
+        return output?.Kind == "weatherFetchRequested"
+            ? null
+            : output;
+    }
+
+    public async Task<SessionOutput?> ReadOutputAsync(
+        string token,
+        IWeatherSource weather,
+        CancellationToken ct)
+    {
+        Session session;
+        SessionWeatherFetch work;
+
+        lock (sync)
+        {
+            var state = Execute(token, null);
+            session = sessions[token];
+
+            var pending = TakeWeatherFetch(session);
+
+            if (pending is null)
+            {
+                return ReadVisibleOutput(token);
+            }
+
+            work = pending;
+
+            if (work.Completed)
+            {
+                TryDeliverWeatherFetch(session, state.TimeMs);
+                return ReadVisibleOutput(token);
+            }
+
+            if (work.Running)
+            {
+                return ReadVisibleOutput(token);
+            }
+
+            work.Running = true;
+        }
+
+        WeatherSnapshot? forecast;
+
+        try
+        {
+            try
+            {
+                forecast = await weather.GetAsync(
+                    work.Request.PostalCode,
+                    ct);
+            }
+            catch (WeatherUnavailableException)
+            {
+                forecast = null;
+            }
+        }
+        catch
+        {
+            lock (sync)
+            {
+                work.Running = false;
+            }
+
+            throw;
+        }
+
+        lock (sync)
+        {
+            work.Running = false;
+
+            if (!sessions.TryGetValue(token, out var current) ||
+                !ReferenceEquals(current, session))
+            {
+                throw new SessionFailure(
+                    404,
+                    "Session expired or unknown");
+            }
+
+            work.Forecast = forecast;
+            work.Completed = true;
+
+            var state = Execute(token, null);
+
+            TryDeliverWeatherFetch(session, state.TimeMs);
+
+            return ReadVisibleOutput(token);
         }
     }
 
@@ -206,7 +420,8 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
             if (command is not null)
             {
                 if (command.Sequence == session.Sequence &&
-                    command.Event == session.LastEvent)
+                    command.Event == session.LastEvent &&
+                    command.Text == session.LastText)
                 {
                     return State(session);
                 }
@@ -216,6 +431,20 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                     throw new SessionFailure(409, "Unexpected command sequence");
                 }
 
+                if (command.Event == "textReceived")
+                {
+                    if (command.Text is null)
+                    {
+                        throw new SessionFailure(400, "Text is required");
+                    }
+                }
+                else if (command.Text is not null)
+                {
+                    throw new SessionFailure(
+                        400,
+                        "Text is only allowed for textReceived");
+                }
+
                 RobinEvent? input = command.Event switch
                 {
                     "weatherAsked" => null,
@@ -223,6 +452,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                     "heartTouched" => RobinEvent.HeartTouched,
                     "headStarted" => RobinEvent.HeadStarted,
                     "headEnded" => RobinEvent.HeadEnded,
+                    "textReceived" => null,
                     "interactionCancelled" => RobinEvent.InteractionCancelled,
                     _ => throw new SessionFailure(400, "Unknown Robin event")
                 };
@@ -247,6 +477,26 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
                         CoreInputSource.Web,
                         now);
                 }
+                else if (command.Event == "textReceived")
+                {
+                    try
+                    {
+                        session.Core.ReceiveText(
+                            command.Text!,
+                            CoreInputSource.Web,
+                            now);
+                    }
+                    catch (ArgumentException)
+                    {
+                        throw new SessionFailure(400, "Invalid text input");
+                    }
+                    catch (CoreMessageQueueFullException)
+                    {
+                        throw new SessionFailure(
+                            503,
+                            "Core input queue is full");
+                    }
+                }
                 else
                 {
                     try
@@ -269,6 +519,7 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
 
                 session.Sequence = command.Sequence;
                 session.LastEvent = command.Event;
+                session.LastText = command.Text;
             }
 
             session.LastContact = elapsed;

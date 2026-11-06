@@ -9,7 +9,6 @@ import {
 } from "@angular/core";
 
 import { CoreState, RobinSessionService } from "./robin-session.service";
-import { weatherAnswerText } from "./weather-answer";
 import packageInfo from "../../package.json";
 
 type RobinMood = "sleeping" | "waking" | "curious" | "happy" | "affectionate";
@@ -90,9 +89,7 @@ export class RobinComponent {
     effect((onCleanup) => {
       const output = this.session.output();
 
-      this.outputSpeech.set(
-        output ? weatherAnswerText(output.weatherAnswer) : null,
-      );
+      this.outputSpeech.set(output?.text ?? null);
 
       if (!output) return;
 

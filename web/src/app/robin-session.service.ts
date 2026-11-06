@@ -10,7 +10,8 @@ export type RobinEvent =
   | "headStarted"
   | "headEnded"
   | "interactionCancelled"
-  | "weatherAsked";
+  | "weatherAsked"
+  | "textReceived";
 
 export interface CoreState {
   mode: "sleeping" | "waking" | "awake";
@@ -44,17 +45,24 @@ export class RobinSessionService {
   readonly state = signal<CoreState | null>(null);
   readonly output = signal<CoreOutput | null>(null);
   readonly connection = signal<"checking" | "connected" | "local">("checking");
+  readonly textError = signal("");
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private token: string | null = null;
   private sequence = 0;
-  private queue: { sequence: number; event: RobinEvent }[] = [];
   private timer?: ReturnType<typeof setTimeout>;
   private destroyed = false;
   private busy = false;
   private creating = false;
   private weatherBusy = false;
   private outputAckBusy = false;
+  private outputReadToken: string | null = null;
+
+  private queue: {
+    sequence: number;
+    event: RobinEvent;
+    text?: string;
+  }[] = [];
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -92,17 +100,45 @@ export class RobinSessionService {
     }
   }
 
-  send(event: RobinEvent): void {
+  send(event: RobinEvent, text?: string): void {
     if (!this.token || this.destroyed) return;
     if (this.queue.length >= 32) {
       this.fail();
       return;
     }
-    this.queue.push({ sequence: ++this.sequence, event });
+
+    this.queue.push({
+      sequence: ++this.sequence,
+      event,
+      ...(text !== undefined ? { text } : {}),
+    });
+
     if (!this.busy) {
       clearTimeout(this.timer);
       void this.pump();
     }
+  }
+
+  sendText(text: string): boolean {
+    if (!this.token || this.destroyed) {
+      this.textError.set("Robin ist gerade nicht verbunden.");
+      return false;
+    }
+
+    if (!text.trim()) {
+      this.textError.set("Schreibe Robin zuerst eine Nachricht.");
+      return false;
+    }
+
+    if (new TextEncoder().encode(text).length > 160) {
+      this.textError.set("Deine Nachricht ist zu lang. Bitte kürze sie.");
+      return false;
+    }
+
+    this.textError.set("");
+    this.send("textReceived", text);
+
+    return this.token !== null;
   }
 
   async updateWeather(postalCode: string): Promise<boolean> {
@@ -174,19 +210,37 @@ export class RobinSessionService {
   }
 
   private async readOutput(token: string): Promise<void> {
-    // Eine noch nicht verarbeitete Ausgabe bleibt erhalten.
-    if (this.output() !== null) return;
+    if (
+      this.destroyed ||
+      this.token !== token ||
+      this.output() !== null ||
+      this.outputReadToken === token
+    ) {
+      return;
+    }
 
-    const response = await this.request<unknown>(
-      "GET",
-      "api/v1/session/outputs/next",
-      undefined,
-      token,
-    );
+    this.outputReadToken = token;
 
-    if (this.destroyed || this.token !== token) return;
+    try {
+      const response = await this.request<unknown>(
+        "GET",
+        "api/v1/session/outputs/next",
+        undefined,
+        token,
+        95_000,
+      );
 
-    this.output.set(parseCoreOutput(response));
+      if (this.destroyed || this.token !== token) return;
+
+      this.output.set(parseCoreOutput(response));
+    } catch {
+      // Lesen darf wiederholt werden. Wartende Core-Ausgaben
+      // werden dadurch weder bestätigt noch entfernt.
+    } finally {
+      if (this.outputReadToken === token) {
+        this.outputReadToken = null;
+      }
+    }
   }
 
   private async pump(): Promise<void> {
@@ -204,7 +258,7 @@ export class RobinSessionService {
       );
       if (!this.destroyed && this.token === token) {
         this.state.set(parseCoreState(state));
-        await this.readOutput(token);
+        void this.readOutput(token);
       }
     } catch {
       // No automatic replay/reconnect: an uncertain command must not affect a new session.
@@ -246,6 +300,7 @@ export class RobinSessionService {
     this.output.set(null);
     if (this.token) this.release(this.token);
     this.token = null;
+    this.outputReadToken = null;
   }
   private release(token: string): void {
     // Navigation can cancel Angular requests; keepalive is best effort, TTL is the backstop.

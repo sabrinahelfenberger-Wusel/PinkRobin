@@ -1,5 +1,4 @@
 import { Component, effect, inject, untracked } from "@angular/core";
-import { DecimalPipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { RobinComponent } from "./robin.component";
 import { BackendStatusService } from "./backend-status.service";
@@ -9,7 +8,7 @@ import { RobinSessionService } from "./robin-session.service";
 @Component({
   selector: "pr-robin-page",
   standalone: true,
-  imports: [RouterLink, RobinComponent, DecimalPipe],
+  imports: [RouterLink, RobinComponent],
   providers: [BackendStatusService, WeatherService, RobinSessionService],
   templateUrl: "./robin-page.component.html",
   styleUrl: "./robin-page.component.css",
@@ -45,6 +44,12 @@ export class RobinPageComponent {
       await this.session.updateWeather(postalCode);
     } catch {
       // Keine automatische Wiederholung bei einem unklaren Netzwerkfehler.
+    }
+  }
+
+  sendMessage(input: HTMLInputElement): void {
+    if (this.session.sendText(input.value)) {
+      input.value = "";
     }
   }
 }

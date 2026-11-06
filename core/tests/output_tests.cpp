@@ -1,3 +1,4 @@
+#include <string_view>
 #include "pinkrobin/output_queue.hpp"
 #include "test_support.hpp"
 #include "pinkrobin/core.hpp"
@@ -31,6 +32,17 @@ namespace {
             std::get<WeatherAnswer>(second_read->payload).kind
             == WeatherAnswerKind::rain
         );
+        const std::string_view expected =
+            u8"Die Prognose meldet Regen. "
+            u8"Vergiss deinen Regenschutz nicht! ♡";
+
+        CHECK(first_read->text.length == expected.size());
+        CHECK(std::string_view(
+            first_read->text.utf8.data(),
+            first_read->text.length) == expected);
+
+        CHECK(second_read->text.length == first_read->text.length);
+        CHECK(second_read->text.utf8 == first_read->text.utf8);
     }
 
     void test_acknowledgement_and_retry() {
@@ -313,24 +325,90 @@ namespace {
             );
         }
     }
+
+    void test_conversation_outputs() {
+        OutputQueue queue;
+
+        CHECK(queue.enqueue(ConversationReply{
+            ConversationReplyKind::ask_postal_code
+            }) == OutputEnqueueResult::accepted);
+
+        const auto reply = queue.front();
+
+        CHECK(reply.has_value());
+        CHECK(reply->sequence == 1);
+        CHECK(std::get<ConversationReply>(reply->payload).kind ==
+            ConversationReplyKind::ask_postal_code);
+
+        const std::string_view expected =
+            u8"Für welchen Ort möchtest du das Wetter wissen? "
+            u8"Nenne mir bitte eine vierstellige Schweizer PLZ. ♡";
+
+        CHECK(reply->text.length == expected.size());
+        CHECK(std::string_view(
+            reply->text.utf8.data(),
+            reply->text.length) == expected);
+
+        CHECK(queue.acknowledge(1));
+
+        CHECK(queue.enqueue(WeatherFetchRequested{
+            1,
+            { '9', '0', '0', '0' }
+            }) == OutputEnqueueResult::accepted);
+
+        const auto request = queue.front();
+
+        CHECK(request.has_value());
+        CHECK(request->sequence == 2);
+
+        const auto& fetch =
+            std::get<WeatherFetchRequested>(request->payload);
+
+        CHECK(fetch.request_id == 1);
+        CHECK(fetch.postal_code[0] == '9');
+        CHECK(fetch.postal_code[3] == '0');
+
+        CHECK(request->text.length == 0);
+        CHECK(request->text.utf8 == OutputText{}.utf8);
+    }
+
+    void test_invalid_conversation_outputs() {
+        OutputQueue queue;
+
+        CHECK(queue.enqueue(ConversationReply{
+            static_cast<ConversationReplyKind>(999)
+            }) == OutputEnqueueResult::invalid_argument);
+
+        CHECK(queue.enqueue(WeatherFetchRequested{
+            0,
+            { '9', '0', '0', '0' }
+            }) == OutputEnqueueResult::invalid_argument);
+
+        CHECK(queue.enqueue(WeatherFetchRequested{
+            1,
+            { '9', 'a', '0', '0' }
+            }) == OutputEnqueueResult::invalid_argument);
+
+        CHECK(!queue.front().has_value());
+
+        CHECK(queue.enqueue(ConversationReply{
+            ConversationReplyKind::unknown_input
+            }) == OutputEnqueueResult::accepted);
+
+        CHECK(queue.front()->sequence == 1);
+    }
 }
 
 int main() {
     return test_support::run_tests({
-        { "output: enqueue_and_repeated_read",
-            test_enqueue_and_repeated_read },
-        { "output: acknowledgement_and_retry",
-            test_acknowledgement_and_retry },
-        { "output: capacity_and_slot_reuse",
-            test_capacity_and_slot_reuse },
-        { "output: invalid_output_preserves_sequence",
-            test_invalid_output_preserves_sequence },
-        { "output: core_weather_answer_and_acknowledgement",
-            test_core_weather_answer_and_acknowledgement },
-        { "output: weather_answer_while_busy_and_on_cooldown",
-            test_weather_answer_while_busy_and_on_cooldown },
-        { "output: weather_answer_kinds_and_expiry",
-            test_weather_answer_kinds_and_expiry },
-
+        { "output: enqueue_and_repeated_read", test_enqueue_and_repeated_read },
+        { "output: acknowledgement_and_retry", test_acknowledgement_and_retry },
+        { "output: capacity_and_slot_reuse", test_capacity_and_slot_reuse },
+        { "output: invalid_output_preserves_sequence", test_invalid_output_preserves_sequence },
+        { "output: core_weather_answer_and_acknowledgement", test_core_weather_answer_and_acknowledgement },
+        { "output: weather_answer_while_busy_and_on_cooldown", test_weather_answer_while_busy_and_on_cooldown },
+        { "output: weather_answer_kinds_and_expiry", test_weather_answer_kinds_and_expiry },
+        { "output: conversation", test_conversation_outputs },
+        { "output: invalid_conversation", test_invalid_conversation_outputs },
     });
 }

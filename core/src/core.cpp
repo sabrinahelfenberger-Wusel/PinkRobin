@@ -17,6 +17,9 @@ namespace pinkrobin {
         }
 
         now_ = now_ms;
+        if (conversation_.expire(now_)) {
+            pending_weather_request_.reset();
+        }
 
         // Vorgemerkte Wetterprognose verarbeiten.
         if (pending_weather_ && pending_weather_received_at_ms_ <= now_) {
@@ -29,8 +32,9 @@ namespace pinkrobin {
                 world_.update_weather(WeatherObservation{
                     forecast,
                     pending_weather_source_,
-                    pending_weather_received_at_ms_
-                    });
+                    pending_weather_received_at_ms_,
+                    pending_weather_->location
+                });
 
                 pending_weather_.reset();
             }
@@ -82,25 +86,59 @@ namespace pinkrobin {
             return Result::time_reversed;
         }
 
-        while (interaction_count_ > 0) {
-            const auto event_time =
-                pending_interactions_[interaction_head_].received_at_ms;
+        while (input_count_ > 0) {
+            const auto& pending = pending_inputs_[input_head_];
 
-            if (event_time > now_ms) {
+            if (pending.received_at_ms > now_ms) {
                 break;
             }
 
-            const auto result = advance_state_to(event_time);
+            const auto processing_time =
+                pending.received_at_ms < now_
+                ? now_
+                : pending.received_at_ms;
+
+            const auto result = advance_state_to(processing_time);
 
             if (result != Result::ok) {
                 return result;
             }
 
-            const auto pending = dequeue_interaction(event_time);
+            auto output_result = OutputEnqueueResult::accepted;
 
-            if (pending) {
-                apply_interaction(pending->interaction.event);
+            if (const auto* text =
+                std::get_if<TextReceived>(&pending.payload)) {
+
+                output_result = process_text(*text);
             }
+            else if (const auto* weather_result =
+                std::get_if<WeatherFetchResult>(&pending.payload)) {
+
+                output_result = process_weather_result(*weather_result);
+            }
+            else if (const auto* interaction =
+                std::get_if<InteractionReceived>(&pending.payload)) {
+
+                apply_interaction(interaction->event);
+            }
+
+            if (output_result == OutputEnqueueResult::full) {
+                break;
+            }
+
+            if (output_result == OutputEnqueueResult::unsupported) {
+                return Result::unsupported;
+            }
+
+            if (output_result == OutputEnqueueResult::sequence_exhausted) {
+                return Result::sequence_exhausted;
+            }
+
+            if (output_result != OutputEnqueueResult::accepted) {
+                return Result::invalid_argument;
+            }
+
+            dequeue_input(processing_time);
         }
 
         return advance_state_to(now_ms);
@@ -164,4 +202,7 @@ namespace pinkrobin {
         return state_;
     }
 
+    const ConversationState& Core::conversation() const noexcept {
+        return conversation_;
+    }
 }
