@@ -62,6 +62,8 @@ export class RobinSessionService {
 
   private recovering = false;
   private reconnectAttempt = 0;
+  private readonly storageKey = "pinkrobin.session.v1";
+  private restoring = false;
 
   private queue: {
     sequence: number;
@@ -72,8 +74,41 @@ export class RobinSessionService {
   constructor() {
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
-      this.close();
+      this.close(true);
     });
+  }
+
+  private readStoredToken(): string | null {
+    try {
+      const token = sessionStorage.getItem(this.storageKey);
+
+      if (token === null) return null;
+
+      if (!/^[a-fA-F0-9]{64}$/.test(token)) {
+        sessionStorage.removeItem(this.storageKey);
+        return null;
+      }
+
+      return token;
+    } catch {
+      return null;
+    }
+  }
+
+  private storeToken(token: string): void {
+    try {
+      sessionStorage.setItem(this.storageKey, token);
+    } catch {
+      // Ohne Browserspeicher bleibt die laufende Session nutzbar.
+    }
+  }
+
+  private forgetStoredToken(): void {
+    try {
+      sessionStorage.removeItem(this.storageKey);
+    } catch {
+      // Nicht verfügbarer Browserspeicher verhindert keine Bereinigung.
+    }
   }
 
   async connect(reducedMotion: boolean): Promise<void> {
@@ -81,6 +116,15 @@ export class RobinSessionService {
     this.creating = true;
     this.connection.set("checking");
     try {
+      const storedToken = this.readStoredToken();
+
+      if (storedToken) {
+        this.token = storedToken;
+        this.restoring = true;
+        this.beginReconnect();
+        await this.pump();
+        return;
+      }
       const created = await this.request<{ token: string; state: unknown }>(
         "POST",
         "api/v1/sessions",
@@ -95,6 +139,7 @@ export class RobinSessionService {
       this.token = created.token;
       const state = parseCoreState(created.state);
       this.sequence = state.sequence;
+      this.storeToken(created.token);
       this.state.set(state);
       this.connection.set("connected");
       this.schedule();
@@ -288,6 +333,18 @@ export class RobinSessionService {
       const state = parseCoreState(response);
 
       if (resuming) {
+        if (this.restoring) {
+          // Nach Neuladen gilt die bestätigte Serversequenz.
+          // Nicht gespeicherte Eingaben werden nicht nachgespielt.
+          this.sequence = state.sequence;
+          this.queue = [
+            {
+              sequence: ++this.sequence,
+              event: "interactionCancelled",
+            },
+          ];
+          this.restoring = false;
+        }
         const firstPending = this.queue[0];
 
         const minimumSequence = firstPending
@@ -426,18 +483,29 @@ export class RobinSessionService {
     this.state.set(null);
     this.connection.set("local");
   }
-  private close(): void {
+
+  private close(preserveSession = false): void {
     clearTimeout(this.timer);
 
     this.recovering = false;
     this.reconnectAttempt = 0;
+    this.restoring = false;
 
     this.queue = [];
     this.output.set(null);
-    if (this.token) this.release(this.token);
+
+    if (!preserveSession) {
+      this.forgetStoredToken();
+
+      if (this.token) {
+        this.release(this.token);
+      }
+    }
+
     this.token = null;
     this.outputReadToken = null;
   }
+
   private release(token: string): void {
     // Navigation can cancel Angular requests; keepalive is best effort, TTL is the backstop.
     void fetch(new URL("api/v1/session", document.baseURI), {

@@ -26,7 +26,7 @@ const outputContext = {
 };
 vm.runInNewContext(compiledOutput, outputContext);
 
-function fixture() {
+function fixture(storage = new Map()) {
     const requests = [];
     const timers = new Map();
     const releases = [];
@@ -81,6 +81,12 @@ function fixture() {
         URL,
         TextEncoder,
         document: { baseURI: 'http://localhost/' },
+
+        sessionStorage: {
+            getItem: key => storage.get(key) ?? null,
+            setItem: (key, value) => storage.set(key, String(value)),
+            removeItem: key => storage.delete(key),
+        },
 
         fetch: async (...args) => {
             releases.push(args);
@@ -236,7 +242,7 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     await flush();
 
     assert.equal(f.timers.size, 0);
-    assert.equal(f.releases.length, 1);
+    assert.equal(f.releases.length, 0);
 
     f.reply(9, state(3, 99));
     await flush();
@@ -627,6 +633,106 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
 
     backoff.destroy();
     assert.equal(backoff.timers.size, 0);
+
+    // Ein Neuladen erhält den Tabspeicher, erzeugt aber einen neuen Service.
+    const tabStorage = new Map();
+    const beforeReload = fixture(tabStorage);
+    const beforeConnecting = beforeReload.service.connect(false);
+
+    beforeReload.reply(0, {
+        token: '3'.repeat(64),
+        state: state(7, 12),
+    });
+    await beforeConnecting;
+
+    assert.equal(
+        tabStorage.get('pinkrobin.session.v1'),
+        '3'.repeat(64),
+    );
+
+    beforeReload.destroy();
+    assert.equal(beforeReload.releases.length, 0);
+
+    const afterReload = fixture(tabStorage);
+    const afterConnecting = afterReload.service.connect(false);
+
+    assert.equal(afterReload.requests[0].method, 'GET');
+    assert.equal(afterReload.requests[0].url, 'api/v1/session');
+    assert.equal(
+        afterReload.requests[0].options.headers['X-Robin-Session'],
+        '3'.repeat(64),
+    );
+
+    afterReload.reply(0, state(7, 12));
+    await afterConnecting;
+    await flush();
+
+    afterReload.reply(1, null);
+    await flush();
+    afterReload.tick();
+
+    assert.equal(
+        afterReload.requests[2].options.body.event,
+        'interactionCancelled',
+    );
+    assert.equal(afterReload.requests[2].options.body.sequence, 8);
+
+    afterReload.reply(2, state(8, 13));
+    await flush();
+
+    afterReload.reply(3, null);
+    await flush();
+
+    assert.equal(afterReload.service.connection(), 'connected');
+    assert.equal(afterReload.service.state().revision, 13);
+    assert.equal(
+        afterReload.requests.some(
+            request => request.url === 'api/v1/sessions',
+        ),
+        false,
+    );
+
+    afterReload.destroy();
+
+    const expiredStorage = new Map([
+        ['pinkrobin.session.v1', '4'.repeat(64)],
+    ]);
+
+    const expired = fixture(expiredStorage);
+    const expiredConnecting = expired.service.connect(false);
+
+    assert.equal(expired.requests[0].method, 'GET');
+    assert.equal(expired.requests[0].url, 'api/v1/session');
+
+    expired.requests[0].subject.error({ status: 404 });
+    await expiredConnecting;
+    await flush();
+
+    assert.equal(expired.service.connection(), 'local');
+    assert.equal(expired.service.state(), null);
+    assert.equal(expiredStorage.has('pinkrobin.session.v1'), false);
+    assert.equal(expired.timers.size, 0);
+
+    // Ein bewusster neuer Einstieg legt eine frische Session an.
+    const freshConnecting = expired.service.connect(false);
+
+    assert.equal(expired.requests[1].method, 'POST');
+    assert.equal(expired.requests[1].url, 'api/v1/sessions');
+
+    expired.reply(1, {
+        token: '5'.repeat(64),
+        state: state(),
+    });
+
+    await freshConnecting;
+
+    assert.equal(expired.service.connection(), 'connected');
+    assert.equal(
+        expiredStorage.get('pinkrobin.session.v1'),
+        '5'.repeat(64),
+    );
+
+    expired.destroy();
 
     console.log(
         'Session ordering, early release, validation, fallback and destroy passed.',
