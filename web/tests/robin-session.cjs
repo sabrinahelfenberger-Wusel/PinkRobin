@@ -240,13 +240,13 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
 
     assert.equal(f.service.state().revision, 3);
 
-    // Verbindungsfehler führen zur lokalen Darstellung.
+    // Eine Unterbrechung erhält Session und letzten Zustand.
     const broken = fixture();
     const start = broken.service.connect(true);
 
     broken.reply(0, {
         token: 'b'.repeat(64),
-        state: state(),
+        state: state(0, 7),
     });
 
     await start;
@@ -255,15 +255,49 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     broken.requests[1].subject.error(new Error('offline'));
     await flush();
 
+    assert.equal(broken.service.connection(), 'reconnecting');
+    assert.equal(broken.service.state().revision, 7);
+    assert.equal(broken.releases.length, 0);
+    assert.equal(broken.timers.size, 1);
+
+    // Während der Unterbrechung keine neuen Eingaben annehmen.
+    broken.service.send('restart');
+    assert.equal(broken.service.sendText('Hallo'), false);
+    assert.equal(broken.requests.length, 2);
+
+    // Auch der manuelle Verbindungsaufruf erzeugt keine neue Session.
+    await broken.service.connect(true);
+    assert.equal(broken.requests.length, 2);
+
+    broken.tick();
+
+    assert.equal(broken.requests[2].method, 'GET');
+    assert.equal(broken.requests[2].url, 'api/v1/session');
+    assert.equal(
+        broken.requests[2].options.headers['X-Robin-Session'],
+        'b'.repeat(64),
+    );
+
+    broken.reply(2, state(0, 8));
+    await flush();
+
+    assert.equal(broken.service.connection(), 'connected');
+    assert.equal(broken.service.state().revision, 8);
+    assert.equal(broken.releases.length, 0);
+
+    broken.reply(3, null);
+    await flush();
+
+    // Eine tatsächlich abgelaufene Session beendet die Wiederverbindung.
+    broken.tick();
+    broken.requests[4].subject.error({ status: 404 });
+    await flush();
+
     assert.equal(broken.service.connection(), 'local');
     assert.equal(broken.service.state(), null);
     assert.equal(broken.timers.size, 0);
 
-    broken.service.send('restart');
-    assert.equal(broken.requests.length, 2);
-
     assert.throws(() => broken.parse({ ...state(), mode: 'made-up' }));
-
     assert.throws(() => broken.parse({ ...state(), timeMs: -1 }));
 
     broken.destroy();
@@ -368,6 +402,131 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     );
 
     textSession.destroy();
+
+    for (const alreadyAccepted of [true, false]) {
+        const retry = fixture();
+        const retryConnecting = retry.service.connect(false);
+
+        retry.reply(0, {
+            token: 'e'.repeat(64),
+            state: state(),
+        });
+
+        await retryConnecting;
+
+        assert.equal(retry.service.sendText('Hallo'), true);
+
+        retry.requests[1].subject.error(new Error('offline'));
+        await flush();
+
+        assert.equal(retry.service.connection(), 'reconnecting');
+        assert.equal(retry.releases.length, 0);
+
+        retry.tick();
+
+        // Vor jeder Wiederholung zuerst den Serverzustand lesen.
+        assert.equal(retry.requests[2].method, 'GET');
+        assert.equal(retry.requests[2].url, 'api/v1/session');
+
+        retry.reply(2, state(alreadyAccepted ? 1 : 0));
+        await flush();
+
+        retry.reply(3, null);
+        await flush();
+
+        assert.equal(retry.service.connection(), 'connected');
+
+        if (alreadyAccepted) {
+            // Der Server hat den Text verarbeitet: nicht erneut senden.
+            assert.equal(
+                retry.requests.filter(
+                    request => request.url === 'api/v1/session/events',
+                ).length,
+                1,
+            );
+        } else {
+            retry.tick();
+
+            // Nicht angenommen: denselben Text mit derselben Nummer senden.
+            assert.equal(retry.requests[4].method, 'POST');
+            assert.equal(retry.requests[4].options.body.sequence, 1);
+            assert.equal(retry.requests[4].options.body.event, 'textReceived');
+            assert.equal(retry.requests[4].options.body.text, 'Hallo');
+            assert.equal(
+                retry.requests[4].options.headers['X-Robin-Session'],
+                'e'.repeat(64),
+            );
+
+            retry.reply(4, state(1));
+            await flush();
+
+            retry.reply(5, null);
+            await flush();
+        }
+
+        retry.destroy();
+    }
+
+    for (const alreadyAccepted of [true, false]) {
+        const contact = fixture();
+        const contactConnecting = contact.service.connect(false);
+
+        contact.reply(0, {
+            token: 'f'.repeat(64),
+            state: state(),
+        });
+
+        await contactConnecting;
+
+        contact.service.send('headStarted');
+        contact.requests[1].subject.error(new Error('offline'));
+        await flush();
+
+        contact.tick();
+
+        contact.reply(
+            2,
+            state(
+                alreadyAccepted ? 1 : 0,
+                alreadyAccepted ? 1 : 0,
+                alreadyAccepted,
+            ),
+        );
+        await flush();
+
+        contact.reply(3, null);
+        await flush();
+        contact.tick();
+
+        const cancellation = contact.requests[4];
+
+        assert.equal(cancellation.method, 'POST');
+        assert.equal(cancellation.url, 'api/v1/session/events');
+        assert.equal(
+            cancellation.options.body.event,
+            'interactionCancelled',
+        );
+        assert.equal(
+            cancellation.options.body.sequence,
+            alreadyAccepted ? 2 : 1,
+        );
+        assert.equal(
+            cancellation.options.headers['X-Robin-Session'],
+            'f'.repeat(64),
+        );
+
+        contact.reply(4, state(alreadyAccepted ? 2 : 1, 2, false));
+        await flush();
+
+        contact.reply(5, null);
+        await flush();
+
+        assert.equal(contact.service.state().headContact, false);
+        assert.equal(contact.service.connection(), 'connected');
+        assert.equal(contact.releases.length, 0);
+
+        contact.destroy();
+    }
 
     console.log(
         'Session ordering, early release, validation, fallback and destroy passed.',

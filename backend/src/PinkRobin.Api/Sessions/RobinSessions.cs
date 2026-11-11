@@ -1,12 +1,16 @@
 using System.Security.Cryptography;
 using PinkRobin.Api.Core;
 using PinkRobin.Api.Weather;
+using Microsoft.Extensions.Options;
 
 namespace PinkRobin.Api.Sessions;
 
 // Tokens are bearer credentials, held only in browser memory. All native access and
 // timestamps are serialized here; no native handle is shared between sessions.
-public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock) : IDisposable
+public sealed class RobinSessions(
+    IRobinCoreGateway gateway,
+    TimeProvider clock,
+    IOptions<RobinSessionOptions>? options = null) : IDisposable
 {
     private sealed class Session(NativeRobinCore core, long started, bool reduced)
     {
@@ -26,8 +30,24 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     }
     private readonly object sync = new();
     private readonly Dictionary<string, Session> sessions = new(StringComparer.Ordinal);
-    private static readonly TimeSpan IdleLimit = TimeSpan.FromMinutes(2);
-    private static readonly TimeSpan AgeLimit = TimeSpan.FromMinutes(30);
+    private readonly TimeSpan idleTimeout =
+        ReadIdleTimeout(options);
+
+    private static TimeSpan ReadIdleTimeout(
+        IOptions<RobinSessionOptions>? options)
+    {
+        var timeout = options?.Value.IdleTimeout
+                      ?? TimeSpan.FromMinutes(15);
+
+        if (timeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options),
+                "Session idle timeout must be greater than zero.");
+        }
+
+        return timeout;
+    }
 
     private static readonly CorePlatformCapabilities WebCapabilities = new(
         TextOutput: true,
@@ -547,13 +567,18 @@ public sealed class RobinSessions(IRobinCoreGateway gateway, TimeProvider clock)
     {
         lock (sync) { if (sessions.Remove(token, out var session)) session.Core.Dispose(); }
     }
-    public void Sweep() { lock (sync) SweepLocked(); }
+
+    public void Sweep()
+    {
+        lock (sync) SweepLocked();
+    }
+
     private void SweepLocked()
     {
         foreach (var pair in sessions.ToArray())
         {
             var elapsed = clock.GetElapsedTime(pair.Value.Started);
-            if (elapsed >= AgeLimit || elapsed - pair.Value.LastSeen >= IdleLimit)
+            if (elapsed - pair.Value.LastSeen >= idleTimeout)
             {
                 pair.Value.Core.Dispose();
                 sessions.Remove(pair.Key);

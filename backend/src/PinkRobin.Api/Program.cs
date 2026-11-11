@@ -9,6 +9,16 @@ using PinkRobin.Api.Reactions;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
+
+builder.Services
+    .AddOptions<RobinSessionOptions>()
+    .Bind(builder.Configuration.GetSection(
+        RobinSessionOptions.SectionName))
+    .Validate(
+        options => options.IdleTimeout > TimeSpan.Zero,
+        "RobinSessions:IdleTimeout must be greater than zero.")
+    .ValidateOnStart();
+
 builder.Services.AddSingleton<RobinSessions>();
 builder.Services.AddHostedService<SessionCleanup>();
 builder.Services.AddRateLimiter(options =>
