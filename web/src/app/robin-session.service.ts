@@ -105,6 +105,18 @@ export class RobinSessionService {
     }
   }
 
+  resume(): void {
+    if (!this.token || this.destroyed) return;
+
+    this.beginReconnect();
+    this.reconnectAttempt = 0;
+    clearTimeout(this.timer);
+
+    if (!this.busy) {
+      void this.pump();
+    }
+  }
+
   send(event: RobinEvent, text?: string): void {
     if (!this.token || this.destroyed) return;
     if (this.connection() !== "connected") return;

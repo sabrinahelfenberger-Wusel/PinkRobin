@@ -309,7 +309,11 @@ export class RobinComponent {
   }
 
   onVisibilityChange(): void {
-    if (document.hidden) this.stopPetting();
+    if (document.hidden) {
+      this.stopPetting();
+    } else {
+      this.session.resume();
+    }
   }
 
   startPetting(): void {

@@ -31,6 +31,7 @@ function fixture() {
     const timers = new Map();
     const releases = [];
     const destroyed = new rx.Subject();
+    const delays = [];
 
     let onDestroy;
     let nextTimer = 0;
@@ -85,8 +86,9 @@ function fixture() {
             releases.push(args);
         },
 
-        setTimeout: (fn) => {
+        setTimeout: (fn, delay) => {
             const id = ++nextTimer;
+            delays.push(delay);
             timers.set(id, fn);
             return id;
         },
@@ -112,6 +114,7 @@ function fixture() {
     return {
         service: new context.exports.RobinSessionService(),
         requests,
+        delays,
         timers,
         releases,
         parse: context.exports.parseCoreState,
@@ -527,6 +530,103 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
 
         contact.destroy();
     }
+
+    const resumed = fixture();
+    const resumeConnecting = resumed.service.connect(false);
+
+    resumed.reply(0, {
+        token: '1'.repeat(64),
+        state: state(0, 5),
+    });
+
+    await resumeConnecting;
+
+    // Rückkehr zur Seite prüft die bestehende Session sofort.
+    resumed.service.resume();
+
+    assert.equal(resumed.requests.length, 2);
+    assert.equal(resumed.requests[1].method, 'GET');
+    assert.equal(resumed.requests[1].url, 'api/v1/session');
+    assert.equal(
+        resumed.requests[1].options.headers['X-Robin-Session'],
+        '1'.repeat(64),
+    );
+    assert.equal(resumed.service.connection(), 'reconnecting');
+    assert.equal(resumed.service.state().revision, 5);
+
+    // Weitere Rückkehrsignale erzeugen keine parallele Anfrage.
+    resumed.service.resume();
+    assert.equal(resumed.requests.length, 2);
+
+    resumed.reply(1, state(0, 6));
+    await flush();
+
+    resumed.reply(2, null);
+    await flush();
+
+    assert.equal(resumed.service.connection(), 'connected');
+    assert.equal(resumed.service.state().revision, 6);
+    assert.equal(resumed.releases.length, 0);
+    assert.equal(
+        resumed.requests.filter(
+            request => request.url === 'api/v1/sessions',
+        ).length,
+        1,
+    );
+
+    resumed.destroy();
+
+    const countAfterDestroy = resumed.requests.length;
+    resumed.service.resume();
+
+    assert.equal(resumed.requests.length, countAfterDestroy);
+    assert.equal(resumed.timers.size, 0);
+
+    const backoff = fixture();
+    const backoffConnecting = backoff.service.connect(false);
+
+    backoff.reply(0, {
+        token: '2'.repeat(64),
+        state: state(),
+    });
+
+    await backoffConnecting;
+
+    for (const expectedDelay of [1000, 2000, 4000, 8000, 15000, 15000]) {
+        backoff.tick();
+        backoff.requests.at(-1).subject.error(new Error('offline'));
+        await flush();
+
+        assert.equal(backoff.delays.at(-1), expectedDelay);
+        assert.equal(backoff.timers.size, 1);
+        assert.equal(backoff.releases.length, 0);
+    }
+
+    // Eine Rückkehr zur Seite überspringt die aktuelle Wartezeit.
+    const recoveryIndex = backoff.requests.length;
+    backoff.service.resume();
+
+    assert.equal(backoff.requests.length, recoveryIndex + 1);
+    assert.equal(backoff.timers.size, 0);
+
+    backoff.reply(recoveryIndex, state());
+    await flush();
+
+    backoff.reply(recoveryIndex + 1, null);
+    await flush();
+
+    assert.equal(backoff.service.connection(), 'connected');
+    assert.equal(backoff.delays.at(-1), 250);
+
+    // Nach erfolgreicher Verbindung beginnt die Wartefolge wieder bei 1 s.
+    backoff.tick();
+    backoff.requests.at(-1).subject.error(new Error('offline'));
+    await flush();
+
+    assert.equal(backoff.delays.at(-1), 1000);
+
+    backoff.destroy();
+    assert.equal(backoff.timers.size, 0);
 
     console.log(
         'Session ordering, early release, validation, fallback and destroy passed.',
