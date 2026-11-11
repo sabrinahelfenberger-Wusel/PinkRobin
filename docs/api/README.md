@@ -50,8 +50,8 @@ es gehört weder in URLs noch in Logs. Folgende Anfragen benötigen den Header
 
 Ereignisse: `restart`, `heartTouched`, `headStarted`, `headEnded`,
 `interactionCancelled`. Jede Sitzung beginnt mit Sequenz 0; neue Befehle müssen
-fortlaufend nummeriert sein. Eine Wiederholung des letzten Befehls mit gleicher
-Sequenz und gleichem Ereignis wird nicht erneut ausgeführt. Andere alte bzw.
+fortlaufend nummeriert sein. Eine Wiederholung des letzten Befehls mit gleicher Sequenz, gleichem Ereignis
+und gleichem Text wird nicht erneut ausgeführt. Andere alte bzw.
 übersprungene Sequenzen liefern 409, unbekannte Ereignisse 400. Zeitwerte nimmt
 der Server ausschliesslich aus seiner monotonen Uhr.
 
@@ -61,15 +61,29 @@ Der Zustand enthält `mode` (`sleeping`, `waking`, `awake`), `mood` (`curious`,
 
 Grenzen: 128 gleichzeitige Instanzen; Erstellung maximal 30-mal pro Minute je
 vom Backend erkannter Quell-IP (hinter dem Proxy teilen Besucher diese Grenze);
-maximal 30 neue Befehle pro Sekunde je Sitzung. Sitzungen enden nach zwei Minuten
-Inaktivität oder spätestens nach 30 Minuten. Fehlende Tokens liefern 401,
-unbekannte/abgelaufene Tokens 404, Überlast 429 bzw. 503. Eine Kontaktpause von
-mehr als zwei Sekunden beendet Streicheln serverseitig. Ein Hintergrunddienst
-prüft jede Sekunde und räumt auch ohne weitere Browseranfrage auf.
+maximal 30 neue Befehle pro Sekunde je Sitzung. Sitzungen enden standardmässig
+nach 15 Minuten ohne erfolgreichen Sessionzugriff. Die Frist ist über
+`RobinSessions:IdleTimeout` konfigurierbar und muss grösser als null sein.
+Eine feste maximale Gesamtlaufzeit besteht nicht mehr. Erfolgreiche Polls
+verlängern die Inaktivitätsfrist.
 
-Bei reduzierter Bewegung überspringt der Server die Begrüssungsphase beim Anlegen
-und Wiederholen. Die Berührungszeiten bleiben im Core. Bei Verbindungsfehlern
-beendet Angular die Sitzung, kennzeichnet die lokale Demo und bietet einen
-bewussten Neuverbindungsversuch an. Es spielt keine ungewissen Befehle in eine neue
-Sitzung ein. Beim Verlassen der Seite stoppt die Abfrage; DELETE mit `keepalive`
-ist best effort, die Ablaufzeit bleibt die Absicherung.
+Fehlende Tokens liefern 401, unbekannte/abgelaufene Tokens 404, Überlast 429
+beziehungsweise 503. Eine Kontaktpause von mehr als zwei Sekunden beendet
+Streicheln serverseitig. Ein Hintergrunddienst prüft jede Sekunde und räumt
+auch ohne weitere Browseranfrage auf.
+
+Bei reduzierter Bewegung überspringt der Server die Begrüssungsphase beim
+Anlegen und Wiederholen. Die Berührungszeiten bleiben im Core.
+
+Bei vorübergehenden Verbindungsfehlern behält Angular die Session und zeigt
+`reconnecting` an. Wiederholungsversuche erfolgen mit wachsenden Warteabständen
+bis maximal 15 Sekunden. Vor weiteren Befehlen wird die bestätigte
+Befehlssequenz derselben Session gelesen. Bereits angenommene Befehle werden
+nicht wiederholt; alte Berührungs- und Neustartbefehle werden aufgehoben.
+Ungewisse Befehle werden nicht in eine neue Session übertragen.
+
+HTTP 404 beendet die Wiederverbindung; ein manueller Einstieg kann danach
+eine neue Session anlegen. Backend-Neustart oder Neuladen der Browserseite
+erhalten die bisherige Session nicht. Beim Verlassen der Demo stoppt die
+Abfrage; DELETE mit `keepalive` ist best effort, die Ablaufzeit bleibt die
+Absicherung.

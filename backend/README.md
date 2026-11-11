@@ -164,20 +164,109 @@ Erst danach verwendet er `cmake` aus dem PATH. Im Visual Studio Installer unter
 falls sie fehlen. Visual Studio danach neu starten. Ein eigener Pfad lässt sich
 mit der MSBuild-Eigenschaft `RobinCMake` angeben.
 
-## Berührungen durchgehend testen
+## Berührungen und Wiederverbindung testen
 
 Nach F5 im Profil **PinkRobin Demo** zeigt die Robin-Seite
-**„Dein Robin wird vom Core gesteuert.“** Herz berühren: glückliche Augen für sechs
-Sekunden. Kopf gedrückt halten: zunächst glückliche Augen, nach fünf Sekunden
-Herzaugen. Loslassen: wieder neugierige Augen. Zwei Tabs besitzen getrennte Robins.
-Bei angehaltener API erscheint die Kennzeichnung der lokalen Demo; die Schaltfläche
-**Verbindung erneut versuchen** legt nach dem Backend-Neustart eine neue Sitzung an.
-Die Anzeige folgt dem Server mit einer Abfrage alle 250 ms zuzüglich Netzwerklaufzeit.
+**„Dein Robin wird vom Core gesteuert.“**
 
-Zusätzlicher HTTP-Test bei laufender API: `python3 tests/sessions.py` aus `backend/`.
-Der native Integrationstest prüft Zeitgrenzen und Sitzungsablauf mit einer Testuhr.
+- Herz berühren: glückliche Augen für sechs Sekunden.
+- Kopf gedrückt halten: zunächst glückliche Augen, nach fünf Sekunden Herzaugen.
+- Loslassen: wieder neugierige Augen.
+- Zwei Tabs besitzen getrennte Robins.
 
-## Wetterdienst
+Die Zustandsabfrage erfolgt im Normalbetrieb alle 250 ms zuzüglich
+Netzwerklaufzeit.
+
+### Kurze Netzwerkunterbrechung
+
+Bei einem vorübergehenden Netzwerkfehler wechselt Angular auf
+`reconnecting`. Token, letzter Core-Zustand und wartende Ausgaben
+bleiben erhalten. Die Oberfläche zeigt die Wiederverbindung an und
+nimmt vorübergehend keine neuen Interaktionen an.
+
+Wiederholungsversuche erfolgen nach 1, 2, 4, 8 und danach jeweils
+15 Sekunden. Bei Rückkehr in den sichtbaren Tab wird eine Prüfung
+sofort angestossen. Laufende Zustandsanfragen werden nicht parallelisiert.
+
+Vor weiteren Befehlen liest Angular den Zustand derselben Session:
+
+- Bereits angenommene Befehle werden nicht erneut gesendet.
+- Noch nicht angenommene Textbefehle behalten Text und Befehlsnummer.
+- Alte Berührungs- und Neustartbefehle werden durch
+  `interactionCancelled` ersetzt.
+- Eine noch aktive Kopfberührung wird aufgehoben.
+
+Es wird keine alte Eingabe in eine neue Session übertragen.
+
+### Session-Lebensdauer
+
+Standardmässig endet eine Backend-Session nach 15 Minuten ohne
+erfolgreichen Sessionzugriff. Erfolgreiche Zustandsabfragen verlängern
+die Frist; sie misst daher nicht die Zeit seit der letzten Berührung.
+
+Die bisherige feste Gesamtlaufzeit von 30 Minuten entfällt.
+Es bleiben höchstens 128 gleichzeitige Sessions erlaubt.
+
+Die Inaktivitätsfrist ist über die Backend-Konfiguration einstellbar:
+
+```json
+{
+  "RobinSessions": {
+    "IdleTimeout": "00:15:00"
+  }
+}
+```
+
+Diesen Abschnitt in die vorhandene Konfiguration integrieren.
+Alternativ kann eine Umgebungsvariable gesetzt werden:
+
+```text
+RobinSessions__IdleTimeout=00:15:00
+```
+
+Die Frist muss grösser als null sein; ungültige Einstellungen werden
+beim Start abgewiesen.
+
+Die Gesprächsfrist im portablen Core bleibt davon unabhängig:
+Ein kurzer Text-Gesprächskontext endet weiterhin nach 120 Sekunden
+ohne erfolgreich verarbeitete Texteingabe.
+
+### Ablauf und Neustart
+
+Meldet das Backend eine nicht mehr vorhandene Session mit HTTP 404,
+endet die Wiederverbindung. Die Oberfläche bietet wieder den manuellen
+Verbindungsaufbau an.
+
+Ein Backend-Neustart verliert alle Sessions. Auch ein Neuladen der
+Browserseite erstellt eine neue Session, da der Token ausschliesslich
+im Arbeitsspeicher liegt. Navigation weg von der Demo gibt die Session
+weiterhin bestmöglich frei.
+
+Ein reiner Netzwerkunterbruch darf dagegen keine Session-Löschung
+auslösen.
+
+### Manueller Prüfablauf
+
+1. Beide lokalen Server durchgehend laufen lassen.
+2. Wetterort im Gespräch auswählen.
+3. In den Browser-Entwicklertools das Netzwerk auf Offline stellen.
+4. Auf die Wiederverbindungsmeldung warten.
+5. Netzwerk wieder aktivieren, ohne die Seite neu zu laden.
+6. Prüfen, dass derselbe Robin zurückkehrt und den Wetterort noch kennt.
+7. Einen Tabwechsel und die Rückkehr zur Demo prüfen.
+8. Auf dem iPad zusätzlich eine Hintergrundpause unterhalb der
+   konfigurierten Sessionfrist prüfen.
+
+Die lokale Offline-/Online-Prüfung wurde durchgeführt.
+Der Nachweis auf einem tatsächlichen iPad steht noch aus.
+
+Zusätzlicher HTTP-Test bei laufender API:
+`python3 tests/sessions.py` aus `backend/`.
+
+Die Interoptests prüfen Sessionfrist, Verlängerung, Freigabe und aktive
+Sessions über 30 Minuten mit einer Testuhr. Webtests prüfen
+Wiederverbindung, Befehlsabgleich, Berührungsaufhebung, Warteabstände
+und Wiederaufnahme beim Zurückkehren zur Seite.## Wetterdienst
 
 `GET /api/weather` liefert normalisierte MeteoSchweiz-Stundenprognosen mit
 einstündigem Cache. Konfiguration, Antwortvertrag und Tests: [WEATHER.md](WEATHER.md).
