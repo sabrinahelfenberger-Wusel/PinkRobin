@@ -69,6 +69,16 @@ export class RobinComponent {
       void this.session.connect(this.reducedMotion.matches);
     });
     effect(() => {
+      if (this.session.connection() === "reconnecting") {
+        this.headHeld = false;
+        this.activePointer = null;
+        this.coreRevision = null;
+        this.clearTimers();
+        this.blinking.set(false);
+        this.look.set(null);
+        this.heartGlowing.set(false);
+        return;
+      }
       const state = this.session.state();
       if (state) {
         this.coreActive = true;
@@ -121,6 +131,7 @@ export class RobinComponent {
   }
 
   private readonly onMotionChange = () => {
+    if (this.session.connection() === "reconnecting") return;
     if (this.session.connection() === "connected") {
       this.clearTimers();
       this.blinking.set(false);
@@ -201,6 +212,7 @@ export class RobinComponent {
 
   greet(): void {
     if (this.destroyed) return;
+    if (this.session.connection() === "reconnecting") return;
     if (this.session.connection() === "connected") {
       this.coreGreeting = true;
       this.headHeld = false;
@@ -237,6 +249,7 @@ export class RobinComponent {
 
   touchHeart(): void {
     if (this.destroyed) return;
+    if (this.session.connection() === "reconnecting") return;
     if (this.session.connection() === "connected") {
       this.headHeld = false;
       this.session.send("heartTouched");
@@ -262,6 +275,7 @@ export class RobinComponent {
   }
 
   onHeadPointerDown(event: PointerEvent): void {
+    if (this.session.connection() === "reconnecting") return;
     if (!event.isPrimary || event.button !== 0) return;
     this.activePointer = event.pointerId;
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
@@ -295,11 +309,16 @@ export class RobinComponent {
   }
 
   onVisibilityChange(): void {
-    if (document.hidden) this.stopPetting();
+    if (document.hidden) {
+      this.stopPetting();
+    } else {
+      this.session.resume();
+    }
   }
 
   startPetting(): void {
     if (this.destroyed) return;
+    if (this.session.connection() === "reconnecting") return;
     if (this.session.connection() === "connected") {
       if (!this.headHeld) {
         this.headHeld = true;
@@ -324,6 +343,11 @@ export class RobinComponent {
 
   stopPetting(): void {
     if (this.destroyed) return;
+    if (this.session.connection() === "reconnecting") {
+      this.headHeld = false;
+      this.activePointer = null;
+      return;
+    }
     if (this.session.connection() === "connected") {
       if (this.headHeld) {
         this.headHeld = false;

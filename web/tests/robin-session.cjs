@@ -26,11 +26,12 @@ const outputContext = {
 };
 vm.runInNewContext(compiledOutput, outputContext);
 
-function fixture() {
+function fixture(storage = new Map()) {
     const requests = [];
     const timers = new Map();
     const releases = [];
     const destroyed = new rx.Subject();
+    const delays = [];
 
     let onDestroy;
     let nextTimer = 0;
@@ -81,12 +82,19 @@ function fixture() {
         TextEncoder,
         document: { baseURI: 'http://localhost/' },
 
+        sessionStorage: {
+            getItem: key => storage.get(key) ?? null,
+            setItem: (key, value) => storage.set(key, String(value)),
+            removeItem: key => storage.delete(key),
+        },
+
         fetch: async (...args) => {
             releases.push(args);
         },
 
-        setTimeout: (fn) => {
+        setTimeout: (fn, delay) => {
             const id = ++nextTimer;
+            delays.push(delay);
             timers.set(id, fn);
             return id;
         },
@@ -112,6 +120,7 @@ function fixture() {
     return {
         service: new context.exports.RobinSessionService(),
         requests,
+        delays,
         timers,
         releases,
         parse: context.exports.parseCoreState,
@@ -233,20 +242,20 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     await flush();
 
     assert.equal(f.timers.size, 0);
-    assert.equal(f.releases.length, 1);
+    assert.equal(f.releases.length, 0);
 
     f.reply(9, state(3, 99));
     await flush();
 
     assert.equal(f.service.state().revision, 3);
 
-    // Verbindungsfehler führen zur lokalen Darstellung.
+    // Eine Unterbrechung erhält Session und letzten Zustand.
     const broken = fixture();
     const start = broken.service.connect(true);
 
     broken.reply(0, {
         token: 'b'.repeat(64),
-        state: state(),
+        state: state(0, 7),
     });
 
     await start;
@@ -255,15 +264,49 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     broken.requests[1].subject.error(new Error('offline'));
     await flush();
 
+    assert.equal(broken.service.connection(), 'reconnecting');
+    assert.equal(broken.service.state().revision, 7);
+    assert.equal(broken.releases.length, 0);
+    assert.equal(broken.timers.size, 1);
+
+    // Während der Unterbrechung keine neuen Eingaben annehmen.
+    broken.service.send('restart');
+    assert.equal(broken.service.sendText('Hallo'), false);
+    assert.equal(broken.requests.length, 2);
+
+    // Auch der manuelle Verbindungsaufruf erzeugt keine neue Session.
+    await broken.service.connect(true);
+    assert.equal(broken.requests.length, 2);
+
+    broken.tick();
+
+    assert.equal(broken.requests[2].method, 'GET');
+    assert.equal(broken.requests[2].url, 'api/v1/session');
+    assert.equal(
+        broken.requests[2].options.headers['X-Robin-Session'],
+        'b'.repeat(64),
+    );
+
+    broken.reply(2, state(0, 8));
+    await flush();
+
+    assert.equal(broken.service.connection(), 'connected');
+    assert.equal(broken.service.state().revision, 8);
+    assert.equal(broken.releases.length, 0);
+
+    broken.reply(3, null);
+    await flush();
+
+    // Eine tatsächlich abgelaufene Session beendet die Wiederverbindung.
+    broken.tick();
+    broken.requests[4].subject.error({ status: 404 });
+    await flush();
+
     assert.equal(broken.service.connection(), 'local');
     assert.equal(broken.service.state(), null);
     assert.equal(broken.timers.size, 0);
 
-    broken.service.send('restart');
-    assert.equal(broken.requests.length, 2);
-
     assert.throws(() => broken.parse({ ...state(), mode: 'made-up' }));
-
     assert.throws(() => broken.parse({ ...state(), timeMs: -1 }));
 
     broken.destroy();
@@ -368,6 +411,328 @@ const state = (sequence = 0, revision = 0, headContact = false) => ({
     );
 
     textSession.destroy();
+
+    for (const alreadyAccepted of [true, false]) {
+        const retry = fixture();
+        const retryConnecting = retry.service.connect(false);
+
+        retry.reply(0, {
+            token: 'e'.repeat(64),
+            state: state(),
+        });
+
+        await retryConnecting;
+
+        assert.equal(retry.service.sendText('Hallo'), true);
+
+        retry.requests[1].subject.error(new Error('offline'));
+        await flush();
+
+        assert.equal(retry.service.connection(), 'reconnecting');
+        assert.equal(retry.releases.length, 0);
+
+        retry.tick();
+
+        // Vor jeder Wiederholung zuerst den Serverzustand lesen.
+        assert.equal(retry.requests[2].method, 'GET');
+        assert.equal(retry.requests[2].url, 'api/v1/session');
+
+        retry.reply(2, state(alreadyAccepted ? 1 : 0));
+        await flush();
+
+        retry.reply(3, null);
+        await flush();
+
+        assert.equal(retry.service.connection(), 'connected');
+
+        if (alreadyAccepted) {
+            // Der Server hat den Text verarbeitet: nicht erneut senden.
+            assert.equal(
+                retry.requests.filter(
+                    request => request.url === 'api/v1/session/events',
+                ).length,
+                1,
+            );
+        } else {
+            retry.tick();
+
+            // Nicht angenommen: denselben Text mit derselben Nummer senden.
+            assert.equal(retry.requests[4].method, 'POST');
+            assert.equal(retry.requests[4].options.body.sequence, 1);
+            assert.equal(retry.requests[4].options.body.event, 'textReceived');
+            assert.equal(retry.requests[4].options.body.text, 'Hallo');
+            assert.equal(
+                retry.requests[4].options.headers['X-Robin-Session'],
+                'e'.repeat(64),
+            );
+
+            retry.reply(4, state(1));
+            await flush();
+
+            retry.reply(5, null);
+            await flush();
+        }
+
+        retry.destroy();
+    }
+
+    for (const alreadyAccepted of [true, false]) {
+        const contact = fixture();
+        const contactConnecting = contact.service.connect(false);
+
+        contact.reply(0, {
+            token: 'f'.repeat(64),
+            state: state(),
+        });
+
+        await contactConnecting;
+
+        contact.service.send('headStarted');
+        contact.requests[1].subject.error(new Error('offline'));
+        await flush();
+
+        contact.tick();
+
+        contact.reply(
+            2,
+            state(
+                alreadyAccepted ? 1 : 0,
+                alreadyAccepted ? 1 : 0,
+                alreadyAccepted,
+            ),
+        );
+        await flush();
+
+        contact.reply(3, null);
+        await flush();
+        contact.tick();
+
+        const cancellation = contact.requests[4];
+
+        assert.equal(cancellation.method, 'POST');
+        assert.equal(cancellation.url, 'api/v1/session/events');
+        assert.equal(
+            cancellation.options.body.event,
+            'interactionCancelled',
+        );
+        assert.equal(
+            cancellation.options.body.sequence,
+            alreadyAccepted ? 2 : 1,
+        );
+        assert.equal(
+            cancellation.options.headers['X-Robin-Session'],
+            'f'.repeat(64),
+        );
+
+        contact.reply(4, state(alreadyAccepted ? 2 : 1, 2, false));
+        await flush();
+
+        contact.reply(5, null);
+        await flush();
+
+        assert.equal(contact.service.state().headContact, false);
+        assert.equal(contact.service.connection(), 'connected');
+        assert.equal(contact.releases.length, 0);
+
+        contact.destroy();
+    }
+
+    const resumed = fixture();
+    const resumeConnecting = resumed.service.connect(false);
+
+    resumed.reply(0, {
+        token: '1'.repeat(64),
+        state: state(0, 5),
+    });
+
+    await resumeConnecting;
+
+    // Rückkehr zur Seite prüft die bestehende Session sofort.
+    resumed.service.resume();
+
+    assert.equal(resumed.requests.length, 2);
+    assert.equal(resumed.requests[1].method, 'GET');
+    assert.equal(resumed.requests[1].url, 'api/v1/session');
+    assert.equal(
+        resumed.requests[1].options.headers['X-Robin-Session'],
+        '1'.repeat(64),
+    );
+    assert.equal(resumed.service.connection(), 'reconnecting');
+    assert.equal(resumed.service.state().revision, 5);
+
+    // Weitere Rückkehrsignale erzeugen keine parallele Anfrage.
+    resumed.service.resume();
+    assert.equal(resumed.requests.length, 2);
+
+    resumed.reply(1, state(0, 6));
+    await flush();
+
+    resumed.reply(2, null);
+    await flush();
+
+    assert.equal(resumed.service.connection(), 'connected');
+    assert.equal(resumed.service.state().revision, 6);
+    assert.equal(resumed.releases.length, 0);
+    assert.equal(
+        resumed.requests.filter(
+            request => request.url === 'api/v1/sessions',
+        ).length,
+        1,
+    );
+
+    resumed.destroy();
+
+    const countAfterDestroy = resumed.requests.length;
+    resumed.service.resume();
+
+    assert.equal(resumed.requests.length, countAfterDestroy);
+    assert.equal(resumed.timers.size, 0);
+
+    const backoff = fixture();
+    const backoffConnecting = backoff.service.connect(false);
+
+    backoff.reply(0, {
+        token: '2'.repeat(64),
+        state: state(),
+    });
+
+    await backoffConnecting;
+
+    for (const expectedDelay of [1000, 2000, 4000, 8000, 15000, 15000]) {
+        backoff.tick();
+        backoff.requests.at(-1).subject.error(new Error('offline'));
+        await flush();
+
+        assert.equal(backoff.delays.at(-1), expectedDelay);
+        assert.equal(backoff.timers.size, 1);
+        assert.equal(backoff.releases.length, 0);
+    }
+
+    // Eine Rückkehr zur Seite überspringt die aktuelle Wartezeit.
+    const recoveryIndex = backoff.requests.length;
+    backoff.service.resume();
+
+    assert.equal(backoff.requests.length, recoveryIndex + 1);
+    assert.equal(backoff.timers.size, 0);
+
+    backoff.reply(recoveryIndex, state());
+    await flush();
+
+    backoff.reply(recoveryIndex + 1, null);
+    await flush();
+
+    assert.equal(backoff.service.connection(), 'connected');
+    assert.equal(backoff.delays.at(-1), 250);
+
+    // Nach erfolgreicher Verbindung beginnt die Wartefolge wieder bei 1 s.
+    backoff.tick();
+    backoff.requests.at(-1).subject.error(new Error('offline'));
+    await flush();
+
+    assert.equal(backoff.delays.at(-1), 1000);
+
+    backoff.destroy();
+    assert.equal(backoff.timers.size, 0);
+
+    // Ein Neuladen erhält den Tabspeicher, erzeugt aber einen neuen Service.
+    const tabStorage = new Map();
+    const beforeReload = fixture(tabStorage);
+    const beforeConnecting = beforeReload.service.connect(false);
+
+    beforeReload.reply(0, {
+        token: '3'.repeat(64),
+        state: state(7, 12),
+    });
+    await beforeConnecting;
+
+    assert.equal(
+        tabStorage.get('pinkrobin.session.v1'),
+        '3'.repeat(64),
+    );
+
+    beforeReload.destroy();
+    assert.equal(beforeReload.releases.length, 0);
+
+    const afterReload = fixture(tabStorage);
+    const afterConnecting = afterReload.service.connect(false);
+
+    assert.equal(afterReload.requests[0].method, 'GET');
+    assert.equal(afterReload.requests[0].url, 'api/v1/session');
+    assert.equal(
+        afterReload.requests[0].options.headers['X-Robin-Session'],
+        '3'.repeat(64),
+    );
+
+    afterReload.reply(0, state(7, 12));
+    await afterConnecting;
+    await flush();
+
+    afterReload.reply(1, null);
+    await flush();
+    afterReload.tick();
+
+    assert.equal(
+        afterReload.requests[2].options.body.event,
+        'interactionCancelled',
+    );
+    assert.equal(afterReload.requests[2].options.body.sequence, 8);
+
+    afterReload.reply(2, state(8, 13));
+    await flush();
+
+    afterReload.reply(3, null);
+    await flush();
+
+    assert.equal(afterReload.service.connection(), 'connected');
+    assert.equal(afterReload.service.state().revision, 13);
+    assert.equal(
+        afterReload.requests.some(
+            request => request.url === 'api/v1/sessions',
+        ),
+        false,
+    );
+
+    afterReload.destroy();
+
+    const expiredStorage = new Map([
+        ['pinkrobin.session.v1', '4'.repeat(64)],
+    ]);
+
+    const expired = fixture(expiredStorage);
+    const expiredConnecting = expired.service.connect(false);
+
+    assert.equal(expired.requests[0].method, 'GET');
+    assert.equal(expired.requests[0].url, 'api/v1/session');
+
+    expired.requests[0].subject.error({ status: 404 });
+    await expiredConnecting;
+    await flush();
+
+    assert.equal(expired.service.connection(), 'local');
+    assert.equal(expired.service.state(), null);
+    assert.equal(expiredStorage.has('pinkrobin.session.v1'), false);
+    assert.equal(expired.timers.size, 0);
+
+    // Ein bewusster neuer Einstieg legt eine frische Session an.
+    const freshConnecting = expired.service.connect(false);
+
+    assert.equal(expired.requests[1].method, 'POST');
+    assert.equal(expired.requests[1].url, 'api/v1/sessions');
+
+    expired.reply(1, {
+        token: '5'.repeat(64),
+        state: state(),
+    });
+
+    await freshConnecting;
+
+    assert.equal(expired.service.connection(), 'connected');
+    assert.equal(
+        expiredStorage.get('pinkrobin.session.v1'),
+        '5'.repeat(64),
+    );
+
+    expired.destroy();
 
     console.log(
         'Session ordering, early release, validation, fallback and destroy passed.',
