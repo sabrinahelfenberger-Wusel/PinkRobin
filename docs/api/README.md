@@ -82,8 +82,15 @@ Befehlssequenz derselben Session gelesen. Bereits angenommene Befehle werden
 nicht wiederholt; alte Berührungs- und Neustartbefehle werden aufgehoben.
 Ungewisse Befehle werden nicht in eine neue Session übertragen.
 
-HTTP 404 beendet die Wiederverbindung; ein manueller Einstieg kann danach
-eine neue Session anlegen. Backend-Neustart oder Neuladen der Browserseite
-erhalten die bisherige Session nicht. Beim Verlassen der Demo stoppt die
-Abfrage; DELETE mit `keepalive` ist best effort, die Ablaufzeit bleibt die
-Absicherung.
+HTTP 404 beendet die Wiederverbindung und entfernt den gespeicherten Token.
+Ein manueller Einstieg kann danach eine neue Session anlegen.
+
+Angular speichert den Session-Token im `sessionStorage`. Beim Neuladen
+im selben Tab wird zuerst die bestehende Session geprüft, statt sofort
+eine neue anzulegen. Nicht gespeicherte Eingaben werden nicht nachgespielt;
+eine offene Berührung wird aufgehoben.
+
+Der Komponentenabbau stoppt die lokalen Abfragen, ohne die Backend-Session
+automatisch zu löschen. Die Inaktivitätsfrist übernimmt die Freigabe.
+Ein Backend-Neustart verliert weiterhin alle Sessions. Wiederaufnahme
+nach Schliessen des Tabs ist nicht zugesichert.

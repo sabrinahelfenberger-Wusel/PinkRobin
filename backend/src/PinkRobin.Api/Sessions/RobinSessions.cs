@@ -5,8 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace PinkRobin.Api.Sessions;
 
-// Tokens are bearer credentials, held only in browser memory. All native access and
-// timestamps are serialized here; no native handle is shared between sessions.
+// Tokens are bearer credentials retained in browser sessionStorage.
+// All native access and timestamps are serialized here;
+// no native handle is shared between sessions.
 public sealed class RobinSessions(
     IRobinCoreGateway gateway,
     TimeProvider clock,

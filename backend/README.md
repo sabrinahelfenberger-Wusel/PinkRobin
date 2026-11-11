@@ -237,10 +237,23 @@ Meldet das Backend eine nicht mehr vorhandene Session mit HTTP 404,
 endet die Wiederverbindung. Die Oberfläche bietet wieder den manuellen
 Verbindungsaufbau an.
 
-Ein Backend-Neustart verliert alle Sessions. Auch ein Neuladen der
-Browserseite erstellt eine neue Session, da der Token ausschliesslich
-im Arbeitsspeicher liegt. Navigation weg von der Demo gibt die Session
-weiterhin bestmöglich frei.
+Ein Backend-Neustart verliert alle Sessions. Ein Neuladen im selben
+Browser-Tab kann dagegen die bestehende Session wieder aufnehmen:
+Angular speichert den Token im `sessionStorage` und prüft ihn beim Start
+gegen das Backend.
+
+Nicht gespeicherte Eingaben werden nach einem Neuladen nicht nachgespielt.
+Eine möglicherweise offene Berührung wird aufgehoben. Ist die Session
+abgelaufen, wird der gespeicherte Token entfernt; ein manueller Einstieg
+kann eine neue Session anlegen.
+
+Beim Verlassen der Demo beendet Angular seine laufenden Abfragen,
+löscht die Backend-Session aber nicht automatisch. Nicht mehr verwendete
+Sessions werden über die Inaktivitätsfrist freigegeben.
+
+Der Token ermöglicht den Zugriff auf die Session und gehört nicht in
+URLs oder Protokollausgaben. `sessionStorage` speichert ihn für den
+jeweiligen Browser-Tab, nicht als dauerhaftes Benutzerprofil.
 
 Ein reiner Netzwerkunterbruch darf dagegen keine Session-Löschung
 auslösen.
@@ -257,8 +270,9 @@ auslösen.
 8. Auf dem iPad zusätzlich eine Hintergrundpause unterhalb der
    konfigurierten Sessionfrist prüfen.
 
-Die lokale Offline-/Online-Prüfung wurde durchgeführt.
-Der Nachweis auf einem tatsächlichen iPad steht noch aus.
+Die lokale Offline-/Online-Prüfung sowie die Wiederaufnahme nach
+Tabwechsel, Hintergrundpause und Neuladen im selben Tab wurden auf
+einem tatsächlichen iPad geprüft. Der gewählte Wetterort blieb erhalten.
 
 Zusätzlicher HTTP-Test bei laufender API:
 `python3 tests/sessions.py` aus `backend/`.
