@@ -1,5 +1,20 @@
 # Änderungsprotokoll
 
+## 0.1.7 – Portfolio zu Textgesprächen
+
+### Aktualisiert
+
+- Einstieg um Robins erste Texteingaben ergänzt.
+- Architektur und Wetterbeispiel auf den Gesprächsablauf umgestellt.
+- Zentrale Antworttexte aus dem Core beschrieben.
+- Meilensteine für v0.1.5 und v0.1.6 ergänzt.
+- Gesprächsdokumentation verlinkt und geplante Erweiterungen eingeordnet.
+
+### Versionen
+
+- Web: 0.1.7
+- Core und Backend: unverändert 0.1.6
+
 ## 0.1.6 – Textgespräche mit Robin
 
 ### Neu
