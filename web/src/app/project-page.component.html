@@ -47,8 +47,9 @@
           <h3>Angular</h3>
           <p class="layer-role">Eingabe und Darstellung</p>
           <p>
-            Erfasst Berührungen und die Wetterfrage. Zeigt Robins Gesicht,
-            Outfit und Antworten an.
+            Erkennt bekannte Textabsichten, verwaltet Gesprächskontext,
+            Wetterwissen und Robins Zustand. Erzeugt Antworttexte und prüft
+            Fähigkeiten sowie Freigaberegeln für Aktionen.
           </p>
         </li>
 
@@ -75,8 +76,8 @@
 
       <p class="architecture-return">
         <span aria-hidden="true">↩</span>
-        Zustand und typisierte Ausgaben gelangen über das Backend zurück zur
-        Darstellung.
+        Zustand und typisierte Ausgaben mit fertigen Antworttexten gelangen über
+        das Backend zurück zur Darstellung.
       </p>
 
       <aside class="architecture-note">
@@ -91,48 +92,51 @@
     <section class="project-section" aria-labelledby="weather-example-title">
       <div class="section-heading">
         <p class="eyebrow">02 / Ein konkreter Ablauf</p>
-        <h2 id="weather-example-title">„Robin, wie wird<br />das Wetter?“</h2>
+        <h2 id="weather-example-title">„Wie wird<br />das Wetter?“</h2>
       </div>
 
       <p class="section-intro">
-        Die Wetterfrage zeigt, wie gespeichertes Wissen, Entscheidung und
-        Darstellung zusammenspielen.
+        Eine Frage, eine Ortsrückfrage und eine Antwort: Der Wetterdialog zeigt,
+        wie Texteingabe, kurzer Gesprächskontext und externe Daten
+        zusammenspielen. Den gewählten Ort behält Robin für diese Session. Bei
+        späteren Wetterfragen lädt er bei Bedarf neue Daten.
       </p>
 
       <ol class="example-steps">
         <li>
-          <h3>Wetterwissen bereitstellen</h3>
+          <h3>Mit Robin schreiben</h3>
           <p>
-            Das Backend lädt eine Prognose für die gewählte Schweizer
-            Postleitzahl. Der Core übernimmt die Werte mit Herkunft und
-            zeitlicher Gültigkeit in sein WorldModel.
+            „Wie wird das Wetter?“ wird als nummerierte Texteingabe an den Core
+            übermittelt. Dort erkennt Robin die bekannte Wetterfrage – ohne LLM.
           </p>
         </li>
 
         <li>
-          <h3>Die Frage übermitteln</h3>
+          <h3>Nach dem Ort fragen</h3>
           <p>
-            Der Wetterfrage-Button sendet einen nummerierten Befehl. Das Backend
-            verhindert, dass eine Wiederholung des zuletzt angenommenen Befehls
-            eine zweite Antwort erzeugt.
+            Ohne gewählten Ort fragt Robin nach einer vierstelligen Schweizer
+            PLZ. Eine kurze Begrüssung zwischendurch unterbricht den
+            Gesprächsfaden nicht: Die Ortsfrage bleibt offen.
           </p>
         </li>
 
         <li>
-          <h3>Eine Antwort erzeugen</h3>
+          <h3>Wetterwissen laden und auswerten</h3>
           <p>
-            Bei unterstützter Textausgabe erzeugt der Core eine typisierte
-            Antwort: trocken, Regen, stürmische Prognose oder unbekannt.
-            Abgelaufenes Wissen wird nicht verwendet.
+            Der Core fordert eine Prognose für die eingegebene PLZ an. Das
+            Backend lädt die Daten und ordnet das Ergebnis über eine Anfrage-ID
+            zu. Robin wertet gültiges Wetterwissen aus und erzeugt den deutschen
+            Antworttext.
           </p>
         </li>
 
         <li>
           <h3>Anzeigen und bestätigen</h3>
           <p>
-            Angular formuliert den deutschen Text und zeigt ihn acht Sekunden
-            an. Erst die Bestätigung entfernt die Ausgabe aus dem Core-Puffer.
-            Bei einem Bestätigungsfehler wird die Bestätigung erneut versucht.
+            Angular zeigt den gelieferten Text acht Sekunden lang an. Erst die
+            Bestätigung entfernt die Antwort aus dem Core-Puffer. Schlägt sie
+            fehl, bleibt die Antwort sichtbar und die Bestätigung wird erneut
+            versucht.
           </p>
         </li>
       </ol>
@@ -189,8 +193,45 @@
             </p>
           </div>
         </li>
-      </ol>
 
+        <li>
+          <span class="release-label">v0.1.5</span>
+          <div>
+            <h3>Ein eigener Platz für die Technik</h3>
+            <p>
+              Startseite auf ein kurzes Intro reduziert. Architektur, Datenfluss
+              und Entwicklung auf dieser Projektseite gebündelt.
+            </p>
+          </div>
+        </li>
+
+        <li>
+          <span class="release-label">v0.1.6</span>
+          <div>
+            <h3>Erste kleine Gespräche</h3>
+            <p>
+              Textfeld, Wetterdialog mit Ortsrückfrage und Antworten auf
+              „Robin?“, Begrüssungen und Dank. Gesprächskontext und Antworttexte
+              liegen im Core; der gewählte Wetterort bleibt für die Session
+              erhalten.
+            </p>
+          </div>
+        </li>
+      </ol>
+      <aside class="architecture-note">
+        <h3>Was als Nächstes wächst</h3>
+        <p>
+          Robin versteht bisher wenige festgelegte Texteingaben. Als nächster
+          technischer Schritt soll die Verbindung auf dem iPad nach kurzen
+          Unterbrechungen zuverlässiger wiederhergestellt werden.
+        </p>
+        <p>
+          Ein eigenes 3D-Modell ist geplant. Darauf aufbauend sollen später auch
+          Regenmantel und weitere Verwandlungen sichtbar werden. Spracheingabe,
+          Sprachausgabe und ein optionales Sprachmodell sind noch nicht
+          implementiert.
+        </p>
+      </aside>
       <div class="architecture-note">
         <h3>Qualität gehört zum Verhalten</h3>
         <p>
@@ -225,7 +266,14 @@
           <a
             href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/docs/architecture/Ausgaben.md"
           >
-            Ausgabeweg mit Ablaufgrafik ↗
+            Core-Ausgaben und Antworttexte ↗
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/docs/architecture/Textgespraeche.md"
+          >
+            Textgespräche und Wetterdialog ↗
           </a>
         </li>
         <li>
