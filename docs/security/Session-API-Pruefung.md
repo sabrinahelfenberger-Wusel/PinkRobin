@@ -1,7 +1,7 @@
 # Begrenzte Session- und API-Prüfung
 
-Stand: 12.11.2026  
-Bezug: GitHub-Issue #48  
+Stand: 12.11.2026
+Bezug: GitHub-Issue #48
 Arbeitsbranch: `security-session-api`
 
 ## Umfang
