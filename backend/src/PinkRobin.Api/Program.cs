@@ -231,23 +231,25 @@ app.MapPost("/api/v1/session/weather", async Task<IResult> (
             title: "A four-digit Swiss postal code is required.");
     }
 
-    try
+    return await WithSessionAsync(context, async token =>
     {
-        var forecast = await weather.GetAsync(request.PostalCode, ct);
-
-        return WithSession(context, token =>
+        try
         {
-            var accepted = sessions.UpdateWeather(token, forecast);
+            var accepted = await sessions.UpdateWeatherAsync(
+                token,
+                request.PostalCode,
+                weather,
+                ct);
 
             return Results.Ok(new { accepted });
-        });
-    }
-    catch (WeatherUnavailableException)
-    {
-        return Results.Problem(
-            statusCode: 503,
-            title: "Weather unavailable");
-    }
+        }
+        catch (WeatherUnavailableException)
+        {
+            return Results.Problem(
+                statusCode: 503,
+                title: "Weather unavailable");
+        }
+    });
 });
 
 app.Run();

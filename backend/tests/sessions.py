@@ -19,6 +19,33 @@ assert code == 201 and a['state']['mode'] == 'awake'
 code, b = request('sessions', 'POST', {'reducedMotion': False})
 assert code == 201 and a['token'] != b['token']
 try:
+    protected_requests = [
+        ('session', 'GET', None),
+        ('session/events', 'POST', {
+            'sequence': 1,
+            'event': 'heartTouched',
+        }),
+        ('session/outputs/next', 'GET', None),
+        ('session/outputs/ack', 'POST', {
+            'sequence': '1',
+        }),
+        ('session/weather', 'POST', {
+            'postalCode': '9000',
+        }),
+    ]
+
+    for path, method, body in protected_requests:
+        for token in (None, 'invalid', 'g' * 64):
+            status, _ = request(path, method, body, token)
+            assert status == 401, (
+                f'{method} {path}: expected 401, got {status}'
+            )
+
+        status, _ = request(path, method, body, '0' * 64)
+        assert status == 404, (
+            f'{method} {path}: expected 404, got {status}'
+        )
+
     assert request('session')[0] == 401
     assert request('session', token='0' * 64)[0] == 404
     code, state = request('session/events', 'POST', {'sequence': 1, 'event': 'headStarted'}, a['token'])
@@ -34,4 +61,9 @@ try:
 finally:
     for session in (a, b): assert request('session', 'DELETE', token=session['token'])[0] == 204
 assert request('session', token=a['token'])[0] == 404
+for path, method, body in protected_requests:
+    status, _ = request(path, method, body, a['token'])
+    assert status == 404, (
+        f'{method} {path}: deleted session returned {status}'
+    )
 print('HTTP session creation, isolation, validation, replay protection and deletion passed.')
