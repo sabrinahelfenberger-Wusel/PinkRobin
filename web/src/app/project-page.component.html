@@ -47,9 +47,9 @@
           <h3>Angular</h3>
           <p class="layer-role">Eingabe und Darstellung</p>
           <p>
-            Erkennt bekannte Textabsichten, verwaltet Gesprächskontext,
-            Wetterwissen und Robins Zustand. Erzeugt Antworttexte und prüft
-            Fähigkeiten sowie Freigaberegeln für Aktionen.
+            Erfasst Berührungen und Texteingaben. Zeigt Robins Gesicht und die
+            gelieferten Antworttexte an. Nimmt nach einer Unterbrechung die
+            Verbindung zur bestehenden Session wieder auf.
           </p>
         </li>
 
@@ -59,7 +59,8 @@
           <p class="layer-role">Transport und Dienste</p>
           <p>
             Verwaltet getrennte Sitzungen, lädt Wetterprognosen und verbindet
-            den Browser über eine C-Schnittstelle mit dem Core.
+            den Browser über eine C-Schnittstelle mit dem Core. Hält Robins
+            Instanz auch bei einer kurzen Netzwerkpause verfügbar.
           </p>
         </li>
 
@@ -68,8 +69,9 @@
           <h3>C++-Core</h3>
           <p class="layer-role">Zustand und Verhalten</p>
           <p>
-            Verarbeitet Nachrichten, hält Wetterwissen und Robins Zustand. Prüft
-            Fähigkeiten und Freigaberegeln für seine Aktionen.
+            Erkennt bekannte Textabsichten, verwaltet Gesprächskontext,
+            Wetterwissen und Robins Zustand. Erzeugt Antworttexte und prüft
+            Fähigkeiten sowie Freigaberegeln für Aktionen.
           </p>
         </li>
       </ol>
@@ -151,6 +153,22 @@
           damit nicht garantiert.
         </p>
       </aside>
+
+      <aside class="architecture-note">
+        <h3>Eine Pause, derselbe Robin</h3>
+        <p>
+          Bei einer kurzen Netzwerkunterbrechung verbindet sich die Oberfläche
+          automatisch wieder mit derselben Session. Auch nach einer
+          Hintergrundpause auf dem iPad und einem Neuladen im selben Tab kann
+          Robin seinen gewählten Wetterort behalten. Die Wiederaufnahme wurde
+          auf einem iPad geprüft.
+        </p>
+        <p>
+          Eine ungenutzte Session läuft standardmässig nach 15 Minuten ohne
+          erfolgreichen Zugriff ab. Ein Backend-Neustart verliert die Sessions;
+          ein dauerhaftes Gedächtnis ist damit noch nicht umgesetzt.
+        </p>
+      </aside>
     </section>
     <section class="project-section" aria-labelledby="milestones-title">
       <div class="section-heading">
@@ -217,13 +235,38 @@
             </p>
           </div>
         </li>
+
+        <li>
+          <span class="release-label">v0.1.7</span>
+          <div>
+            <h3>Gespräche im Portfolio</h3>
+            <p>
+              Wetterdialog, zentrale Core-Antworttexte und die ersten kleinen
+              Gespräche im technischen Portfolio nachvollziehbar beschrieben.
+            </p>
+          </div>
+        </li>
+
+        <li>
+          <span class="release-label">v0.1.8</span>
+          <div>
+            <h3>Nach einer Pause wieder da</h3>
+            <p>
+              Automatische Wiederverbindung und Wiederaufnahme nach Neuladen
+              im selben Tab. Der Wetterort bleibt in der bestehenden Session
+              erhalten. Aktive Sessions enden nicht mehr pauschal nach
+              30 Minuten; die Inaktivitätsfrist ist konfigurierbar.
+            </p>
+          </div>
+        </li>
       </ol>
       <aside class="architecture-note">
         <h3>Was als Nächstes wächst</h3>
         <p>
-          Robin versteht bisher wenige festgelegte Texteingaben. Als nächster
-          technischer Schritt soll die Verbindung auf dem iPad nach kurzen
-          Unterbrechungen zuverlässiger wiederhergestellt werden.
+          Robin versteht bisher wenige festgelegte Texteingaben. Die
+          Wiederaufnahme auf dem iPad funktioniert bereits in der Webversion.
+          Eine eigenständige iPad-App und ein dauerhaftes Gedächtnis bleiben
+          spätere Erweiterungen.
         </p>
         <p>
           Ein eigenes 3D-Modell ist geplant. Darauf aufbauend sollen später auch
@@ -238,7 +281,10 @@
           Automatisierte Tests prüfen unter anderem Zeitgrenzen,
           Nachrichtenreihenfolge, Puffergrenzen und Session-Trennung. GitHub
           Actions prüft Core und native Backend-Anbindung auf Windows, Linux und
-          macOS sowie Web-Tests und Angular-Build.
+          macOS sowie Web-Tests und Angular-Build. Weitere Tests prüfen
+          Wiederverbindung, Befehlsabgleich und Session-Ablauf. So werden
+          angenommene Befehle nicht doppelt verarbeitet und alte Berührungen
+          nach einer Unterbrechung aufgehoben.
         </p>
       </div>
     </section>
@@ -281,6 +327,13 @@
             href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/docs/architecture/Plattformfaehigkeiten.md"
           >
             Plattformfähigkeiten und Grenzen ↗
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/sabrinahelfenberger-Wusel/PinkRobin/blob/main/backend/README.md#berührungen-und-wiederverbindung-testen"
+          >
+            Wiederverbindung und Session-Lebensdauer ↗
           </a>
         </li>
       </ul>
