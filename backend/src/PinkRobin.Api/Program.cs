@@ -7,6 +7,10 @@ using PinkRobin.Api.Weather;
 using PinkRobin.Api.Reactions;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 8 * 1024;
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -78,8 +82,15 @@ if (origins.Length > 0)
 }
 
 var app = builder.Build();
-app.UseExceptionHandler();
-app.UseStatusCodePages();
+
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = exception =>
+        exception is BadHttpRequestException badRequest
+            ? badRequest.StatusCode
+            : StatusCodes.Status500InternalServerError
+}); app.UseStatusCodePages();
+
 if (origins.Length > 0) app.UseCors();
 app.UseRateLimiter();
 app.Use(async (context, next) =>
