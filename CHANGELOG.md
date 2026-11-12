@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 0.1.9 – Portfolio zur Wiederverbindung
+
+### Aktualisiert
+
+- Wiederverbindung und Session-Wiederaufnahme aus v0.1.8 im Portfolio beschrieben.
+- Meilensteine für v0.1.7 und v0.1.8 ergänzt.
+- Sessionfrist, iPad-Prüfung und Grenzen der Wiederaufnahme erläutert.
+- Zuordnung der Angular- und Core-Aufgaben in der Architekturübersicht korrigiert.
+- Ausblick und Dokumentationslinks aktualisiert.
+
+### Versionen
+
+- Web: 0.1.9
+- Backend: unverändert 0.1.8
+- Core: unverändert 0.1.6
+
 ## 0.1.8 – Zuverlässigere Wiederverbindung
 
 ### Verbessert
