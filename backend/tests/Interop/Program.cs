@@ -2,6 +2,7 @@ NativeCoreTests.StateAndLifetime();
 NativeCoreTests.InteractionQueue();
 SessionTests.Lifecycle();
 SessionTests.LifetimePolicy();
+await SessionTests.WeatherRequiresExistingSession();
 SessionTests.Capacity();
 WeatherTests.Validation();
 WeatherTests.Transformation();
