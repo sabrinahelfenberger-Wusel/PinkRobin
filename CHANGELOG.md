@@ -1,5 +1,29 @@
 # Änderungsprotokoll
 
+## 0.1.10 – Session- und API-Absicherung
+
+### Korrigiert
+
+- Session vor externem Wetterabruf prüfen.
+- HTTP-Anfrageinhalt in Backend und Webproxy auf 8 KiB begrenzen.
+- Anfragefehler behalten ihren HTTP-Status:
+  fehlerhaftes JSON liefert 400 statt 500.
+
+### Tests und Dokumentation
+
+- Geschützte Session-Endpunkte mit fehlenden, ungültigen und
+  nicht mehr gültigen Tokens geprüft.
+- Ungültige Texte, Anfragegrössen und unveränderte Befehlssequenz getestet.
+- Überlappende Wetteranfragen verwenden nachweislich dieselbe
+  Cache-Aktualisierung.
+- Begrenzten Prüfblock und offene Sicherheitsaufgaben dokumentiert.
+- Issue #48 bleibt für den weiteren Prüfungsumfang offen.
+
+### Versionen
+
+- Web und Backend: 0.1.10
+- Core: unverändert 0.1.6
+
 ## 0.1.9 – Portfolio zur Wiederverbindung
 
 ### Aktualisiert

@@ -208,6 +208,21 @@ public sealed class RobinSessions(
             checked(coreNowMs + (ulong)remainingMs));
     }
 
+    public async Task<bool> UpdateWeatherAsync(
+        string token,
+        string postalCode,
+        IWeatherSource weather,
+        CancellationToken ct)
+    {
+        // Unbekannte oder abgelaufene Session vor externer Arbeit abweisen.
+        Read(token);
+
+        var forecast = await weather.GetAsync(postalCode, ct);
+
+        // Nach dem Warten erneut prüfen, ob die Session noch besteht.
+        return UpdateWeather(token, forecast);
+    }
+
     public bool UpdateWeather(
         string token,
         WeatherSnapshot weather)

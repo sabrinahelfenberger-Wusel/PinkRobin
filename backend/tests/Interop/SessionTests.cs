@@ -123,4 +123,82 @@ internal static class SessionTests
         Console.WriteLine(
             "Session pause, renewal, expiry and configured timeout passed.");
     }
+
+    public static async Task WeatherRequiresExistingSession()
+    {
+        var clock = new ManualClock();
+        var weather = new ControlledWeatherSource();
+
+        using var sessions = new PinkRobin.Api.Sessions.RobinSessions(
+            new TestGateway(),
+            clock);
+
+        var removed = sessions.Create(false);
+        sessions.Remove(removed.Token);
+
+        var expired = sessions.Create(false);
+        clock.Advance(900000);
+        sessions.Sweep();
+
+        foreach (var token in new[]
+        {
+            new string('0', 64),
+            removed.Token,
+            expired.Token
+        })
+        {
+            var attempt = sessions.UpdateWeatherAsync(
+                token,
+                "9000",
+                weather,
+                CancellationToken.None);
+
+            Require(
+                weather.Calls == 0,
+                "Rejected session must not invoke the weather source");
+
+            try
+            {
+                await attempt;
+
+                throw new InvalidOperationException(
+                    "Weather update unexpectedly accepted a rejected session.");
+            }
+            catch (PinkRobin.Api.Sessions.SessionFailure error)
+            {
+                Require(
+                    error.Status == 404,
+                    "Unknown, removed and expired sessions return 404");
+            }
+        }
+
+        // Positive Kontrolle: Eine gültige Session erreicht die Quelle.
+        var valid = sessions.Create(false);
+        var now = clock.GetUtcNow();
+
+        weather.Completion.SetResult(new WeatherSnapshot(
+            Source: "Test",
+            PostalCode: "9000",
+            PointId: "900000",
+            ForecastRunAt: now,
+            RetrievedAt: now,
+            ValidFrom: now,
+            ValidTo: now.AddMinutes(10),
+            TemperatureC: 8.5,
+            PrecipitationMm: 2.0,
+            WindSpeedKmh: 10.0,
+            WindGustKmh: 20.0));
+
+        var accepted = await sessions.UpdateWeatherAsync(
+            valid.Token,
+            "9000",
+            weather,
+            CancellationToken.None);
+
+        Require(accepted, "Valid session accepts weather");
+        Require(weather.Calls == 1, "Valid session invokes weather once");
+
+        Console.WriteLine(
+            "Weather access rejects missing sessions before external work.");
+    }
 }

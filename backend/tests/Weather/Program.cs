@@ -10,10 +10,29 @@ static void Check(bool success, string message)
     if (!success) throw new Exception(message);
 }
 var clock = new TestClock();
-var handler = new ForecastHandler();
+var handler = new ForecastHandler { PauseFirstRequest = true };
 var service = new WeatherService(new Factory(handler), Options.Create(new WeatherOptions { PostalCode = "8001" }),
     clock, NullLogger<WeatherService>.Instance);
-var requests = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => service.GetAsync(default)));
+
+var pendingRequests = Enumerable.Range(0, 8)
+    .Select(_ => service.GetAsync(default))
+    .ToArray();
+
+await handler.FirstRequestStarted.Task.WaitAsync(
+    TimeSpan.FromSeconds(5));
+
+Check(
+    handler.Count == 1,
+    "Only one upstream request starts while refresh is blocked");
+
+Check(
+    pendingRequests.All(task => !task.IsCompleted),
+    "All callers wait for the shared refresh");
+
+handler.ContinueFirstRequest.TrySetResult(true);
+
+var requests = await Task.WhenAll(pendingRequests);
+
 Check(handler.Count == 6, "Concurrent cache misses must trigger only one refresh");
 Check(requests.All(x => x.PointId == "42" && x.TemperatureC == 8.5 && x.PrecipitationMm == 1.2), "Point type, decimal parsing and parameter mapping");
 Check(requests[0].ValidFrom == clock.Now.AddMinutes(-30), "Timestamp is the interval end");
@@ -69,10 +88,32 @@ sealed class ForecastHandler : HttpMessageHandler
 {
     public int Count;
     public bool Fail;
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    public bool PauseFirstRequest;
+
+    public TaskCompletionSource<bool> FirstRequestStarted { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public TaskCompletionSource<bool> ContinueFirstRequest { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken ct)
     {
-        Interlocked.Increment(ref Count);
-        if (Fail) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        var count = Interlocked.Increment(ref Count);
+
+        if (PauseFirstRequest && count == 1)
+        {
+            FirstRequestStarted.TrySetResult(true);
+            await ContinueFirstRequest.Task.WaitAsync(ct);
+        }
+
+        if (Fail)
+        {
+            return new HttpResponseMessage(
+                HttpStatusCode.ServiceUnavailable);
+        }
+
         var path = request.RequestUri!.AbsolutePath;
         string content;
         if (path.EndsWith("meta_point.csv"))
@@ -89,7 +130,9 @@ sealed class ForecastHandler : HttpMessageHandler
             var value = parameter switch { "tre200h0" => "8.5", "rre150h0" => "1.2", _ => "15.0" };
             content = $"point_id;point_type_id;Date;{parameter}\n42;1;202610181300;999\n42;2;202610181300;{value}\n42;2;202610181400;9.5\n42;2;202610181500;10.5\n43;2;202610181300;4.2\n43;2;202610181400;5.2\n43;2;202610181500;6.2\n";
         }
-        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-        { Content = new StringContent(content, Encoding.Latin1) });
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(content, Encoding.Latin1)
+        };
     }
 }

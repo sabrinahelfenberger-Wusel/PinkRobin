@@ -7,6 +7,10 @@ using PinkRobin.Api.Weather;
 using PinkRobin.Api.Reactions;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 8 * 1024;
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -78,8 +82,15 @@ if (origins.Length > 0)
 }
 
 var app = builder.Build();
-app.UseExceptionHandler();
-app.UseStatusCodePages();
+
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = exception =>
+        exception is BadHttpRequestException badRequest
+            ? badRequest.StatusCode
+            : StatusCodes.Status500InternalServerError
+}); app.UseStatusCodePages();
+
 if (origins.Length > 0) app.UseCors();
 app.UseRateLimiter();
 app.Use(async (context, next) =>
@@ -231,23 +242,25 @@ app.MapPost("/api/v1/session/weather", async Task<IResult> (
             title: "A four-digit Swiss postal code is required.");
     }
 
-    try
+    return await WithSessionAsync(context, async token =>
     {
-        var forecast = await weather.GetAsync(request.PostalCode, ct);
-
-        return WithSession(context, token =>
+        try
         {
-            var accepted = sessions.UpdateWeather(token, forecast);
+            var accepted = await sessions.UpdateWeatherAsync(
+                token,
+                request.PostalCode,
+                weather,
+                ct);
 
             return Results.Ok(new { accepted });
-        });
-    }
-    catch (WeatherUnavailableException)
-    {
-        return Results.Problem(
-            statusCode: 503,
-            title: "Weather unavailable");
-    }
+        }
+        catch (WeatherUnavailableException)
+        {
+            return Results.Problem(
+                statusCode: 503,
+                title: "Weather unavailable");
+        }
+    });
 });
 
 app.Run();
