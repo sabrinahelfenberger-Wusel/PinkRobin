@@ -50,6 +50,10 @@
         @case ("connected") {
           Dein Robin wird vom Core gesteuert.
         }
+        @case ("reconnecting") {
+          Die Verbindung ist unterbrochen. Wir verbinden dich wieder mit deinem
+          Robin …
+        }
         @case ("local") {
           Lokale Demo – die Verbindung zum Core ist unterbrochen oder nicht
           verfügbar.
@@ -103,6 +107,12 @@
             }
             @case ("connected") {
               <span>Core verbunden</span>
+            }
+            @case ("reconnecting") {
+              <span
+                >Verbindung zu deiner Core-Sitzung wird wiederhergestellt
+                …</span
+              >
             }
             @case ("local") {
               <span>Core-Sitzung nicht verbunden</span>

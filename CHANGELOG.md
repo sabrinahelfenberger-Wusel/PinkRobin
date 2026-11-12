@@ -1,5 +1,37 @@
 # Änderungsprotokoll
 
+## 0.1.8 – Zuverlässigere Wiederverbindung
+
+### Verbessert
+
+- Automatische Wiederverbindung bei kurzen Netzwerkunterbrechungen.
+- Bestehende Session und gewählter Wetterort bleiben erhalten.
+- Session-Token im sessionStorage ermöglicht die Wiederaufnahme
+  nach einem Neuladen im selben Browser-Tab.
+- Rückkehr zur Seite prüft die Verbindung unmittelbar.
+- Befehlsabgleich verhindert doppelte Verarbeitung und das Nachspielen
+  alter Berührungen.
+- Wiederholungsversuche verwenden wachsende Warteabstände.
+
+### Backend
+
+- Inaktivitätsfrist konfigurierbar, standardmässig 15 Minuten.
+- Feste maximale Session-Laufzeit von 30 Minuten entfernt.
+- Abgelaufene Sessions werden weiterhin freigegeben.
+
+### Tests und Dokumentation
+
+- Tests für Wiederverbindung, Befehlsabgleich, Berührungsaufhebung,
+  Warteabstände und Wiederaufnahme nach Neuladen ergänzt.
+- Session-Lebensdauer mit deterministischer Testuhr geprüft.
+- Hintergrundpause und Neuladen auf dem iPad erfolgreich getestet.
+- Konfiguration und Grenzen der Wiederaufnahme dokumentiert.
+
+### Versionen
+
+- Web und Backend: 0.1.8
+- Core: unverändert 0.1.6
+
 ## 0.1.7 – Portfolio zu Textgesprächen
 
 ### Aktualisiert
