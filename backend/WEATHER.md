@@ -6,11 +6,11 @@ Health-Endpunkte bleiben bestehen. Wetter ist unabhängig von der nativen Core-A
 
 ## Konfiguration und Start
 
-In `src/PinkRobin.Api/appsettings.json` steht als Beispiel die PLZ `8001`.
+In `src/PinkRobin.Api/appsettings.json` ist die Standard-PLZ `9200` (Gossau SG) konfiguriert.
 Für den eigenen Standort `Weather:PostalCode` ändern oder vor dem Start setzen:
 
 ```sh
-Weather__PostalCode=8001 dotnet run --project backend/src/PinkRobin.Api --no-launch-profile --urls http://127.0.0.1:5080
+Weather__PostalCode=9200 dotnet run --project backend/src/PinkRobin.Api --no-launch-profile --urls http://127.0.0.1:5080
 curl -i http://127.0.0.1:5080/api/weather
 ```
 
